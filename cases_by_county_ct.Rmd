@@ -85,8 +85,7 @@ log10_minor_break = function (...){
 }
 pcases <- ggplot(data = ct, aes(x = date, y = cases, colour = county)) + 
   geom_point() + geom_line() + xlab(NULL) +
-  scale_y_log10(minor_breaks=log10_minor_break()) + 
-  scale_x_date(date_minor_breaks = "1 day") +
+    scale_x_date(date_minor_breaks = "1 day") +
   theme_minimal() + 
   theme(legend.position = "none")
 
@@ -97,21 +96,22 @@ pcases <- pcases + geom_text_repel(data = for_labels, aes(label = county),
                          # nudge_x = 0.21,
                          direction = "y") + 
   expand_limits(x = max(ct$date) + 1) +
-ylab("confirmed cases (log scale)") +
 labs(
   title = "Cumulative COVID19 Cases in Connecticut by County",
   subtitle = NULL,
   caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html"
 )
-pcases +
+pcases_nonlog <- pcases +
     annotation_custom(grob = ggplotGrob(county_map), xmin = date_range[2], xmax = date_range[13], 
                       ymin = 10 ^ (log10(max(ct$cases)) * 0.66), 
                       ymax = max(ct$cases))
+pcases <- pcases +
+  ylab("confirmed cases (log scale)") +
+  scale_y_log10(minor_breaks=log10_minor_break()) 
 
-pcases +
-    annotation_custom(grob = g, xmin = date_range[2], xmax = date_range[13], 
-                      ymin = 10 ^ (log10(max(ct$cases)) * 0.66), 
-                      ymax = max(ct$cases))
+pcases_nonlog + 
+  ylab("confirmed cases")
+
 
 pdeaths <- ggplot(data = ct %>% filter(deaths > 0) %>% 
                     mutate(deaths = ifelse(deaths == 0, NA_real_, deaths))
@@ -139,7 +139,7 @@ labs(
 pdeaths 
 
 
-g1  <- qplot(0:10, 0:10)
+
 
 ```
 
