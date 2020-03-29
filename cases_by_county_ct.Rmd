@@ -1,0 +1,145 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(tidyverse, quietly = TRUE)
+```
+```{r county_maps}
+library(sf, quietly = TRUE)
+library(tigris, quietly = TRUE)
+library(tidycensus, quietly = TRUE)
+library(viridis, quietly = TRUE)
+options(tigris_use_cache = TRUE)
+options(tigris_class = "sf")
+
+county_geometries <- counties(state = "CT", cb = FALSE)
+ct_pop <- get_acs(geography = "county", 
+                    variables = "B01003_001", 
+                    state = "CT",
+                    geometry = TRUE) %>% 
+  mutate(county = str_replace(NAME, " County, Connecticut", ""))
+ct_pop <- ct_pop %>% 
+  left_join(ct %>% filter(date == max(date))) %>% 
+  mutate(cases_per_pop = cases / (estimate / 100000))
+county_centroid <- st_centroid(ct_pop) # use to place town labels
+county_map <- ggplot() + 
+  geom_sf(data = ct_pop, aes(fill = cases_per_pop)) + 
+  scale_fill_gradient(low = "white", high = "grey") +
+  geom_sf_text(data = county_centroid, aes(label = county), color = "black") +
+  coord_sf(datum = NA, label_axes = "----") +
+  xlab("") + ylab("") + theme_minimal()  +
+  theme(legend.position = "none") +
+  labs(title = NULL,
+       subtitle = NULL,
+       caption = "Source: US Census, tidycensus package")
+
+```
+
+```{r}
+counties <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
+ct <- counties %>% filter(state == "Connecticut")
+```
+
+
+```{r}
+ct<- ct %>% 
+  mutate(county = fct_reorder2(county, date, cases))
+date_range <- unique(ct$date)
+label_height_cases <- function(county, date) {
+  # ht <- ct$cases[(ct$county == county) & (ct$date == date)]
+  ht <- ct$cases[(ct$county == county) & (ct$date == max(ct$date))]
+  # ht <- ct$cases[(ct$county == county) & (ct$date == date_range[length(date_range) - 2])]
+  if (length(ht) == 0) ht <- 0.5
+  return(ht)
+}
+label_height_deaths <- function(county, date) {
+  ht <- ct$deaths[(ct$county == county) & (ct$date == max(ct$date))]
+  if (length(ht) == 0) ht <- 0.5
+  return(ht)
+}
+for_labels <- tibble(
+  # date = date_range[seq(length(date_range) - 2 + 1, length(date_range) - 1 + 1 - length(unique(ct$county)), -1)],
+  date = max(date_range),
+  county = levels(ct$county),
+  cases = 0,
+  deaths = 0,
+) %>% 
+  mutate(cases = map2_dbl(county, date, label_height_cases),
+         deaths = map2_dbl(county, date, label_height_deaths))
+# log minor breaks taken from https://stackoverflow.com/questions/30179442/plotting-minor-breaks-on-a-log-scale-with-ggplot
+log10_minor_break = function (...){
+  function(x) {
+    minx         = floor(min(log10(x), na.rm=T))-1;
+    maxx         = ceiling(max(log10(x), na.rm=T))+1;
+    n_major      = maxx-minx+1;
+    major_breaks = seq(minx, maxx, by=1)
+    minor_breaks = 
+      rep(log10(seq(1, 9, by=1)), times = n_major)+
+      rep(major_breaks, each = 9)
+    return(10^(minor_breaks))
+  }
+}
+pcases <- ggplot(data = ct, aes(x = date, y = cases, colour = county)) + 
+  geom_point() + geom_line() + xlab(NULL) +
+  scale_y_log10(minor_breaks=log10_minor_break()) + 
+  scale_x_date(date_minor_breaks = "1 day") +
+  theme_minimal() + 
+  theme(legend.position = "none")
+
+pcases <- pcases + geom_text_repel(data = for_labels, aes(label = county), 
+                         hjust = 0, vjust = 0.5, 
+                         # check_overlap = FALSE, 
+                         show.legend = FALSE, 
+                         # nudge_x = 0.21,
+                         direction = "y") + 
+  expand_limits(x = max(ct$date) + 1) +
+ylab("confirmed cases (log scale)") +
+labs(
+  title = "Cumulative COVID19 Cases in Connecticut by County",
+  subtitle = NULL,
+  caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html"
+)
+pcases +
+    annotation_custom(grob = ggplotGrob(county_map), xmin = date_range[2], xmax = date_range[13], 
+                      ymin = 10 ^ (log10(max(ct$cases)) * 0.66), 
+                      ymax = max(ct$cases))
+
+pcases +
+    annotation_custom(grob = g, xmin = date_range[2], xmax = date_range[13], 
+                      ymin = 10 ^ (log10(max(ct$cases)) * 0.66), 
+                      ymax = max(ct$cases))
+
+pdeaths <- ggplot(data = ct %>% filter(deaths > 0) %>% 
+                    mutate(deaths = ifelse(deaths == 0, NA_real_, deaths))
+                  , aes(x = date, y = deaths, colour = county)) + 
+  geom_point() + geom_line() + xlab(NULL) +
+  scale_y_log10(minor_breaks=log10_minor_break()) + 
+  scale_x_date(date_minor_breaks = "1 day", limits = c(min(ct$date), NA)) +
+  theme_minimal() + 
+  theme(legend.position = "none")
+
+pdeaths <- pdeaths + geom_text_repel(data = for_labels %>% filter(deaths > 0), 
+                                     aes(label = county), 
+                         hjust = 0, vjust = 0.5, 
+                         # check_overlap = FALSE, 
+                         show.legend = FALSE, 
+                         # nudge_x = 0.21,
+                         direction = "y") + 
+  expand_limits(x = max(ct$date) + 1) +
+ylab("deaths (log scale)") +
+labs(
+  title = "Cumulative COVID19 Deaths in Connecticut by County",
+  subtitle = NULL,
+  caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html"
+)
+pdeaths 
+
+
+g1  <- qplot(0:10, 0:10)
+
+```
+
