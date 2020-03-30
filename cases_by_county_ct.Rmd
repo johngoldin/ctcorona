@@ -16,6 +16,8 @@ library(viridis, quietly = TRUE)
 options(tigris_use_cache = TRUE)
 options(tigris_class = "sf")
 
+path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
+
 county_geometries <- counties(state = "CT", cb = FALSE)
 ct_pop <- get_acs(geography = "county", 
                     variables = "B01003_001", 
@@ -24,28 +26,52 @@ ct_pop <- get_acs(geography = "county",
   mutate(county = str_replace(NAME, " County, Connecticut", ""))
 ct_pop <- ct_pop %>% 
   left_join(ct %>% filter(date == max(date))) %>% 
-  mutate(cases_per_pop = cases / (estimate / 100000))
+  mutate(cases_per_pop = cases / (estimate / 100000),
+         per_pop_label =  as.character(round(cases_per_pop, 1)))
 county_centroid <- st_centroid(ct_pop) # use to place town labels
 county_map <- ggplot() + 
   geom_sf(data = ct_pop, aes(fill = cases_per_pop)) + 
   scale_fill_gradient(low = "white", high = "grey") +
-  geom_sf_text(data = county_centroid, aes(label = county), color = "black") +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", per_pop_label, " per 100K")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
-  theme(legend.position = "none") +
-  labs(title = NULL,
-       subtitle = NULL,
+  # theme(legend.position = "none") +
+  labs(title = "Cumulative Confirmed Cases by Connecticut County",
+       subtitle = "cases per 100K of population for most recent report date",
+       fill = "cases per 100K",
        caption = "Source: US Census, tidycensus package")
 
 ```
 
 ```{r}
+# from https://github.com/nytimes/covid-19-data
 counties <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
 ct <- counties %>% filter(state == "Connecticut")
-```
 
+manual_supplement <- tibble(
+  date = c(rep(as.Date("2020-03-28"), 8), rep(as.Date("2020-03-29"), 8)),
+  county = rep(c("Fairfield", "Hartford", "Litchfield", "Middlesex", "New Haven", "New London", "Tolland", "Windham"), 2),
+  cases = c(908, 228, 65, 28, 236, 19, 37, 3,
+            1245, 276, 87, 38, 280, 20, 40, 7),
+  deaths = c(20, 2, 0, 1, 6, 0, 4, 0,
+             21, 2, 0, 1, 6, 0, 4, 0)
+) %>% 
+  filter(date > max(ct$date))
+if (nrow(manual_supplement) > 0) ct <- bind_rows(ct, manual_supplement)
+print(max(ct$date))
+```
+March 10 -- executive order 7: prohibited large gatherings
+March 17 order 7C: cancelled classes
+March 23 order 7H: restrict nonessential business
+March 26 order 7N: limit gathering to 5 or fewer
 
 ```{r}
+exec_orders <- tibble(
+  date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26")),
+  label = c("prohibit large\ngatherings", "cancel\nclasses", "restrict\nbusiness", "5 or fewer")
+) %>% 
+  left_join(ct %>% filter(county == "Fairfield") %>% select(date, cases), by = "date") %>% 
+  mutate(county = "Fairfield")
 ct<- ct %>% 
   mutate(county = fct_reorder2(county, date, cases))
 date_range <- unique(ct$date)
@@ -101,16 +127,16 @@ labs(
   subtitle = NULL,
   caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html"
 )
-pcases_nonlog <- pcases +
-    annotation_custom(grob = ggplotGrob(county_map), xmin = date_range[2], xmax = date_range[13], 
-                      ymin = 10 ^ (log10(max(ct$cases)) * 0.66), 
-                      ymax = max(ct$cases))
+pcases_nonlog <- pcases  + 
+  ylab("confirmed cases")
+    # annotation_custom(grob = ggplotGrob(county_map), xmin = date_range[2], xmax = date_range[13], 
+    #                   ymin = 10 ^ (log10(max(ct$cases)) * 0.66), 
+    #                   ymax = max(ct$cases))
 pcases <- pcases +
   ylab("confirmed cases (log scale)") +
-  scale_y_log10(minor_breaks=log10_minor_break()) 
-
-pcases_nonlog + 
-  ylab("confirmed cases")
+  scale_y_log10(minor_breaks=log10_minor_break()) +
+  geom_text(data = exec_orders, aes(y = cases * 1.2, label = label), 
+            hjust = 0.5, vjust = 0, size = 3, colour = "darkgrey")
 
 
 pdeaths <- ggplot(data = ct %>% filter(deaths > 0) %>% 
@@ -139,7 +165,17 @@ labs(
 pdeaths 
 
 
+ggsave("log_cases.png", plot = pcases, path = path_to_post,
+       width = 7, height = 6, units = "in")
 
+ggsave("cases_nonlog.png", plot = pcases_nonlog, path = path_to_post,
+       width = 7, height = 6, units = "in")
+
+ggsave("county_map.png", plot = county_map, path = path_to_post,
+       width = 6, height = 5, units = "in")
+
+ggsave("deaths.png", plot = pdeaths, path = path_to_post,
+       width = 7, height = 6, units = "in")
 
 ```
 
