@@ -9,39 +9,32 @@ output: html_notebook
 library(tidyverse, quietly = TRUE)
 ```
 ```{r county_maps}
+library(tidyverse, quietly = TRUE)
 library(sf, quietly = TRUE)
 library(tigris, quietly = TRUE)
 library(tidycensus, quietly = TRUE)
 library(viridis, quietly = TRUE)
 options(tigris_use_cache = TRUE)
+library(ggrepel)
 options(tigris_class = "sf")
 
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 
-county_geometries <- counties(state = "CT", cb = FALSE)
-ct_pop <- get_acs(geography = "county", 
-                    variables = "B01003_001", 
-                    state = "CT",
-                    geometry = TRUE) %>% 
-  mutate(county = str_replace(NAME, " County, Connecticut", ""))
-ct_pop <- ct_pop %>% 
-  left_join(ct %>% filter(date == max(date))) %>% 
-  mutate(cases_per_pop = cases / (estimate / 100000),
-         per_pop_label =  as.character(round(cases_per_pop, 1)))
-county_centroid <- st_centroid(ct_pop) # use to place town labels
-county_map <- ggplot() + 
-  geom_sf(data = ct_pop, aes(fill = cases_per_pop)) + 
-  scale_fill_gradient(low = "white", high = "grey") +
-  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", per_pop_label, " per 100K")), color = "black", size = 3) +
-  coord_sf(datum = NA, label_axes = "----") +
-  xlab("") + ylab("") + theme_minimal()  +
-  # theme(legend.position = "none") +
-  labs(title = "Cumulative Confirmed Cases by Connecticut County",
-       subtitle = "cases per 100K of population for most recent report date",
-       fill = "cases per 100K",
-       caption = "Source: US Census, tidycensus package")
-
 ```
+```{r census_stuff}
+if (!exists("county_geometries")) load("ct_population.RData")
+if (!exists("county_geometries")) {
+  county_geometries <- counties(state = "CT", cb = FALSE)
+  ct_population <- get_acs(geography = "county", 
+                           variables = "B01003_001", 
+                           state = "CT",
+                           geometry = TRUE) %>% 
+    mutate(county = str_replace(NAME, " County, Connecticut", ""))
+  # save(county_geometries, ct_population, file = "ct_population.RData")
+}
+```
+
+
 
 ```{r}
 # from https://github.com/nytimes/covid-19-data
@@ -49,12 +42,18 @@ counties <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/ma
 ct <- counties %>% filter(state == "Connecticut")
 
 manual_supplement <- tibble(
-  date = c(rep(as.Date("2020-03-28"), 8), rep(as.Date("2020-03-29"), 8)),
-  county = rep(c("Fairfield", "Hartford", "Litchfield", "Middlesex", "New Haven", "New London", "Tolland", "Windham"), 2),
+  date = c(rep(as.Date("2020-03-28"), 8), rep(as.Date("2020-03-29"), 8),
+  rep(as.Date("2020-03-30"), 8),
+  rep(as.Date("2020-03-31"), 8)),
+  county = rep(c("Fairfield", "Hartford", "Litchfield", "Middlesex", "New Haven", "New London", "Tolland", "Windham"), 4),
   cases = c(908, 228, 65, 28, 236, 19, 37, 3,
-            1245, 276, 87, 38, 280, 20, 40, 7),
+            1245, 276, 87, 38, 280, 20, 40, 7,
+            1445, 330, 113, 59, 373, 24, 50, 10,
+            1870, 393, 121, 56, 517, 27, 56, 11),
   deaths = c(20, 2, 0, 1, 6, 0, 4, 0,
-             21, 2, 0, 1, 6, 0, 4, 0)
+             21, 2, 0, 1, 6, 0, 4, 0,
+             21, 3, 1, 1, 6, 0, 4, 0,
+             38, 7, 1, 1, 12, 1, 7, 0)
 ) %>% 
   filter(date > max(ct$date))
 if (nrow(manual_supplement) > 0) ct <- bind_rows(ct, manual_supplement)
@@ -163,8 +162,30 @@ labs(
   caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html"
 )
 pdeaths 
+```
 
+```{r create_county_map}
 
+ct_pop <- ct_population %>% 
+  left_join(ct %>% filter(date == max(date))) %>% 
+  mutate(cases_per_pop = cases / (estimate / 100000),
+         per_pop_label =  as.character(round(cases_per_pop, 1)))
+county_centroid <- st_centroid(ct_pop) # use to place town labels
+county_map <- ggplot() + 
+  geom_sf(data = ct_pop, aes(fill = cases_per_pop)) + 
+  scale_fill_gradient(low = "white", high = "grey") +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", per_pop_label, " per 100K")), color = "black", size = 3) +
+  coord_sf(datum = NA, label_axes = "----") +
+  xlab("") + ylab("") + theme_minimal()  +
+  # theme(legend.position = "none") +
+  labs(title = "Cumulative Confirmed Cases by Connecticut County",
+       subtitle = "cases per 100K of population for most recent report date",
+       fill = "cases per 100K",
+       caption = "Source: US Census, tidycensus package")
+
+```
+
+```{r save_plots}
 ggsave("log_cases.png", plot = pcases, path = path_to_post,
        width = 7, height = 6, units = "in")
 
@@ -177,5 +198,37 @@ ggsave("county_map.png", plot = county_map, path = path_to_post,
 ggsave("deaths.png", plot = pdeaths, path = path_to_post,
        width = 7, height = 6, units = "in")
 
+```
+
+Next let's try to plot the regression line through Fairfield and other counties.
+
+```{r}
+ct2 <- ct %>% mutate(county = fct_collapse(county, Fairfield = "Fairfield", group_other = TRUE)) %>% 
+  group_by(county, date) %>% 
+  summarise(cases = sum(cases), deaths = sum(deaths))
+
+library(broom)
+slopes <- ct2 %>%
+  mutate( d = as.numeric(date - min(ct$date))) %>% 
+  nest(-county) %>% 
+  mutate(
+    fit = map(data, ~ lm(log(cases) ~ d , data = .x)),
+    tidied = map(fit, tidy)
+  ) %>% 
+  unnest(tidied)
+slopes %>% 
+  filter(term == "date") %>% 
+  mutate(doubling = exp(log(2) / log(estimate))) %>% 
+  select(county, doubling)
+
+slopes %>% 
+  filter(term == "d") %>% 
+  mutate(doubling = log(2) /estimate) %>% 
+  select(county, doubling)
+
+```
+
+```{r}
+xx <- ct %>% filter(county = "Fairfield")
 ```
 
