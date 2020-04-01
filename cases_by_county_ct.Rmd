@@ -39,7 +39,8 @@ if (!exists("county_geometries")) {
 ```{r}
 # from https://github.com/nytimes/covid-19-data
 counties <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
-ct <- counties %>% filter(state == "Connecticut")
+ct <- counties %>%
+  filter(state == "Connecticut", county != "Unknown")
 
 manual_supplement <- tibble(
   date = c(rep(as.Date("2020-03-28"), 8), rep(as.Date("2020-03-29"), 8),
