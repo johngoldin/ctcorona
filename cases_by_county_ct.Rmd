@@ -17,6 +17,8 @@ library(viridis, quietly = TRUE)
 options(tigris_use_cache = TRUE)
 library(ggrepel)
 options(tigris_class = "sf")
+library(lubridate, quietly = TRUE)
+library(janitor)
 
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 
@@ -54,8 +56,10 @@ manual_supplement <- tibble(
   rep(as.Date("2020-04-04"), 9),
   rep(as.Date("2020-04-05"), 9),
   rep(as.Date("2020-04-06"), 9),
-  rep(as.Date("2020-04-07"), 9)),
-  county = rep(c("Fairfield", "Hartford", "Litchfield", "Middlesex", "New Haven", "New London", "Tolland", "Windham", "Unknown"), 11),
+  rep(as.Date("2020-04-07"), 9),
+  rep(as.Date("2020-04-08"), 9),
+  rep(as.Date("2020-04-09"), 9)),
+  county = rep(c("Fairfield", "Hartford", "Litchfield", "Middlesex", "New Haven", "New London", "Tolland", "Windham", "Unknown"), 13),
   cases = c(908, 228, 65, 28, 236, 19, 37, 3, 0,
             1245, 276, 87, 38, 280, 20, 40, 7, 0,
             1445, 330, 113, 59, 373, 24, 50, 10, 0,
@@ -66,7 +70,9 @@ manual_supplement <- tibble(
             2824, 726, 182, 100, 1024, 57, 91, 31,241,
             3050, 751, 197, 110, 1162, 57, 94, 32, 222,
             3719, 882, 230, 135, 1468, 65, 103, 40, 264,
-            4136, 1045, 255, 150, 1664, 85, 111, 43, 292
+            4136, 1045, 255, 150, 1664, 85, 111, 43, 292,
+            4417, 1290, 292, 174, 1945, 120, 128, 49, 366,
+            4882, 1471, 315, 205, 2183, 139, 145, 52, 392
             ),
   deaths = c(20, 2, 0, 1, 6, 0, 4, 0, 0,
              21, 2, 0, 1, 6, 0, 4, 0, 0,
@@ -78,7 +84,9 @@ manual_supplement <- tibble(
              86, 26, 5, 4, 29, 3, 10, 1, 1,
              96, 29, 6, 5, 36, 4, 11, 1, 1,
              101, 31, 8, 7, 41, 4, 13, 1, 0,
-             132, 48, 9, 7, 60, 4, 13, 1, 3)
+             132, 48, 9, 7, 60, 4, 13, 1, 3,
+             155, 68, 12, 9, 70, 5, 13, 1, 2,
+             178, 75, 13, 14, 78, 6, 13, 1,2)
 ) %>% 
   filter(date > max(ct0$date)) %>% 
   mutate(state = "Connecticut")
@@ -102,7 +110,9 @@ hospital <- tribble(
 "4/4/2020",15,184,3,3,475,324,19,10,
 "4/5/2020",15,189,3,3,531,372,19,10,
 "4/6/2020",15,213,3,2,572,384,22,10,
-"4/7/2020",17,243,4,3,613,390,26,12
+"4/7/2020",17,243,4,3,613,390,26,12,
+"4/8/2020",20,251,7,3,665,428,28,16,
+"4/9/2020",25,276,7,4,664,447,26,15
 ) %>% 
   mutate(date = mdy(date)) %>% 
   pivot_longer(-date, names_to = "county", values_to = "hospital")
@@ -133,7 +143,7 @@ exec_orders <- tibble(
   date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26")),
   label = c("prohibit large\ngatherings", "cancel\nclasses", "restrict\nbusiness", "5 or fewer")
 ) %>% 
-  left_join(ct %>% filter(county == "Fairfield") %>% select(date, cases), by = "date") %>% 
+  left_join(ct2 %>% filter(county == "Fairfield") %>% select(date, cases), by = "date") %>% 
   mutate(county = "Fairfield")
 ct <- ct2 %>% 
   mutate(county = fct_reorder2(county, date, cases))
@@ -195,7 +205,7 @@ pcases <- pcases + geom_text_repel(data = for_labels, aes(label = county),
 labs(
   title = "Cumulative COVID19 Cases in Connecticut by County",
   subtitle = NULL,
-  caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html"
+  caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html & CT DPH"
 )
 pcases_nonlog <- pcases  + 
   ylab("confirmed cases")
@@ -238,7 +248,7 @@ pdeaths <- pdeaths +
   labs(
     title = "Cumulative COVID19 Deaths in Connecticut by County",
     subtitle = NULL,
-    caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html"
+    caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html & CT DPH"
   )
 
 phospital <- ggplot(data = ct2 %>% filter(!is.na(hospital)), 
@@ -303,22 +313,49 @@ ggsave("county_map.png", plot = county_map, path = path_to_post,
 
 ggsave("deaths.png", plot = pdeaths, path = path_to_post,
        width = 7, height = 6, units = "in")
-
+ggsave("log_deaths.png", plot = pdeaths_log, path = path_to_post,
+       width = 7, height = 6, units = "in")
 ggsave("hospitalizations.png", plot = phospital, path = path_to_post,
        width = 7, height = 6, units = "in")
 ```
 
 Next let's try to plot the regression line through Fairfield and other counties.
 
-```{r}
-ct2 <- ct %>% mutate(county = fct_collapse(county, Fairfield = "Fairfield", group_other = TRUE)) %>% 
-  group_by(county, date) %>% 
-  summarise(cases = sum(cases), deaths = sum(deaths))
+```{r slopes}
+# Setup week ranges starting with most recent week and working backward
+nweeks = 4
+week_setup <- tibble(
+  start_period = today() - weeks(seq(nweeks, 1, -1)),
+) %>%  
+  mutate(end_period = start_period + days(6),
+  period_label = str_c(str_sub(start_period, 6, 10), " to ", str_sub(end_period, 6, 10)),
+  period_label = str_replace_all(period_label, "-", "/"))
 
+week_setup2 <- tibble(
+  start_period = 
+)
+
+c(rep(week_setup$start_period, 7))
+
+ct3 <- ct2 %>% mutate(county = fct_collapse(county, Fairfield = "Fairfield", 
+                                             `New Haven` = "New Haven",
+                                            Hartford = "Hartford", group_other = TRUE),
+                      ) %>% 
+  group_by(county, date) %>% 
+  summarise(cases = sum(cases), deaths = sum(deaths), hospital = sum(hospital))
+
+ct_recent <- ct3 %>% filter(date >= (max(ct3$date) - 6))
+fairfield <- ct_recent %>% filter(county == "Fairfield") %>% 
+  mutate(d =  as.numeric(date - min(ct_recent$date)) )
+fairfield2 <- ct3 %>% filter(county == "Fairfield",
+  date >= (max(ct3$date) - 13), date < (max(ct3$date) - 6)) %>% 
+  mutate(d = as.numeric(date - min(ct_recent$date)))
+lm(log(cases) ~ d, data = fairfield)
+lm(log(cases) ~ d, data = fairfield2)
 library(broom)
-slopes <- ct2 %>%
-  mutate( d = as.numeric(date - min(ct$date))) %>% 
-  nest(-county) %>% 
+slopes <- ct_recent %>%
+  mutate( d = as.numeric(date - min(ct_recent$date))) %>% 
+  nest(-county, d, cases) %>% 
   mutate(
     fit = map(data, ~ lm(log(cases) ~ d , data = .x)),
     tidied = map(fit, tidy)
@@ -336,7 +373,12 @@ slopes %>%
 
 ```
 
+
+Do analysis on totals
 ```{r}
-xx <- ct %>% filter(county = "Fairfield")
+ct_total <- ct1 %>%
+  left_join(hospital, by = c("date", "county")) %>% 
+  filter(state == "Connecticut") %>% 
+  group_by
 ```
 
