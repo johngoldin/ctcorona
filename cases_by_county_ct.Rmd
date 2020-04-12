@@ -19,6 +19,8 @@ library(ggrepel)
 options(tigris_class = "sf")
 library(lubridate, quietly = TRUE)
 library(janitor)
+library(fuzzyjoin) # for interval_left_join
+library(broom)
 
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 
@@ -58,8 +60,9 @@ manual_supplement <- tibble(
   rep(as.Date("2020-04-06"), 9),
   rep(as.Date("2020-04-07"), 9),
   rep(as.Date("2020-04-08"), 9),
-  rep(as.Date("2020-04-09"), 9)),
-  county = rep(c("Fairfield", "Hartford", "Litchfield", "Middlesex", "New Haven", "New London", "Tolland", "Windham", "Unknown"), 13),
+  rep(as.Date("2020-04-09"), 9),
+  rep(as.Date("2020-04-10"), 9)),
+  county = rep(c("Fairfield", "Hartford", "Litchfield", "Middlesex", "New Haven", "New London", "Tolland", "Windham", "Unknown"), 14),
   cases = c(908, 228, 65, 28, 236, 19, 37, 3, 0,
             1245, 276, 87, 38, 280, 20, 40, 7, 0,
             1445, 330, 113, 59, 373, 24, 50, 10, 0,
@@ -72,7 +75,8 @@ manual_supplement <- tibble(
             3719, 882, 230, 135, 1468, 65, 103, 40, 264,
             4136, 1045, 255, 150, 1664, 85, 111, 43, 292,
             4417, 1290, 292, 174, 1945, 120, 128, 49, 366,
-            4882, 1471, 315, 205, 2183, 139, 145, 52, 392
+            4882, 1471, 315, 205, 2183, 139, 145, 52, 392,
+            5180, 1615, 346, 240, 2383, 156, 152,59, 407
             ),
   deaths = c(20, 2, 0, 1, 6, 0, 4, 0, 0,
              21, 2, 0, 1, 6, 0, 4, 0, 0,
@@ -86,7 +90,8 @@ manual_supplement <- tibble(
              101, 31, 8, 7, 41, 4, 13, 1, 0,
              132, 48, 9, 7, 60, 4, 13, 1, 3,
              155, 68, 12, 9, 70, 5, 13, 1, 2,
-             178, 75, 13, 14, 78, 6, 13, 1,2)
+             178, 75, 13, 14, 78, 6, 13, 1,2,
+             203, 88, 16, 17, 98, 7, 14, 1, 4)
 ) %>% 
   filter(date > max(ct0$date)) %>% 
   mutate(state = "Connecticut")
@@ -112,7 +117,8 @@ hospital <- tribble(
 "4/6/2020",15,213,3,2,572,384,22,10,
 "4/7/2020",17,243,4,3,613,390,26,12,
 "4/8/2020",20,251,7,3,665,428,28,16,
-"4/9/2020",25,276,7,4,664,447,26,15
+"4/9/2020",25,276,7,4,664,447,26,15,
+"4/10/2020",32,296,6,5,685,493,28,17
 ) %>% 
   mutate(date = mdy(date)) %>% 
   pivot_longer(-date, names_to = "county", values_to = "hospital")
@@ -145,8 +151,18 @@ exec_orders <- tibble(
 ) %>% 
   left_join(ct2 %>% filter(county == "Fairfield") %>% select(date, cases), by = "date") %>% 
   mutate(county = "Fairfield")
+# Setup week ranges starting with most recent week and working backward
+nweeks = 4
+week_setup <- tibble(
+  start_period = today() - weeks(seq(nweeks, 1, -1)),
+) %>%  
+  mutate(end_period = start_period + days(6),
+  period_label = str_c(str_sub(start_period, 6, 10), " to ", str_sub(end_period, 6, 10)),
+  period_label = str_replace_all(period_label, "-", "/"))
 ct <- ct2 %>% 
-  mutate(county = fct_reorder2(county, date, cases))
+  mutate(county = fct_reorder2(county, date, cases)) %>% 
+  fuzzyjoin::interval_left_join(week_setup,
+                     by = c("date" = "start_period", "date" = "end_period"))
 date_range <- unique(ct$date)
 label_height_cases <- function(county, date) {
   # ht <- ct$cases[(ct$county == county) & (ct$date == date)]
@@ -321,64 +337,119 @@ ggsave("hospitalizations.png", plot = phospital, path = path_to_post,
 
 Next let's try to plot the regression line through Fairfield and other counties.
 
+[example of doubling time in R](http://www.pangloss.com/wiki/R_GrowthCurve?action=AttachFile&do=get&target=R_growth_curve_example.pdf)
+
 ```{r slopes}
-# Setup week ranges starting with most recent week and working backward
-nweeks = 4
-week_setup <- tibble(
-  start_period = today() - weeks(seq(nweeks, 1, -1)),
-) %>%  
-  mutate(end_period = start_period + days(6),
-  period_label = str_c(str_sub(start_period, 6, 10), " to ", str_sub(end_period, 6, 10)),
-  period_label = str_replace_all(period_label, "-", "/"))
 
-week_setup2 <- tibble(
-  start_period = 
-)
 
-c(rep(week_setup$start_period, 7))
-
-ct3 <- ct2 %>% mutate(county = fct_collapse(county, Fairfield = "Fairfield", 
+ct3 <- ct %>% mutate(county = fct_collapse(county, Fairfield = "Fairfield", 
                                              `New Haven` = "New Haven",
                                             Hartford = "Hartford", group_other = TRUE),
                       ) %>% 
   group_by(county, date) %>% 
-  summarise(cases = sum(cases), deaths = sum(deaths), hospital = sum(hospital))
+  summarise(cases = sum(cases, na.rm = TRUE), 
+            deaths = sum(deaths, na.rm = TRUE), 
+            hospital = sum(hospital, na.rm = TRUE),
+            period_label = first(period_label))
 
-ct_recent <- ct3 %>% filter(date >= (max(ct3$date) - 6))
-fairfield <- ct_recent %>% filter(county == "Fairfield") %>% 
-  mutate(d =  as.numeric(date - min(ct_recent$date)) )
-fairfield2 <- ct3 %>% filter(county == "Fairfield",
-  date >= (max(ct3$date) - 13), date < (max(ct3$date) - 6)) %>% 
-  mutate(d = as.numeric(date - min(ct_recent$date)))
-lm(log(cases) ~ d, data = fairfield)
-lm(log(cases) ~ d, data = fairfield2)
-library(broom)
-slopes <- ct_recent %>%
-  mutate( d = as.numeric(date - min(ct_recent$date))) %>% 
-  nest(-county, d, cases) %>% 
+
+
+
+
+doubling_cases <- ct3 %>% 
+  filter(!is.na(period_label), cases > 0) %>% 
+  group_by(county, period_label) %>% 
+  nest() %>% 
   mutate(
-    fit = map(data, ~ lm(log(cases) ~ d , data = .x)),
-    tidied = map(fit, tidy)
+    fit_cases = map(data, ~ lm(log(cases) ~ date, data = .x)),
+    tidied_cases = map(fit_cases, tidy),
+    glance_cases = map(fit_cases, glance)
   ) %>% 
-  unnest(tidied)
-slopes %>% 
-  filter(term == "date") %>% 
-  mutate(doubling = exp(log(2) / log(estimate))) %>% 
-  select(county, doubling)
+  unnest(tidied_cases) %>% 
+  select(county, period_label, data, fit_cases, term, estimate) %>% 
+  pivot_wider(values_from = estimate, names_from = term) %>% 
+  mutate(doubling = log(2) / log(1 + date))
 
-slopes %>% 
-  filter(term == "d") %>% 
-  mutate(doubling = log(2) /estimate) %>% 
-  select(county, doubling)
+doubling_deaths <- ct3 %>% 
+  filter(!is.na(period_label), deaths > 0) %>% 
+  group_by(county, period_label) %>% 
+  nest() %>% 
+  mutate(
+    fit_deaths = map(data, ~lm(log(deaths) ~ date, data = .x )),
+    tidied_deaths = map(fit_deaths, tidy),
+    glance_deaths = map(fit_deaths, glance)
+  ) %>% 
+  unnest(tidied_deaths) %>% 
+  select(county, period_label, data, fit_deaths, term, estimate) %>% 
+  pivot_wider(values_from = estimate, names_from = term) %>% 
+  mutate(doubling = log(2) / log(1 + date))
+doubling <-
+  bind_rows(
+    doubling_cases %>% 
+      select(county, week = period_label, daily_rate = date, doubling) %>% 
+      mutate(measure = "cases"),
+    doubling_deaths %>% 
+      select(county, week = period_label, daily_rate = date, doubling) %>% 
+      mutate(measure = "deaths")  
+  )
 
+p <- ggplot(data = doubling %>% filter(measure == "cases"), aes(x = week, y = doubling, fill = doubling)) + 
+  geom_col(position = position_dodge2(reverse = TRUE, padding = 0.1)) +
+  coord_flip() +
+  xlab(NULL) + ylab("doubling time (in days)") +
+  facet_wrap( ~ county) +
+  labs(title = "Doubling Time of Cumulative Count of Confirmed Cases",
+       subtitle = "(longer doubling time is better!)",
+       caption = "Doubling time is the number of days for the cumulative count to double.")
+
+
+ggplot(data = doubling, aes(x = daily_rate, y = doubling))+geom_smooth(se = FALSE)+
+  xlab("Doubling Time (days)")+
+  ylab("Daily Growth Rate")+
+  ggtitle("Relationship Between Daily Growth Rate and Doubling Time")
+
+# dbl <- log(2) / log(1 + rate)
+ggplot(data = tibble(xpoints = seq(0.05, 0.6, 0.005),
+                       ypoints = log(2) / log(1 + xpoints)), aes(x = xpoints, y = ypoints)) + geom_line()+
+  ylab("Doubling Time (days)")+
+  xlab("Daily Growth Rate")+
+  ggtitle("Relationship Between Daily Growth Rate and Doubling Time")
+
+# pcases + 
+#   geom_smooth(data = ct3 %>% filter(period_label == "04/02 to 04/08"),
+#               aes(y = exp(cases)),
+#               method = "lm", se = FALSE)
 ```
 
 
 Do analysis on totals
 ```{r}
-ct_total <- ct1 %>%
-  left_join(hospital, by = c("date", "county")) %>% 
-  filter(state == "Connecticut") %>% 
-  group_by
+test <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = date, y = cases)) + 
+  geom_point() + geom_line() + xlab(NULL) +
+    scale_x_date(date_minor_breaks = "1 day") +
+  theme_minimal() + 
+  theme(legend.position = "none")
+
+test <- test + geom_text_repel(data = for_labels, aes(label = county), 
+                         hjust = 0, vjust = 0.5, 
+                         # check_overlap = FALSE, 
+                         show.legend = FALSE, 
+                         # nudge_x = 0.21,
+                         direction = "y") + 
+  expand_limits(x = max(ct$date) + 1) +
+labs(
+  title = "Cumulative COVID19 Cases in Connecticut by County",
+  subtitle = NULL,
+  caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html & CT DPH"
+)
+test <- test +
+  ylab("confirmed cases (log scale)") +
+  scale_y_log10(minor_breaks=log10_minor_break()) +
+  geom_text(data = exec_orders, aes(y = cases * 1.2, label = label), 
+            hjust = 0.5, vjust = 0, size = 3, colour = "darkgrey")
+
+pcases + geom_smooth(data = ct %>% filter(date > ymd("2020-03-27")), 
+                                          aes(group = period_label, colour = county),
+                   method = "lm", se = FALSE)
 ```
 
