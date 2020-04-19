@@ -575,5 +575,12 @@ test <- test +
 pcases + geom_smooth(data = ct %>% filter(date > ymd("2020-03-27")), 
                                           aes(group = week, colour = county),
                    method = "lm", se = FALSE)
+
+
+# ct_counties <- ct_counties %>% 
+#   bind_rows(
+#     nyt_series %>% filter(date < min(ct_counties$date)) %>%
+#       select(county, cases, deaths, date) %>%
+#       mutate(hospital = NA_real_, cnty_cod = NA_character_))
 ```
 

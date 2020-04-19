@@ -13,19 +13,20 @@ library(janitor)
 library(fuzzyjoin) # for interval_left_join
 library(broom)
 library(RSocrata)
+library(RcppRoll)
 
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 
 
-if (!exists("county_geometries")) load("ct_population.RData")
+if (!exists("county_geometries")) load("dph_population.RData")
 if (!exists("county_geometries")) {
   county_geometries <- counties(state = "CT", cb = FALSE)
-  ct_population <- get_acs(geography = "county",
+  dph_population <- get_acs(geography = "county",
                            variables = "B01003_001",
                            state = "CT",
                            geometry = TRUE) %>%
     mutate(county = str_replace(NAME, " County, Connecticut", ""))
-  # save(county_geometries, ct_population, file = "ct_population.RData")
+  # save(county_geometries, dph_population, file = "dph_population.RData")
 }
 
 if (!exists("nyt_series")) load("nyt_series.RData")
@@ -37,21 +38,24 @@ if (!exists("nyt_series")) {
   # save(nyt_series, file = "nyt_series.RData")
 }
 
-ct_counties <- read.socrata("https://data.ct.gov/resource/bfnu-rgqt.json",
+dph_counties <- read.socrata("https://data.ct.gov/resource/bfnu-rgqt.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
   mutate(date = as_date(dateupdated), cases = as.numeric(cases),
          deaths = as.numeric(deaths), hospital = as.numeric(hospitalization)) %>%
   select(-dateupdated, -hospitalization) %>%
   bind_rows(
-    nyt_series %>% filter(date < min(ct_counties$date)) %>%
+    nyt_series %>% filter(date < min(dph_counties$date)) %>%
       select(county, cases, deaths, date) %>%
       mutate(hospital = NA_real_, cnty_cod = NA_character_))
-usethis::ui_info("Most recent county data is {ui_value(max(ct_counties$date, na.rm = TRUE))}.")
-if ((ct_counties %>% count(county, date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("ct_counties contains multiple rows on the same date.")
+usethis::ui_info("Most recent county data is {ui_value(max(dph_counties$date, na.rm = TRUE))}.")
+if ((dph_counties %>% count(county, date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_counties contains multiple rows on the same date.")
 
+# at this point we should have full
+# do rolling average
+ct %>% arrange(county, date) %>%  group_by(county) %>% mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_)) %>% View()
 
-ct_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
+dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
   mutate(date = as_date(lastupdatedate), cases = as.numeric(confirmedcases),
@@ -59,7 +63,7 @@ ct_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
   rename(per_100k = caserate) %>%
   select(-lastupdatedate, -confirmedcases, -town_no)
 
-ct_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
+dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
   mutate(date = as_date(date), cases = as.numeric(cases),
@@ -67,13 +71,13 @@ ct_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
   mutate_at(vars(starts_with("cases_")), as.numeric) %>%
   select( -hospitalizations)
 
-last_date <- max(ct_total$date)
+last_date <- max(dph_total$date)
 usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}")
-usethis::ui_info("Confirmed cases:            {usethis::ui_value(ct_total$cases[ct_total$date == last_date])}")
-usethis::ui_info("Confirmed deaths:           {usethis::ui_value(ct_total$deaths[ct_total$date == last_date])}")
-usethis::ui_info("Confirmed hospitalizations: {usethis::ui_value(ct_total$hospital[ct_total$date == last_date])}")
+usethis::ui_info("Confirmed cases:            {usethis::ui_value(dph_total$cases[dph_total$date == last_date])}")
+usethis::ui_info("Confirmed deaths:           {usethis::ui_value(dph_total$deaths[dph_total$date == last_date])}")
+usethis::ui_info("Confirmed hospitalizations: {usethis::ui_value(dph_total$hospital[dph_total$date == last_date])}")
 
-ct_age <- read.socrata("https://data.ct.gov/resource/ypz6-8qyf.json",
+dph_age <- read.socrata("https://data.ct.gov/resource/ypz6-8qyf.json",
                          app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
   mutate(date = as_date(dateupdated), cases = as.numeric(cases),
@@ -81,7 +85,7 @@ ct_age <- read.socrata("https://data.ct.gov/resource/ypz6-8qyf.json",
          rename(per_100k = rate) %>%
   select(-dateupdated)
 
-ct_gender <- read.socrata("https://data.ct.gov/resource/qa53-fghg.json",
+dph_gender <- read.socrata("https://data.ct.gov/resource/qa53-fghg.json",
                        app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
   mutate(date = as_date(dateupdated), cases = as.numeric(cases),
@@ -89,30 +93,30 @@ ct_gender <- read.socrata("https://data.ct.gov/resource/qa53-fghg.json",
   rename(per_100k = rate) %>%
   select(-dateupdated)
 
-if ((max(ct_total$date) != max(ct_counties$date)) |
-    (max(ct_total$date) != max(ct_towns$date)) |
-    (max(ct_total$date) != max(ct_age$date)) |
-    (max(ct_total$date) != max(ct_gender$date)))
-  usethis::ui_stop(paste("CT DPH dates. \ntotal:", max(ct_total$date), " counties:", max(ct_counties$date),
-                          " towns:", max(ct_towns$date), " age:", max(ct_age$date), " gender:", max(ct_gender$date)))
+if ((max(dph_total$date) != max(dph_counties$date)) |
+    (max(dph_total$date) != max(dph_towns$date)) |
+    (max(dph_total$date) != max(dph_age$date)) |
+    (max(dph_total$date) != max(dph_gender$date)))
+  usethis::ui_stop(paste("CT DPH dates. \ntotal:", max(dph_total$date), " counties:", max(dph_counties$date),
+                          " towns:", max(dph_towns$date), " age:", max(dph_age$date), " gender:", max(dph_gender$date)))
 
 exec_orders <- tibble(
   date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26")),
   label = c("prohibit large\ngatherings", "cancel\nclasses", "restrict\nbusiness", "5 or fewer")
 ) %>%
-  left_join(ct_counties %>% filter(county == "Fairfield") %>% select(date, cases), by = "date") %>%
+  left_join(dph_counties %>% filter(county == "Fairfield") %>% select(date, cases), by = "date") %>%
   mutate(county = "Fairfield")
 
 # Setup week ranges starting with most recent week and working backward
 nweeks = 4
 week_setup <- tibble(
-  start_period = (max(ct_counties$date) + 1) - weeks(seq(nweeks, 1, -1)),
+  start_period = (max(dph_counties$date) + 1) - weeks(seq(nweeks, 1, -1)),
 ) %>%
   mutate(end_period = start_period + days(6),
          week = str_c(str_sub(start_period, 6, 10), " to ", str_sub(end_period, 6, 10)),
          week = str_replace_all(week, "-", "/"))
 
-ct <- ct_counties %>%
+ct <- dph_counties %>%
   mutate(county = fct_reorder2(county, date, cases)) %>%
   fuzzyjoin::interval_left_join(week_setup,
                                 by = c("date" = "start_period", "date" = "end_period"))
@@ -242,13 +246,13 @@ phospital <- phospital +
     caption = "Source: Connecticut Hospital Association, via CT DPH"
   )
 
-ct_pop <- ct_population %>%
+dph_pop <- dph_population %>%
   left_join(ct %>% filter(date == max(date))) %>%
   mutate(cases_per_pop = cases / (estimate / 100000),
          per_pop_label =  as.character(round(cases_per_pop, 1)))
-county_centroid <- st_centroid(ct_pop) # use to place town labels
+county_centroid <- st_centroid(dph_pop) # use to place town labels
 county_map <- ggplot() +
-  geom_sf(data = ct_pop, aes(fill = cases_per_pop)) +
+  geom_sf(data = dph_pop, aes(fill = cases_per_pop)) +
   scale_fill_gradient(low = "white", high = "grey") +
   geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", per_pop_label, " per 100K")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
