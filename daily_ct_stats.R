@@ -1,11 +1,11 @@
 # New process for daily CT stats
-
+library(dplyr)
 library(tidyverse, quietly = TRUE)
 library(sf, quietly = TRUE)
+options(tigris_use_cache = TRUE)
 library(tigris, quietly = TRUE)
 library(tidycensus, quietly = TRUE)
 library(viridis, quietly = TRUE)
-options(tigris_use_cache = TRUE)
 library(ggrepel)
 options(tigris_class = "sf")
 library(lubridate, quietly = TRUE)
@@ -43,17 +43,24 @@ dph_counties <- read.socrata("https://data.ct.gov/resource/bfnu-rgqt.json",
   as_tibble() %>%
   mutate(date = as_date(dateupdated), cases = as.numeric(cases),
          deaths = as.numeric(deaths), hospital = as.numeric(hospitalization)) %>%
-  select(-dateupdated, -hospitalization) %>%
+  select(-dateupdated, -hospitalization)
+if (min(dph_counties$date) != ymd("2020-03-08")) dph_counties <- dph_counties %>%
   bind_rows(
     nyt_series %>% filter(date < min(dph_counties$date)) %>%
       select(county, cases, deaths, date) %>%
+      arrange(county, date) %>%
       mutate(hospital = NA_real_, cnty_cod = NA_character_))
-usethis::ui_info("Most recent county data is {ui_value(max(dph_counties$date, na.rm = TRUE))}.")
+usethis::ui_info("Most recent county data is {ui_value(max(dph_counties$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")
 if ((dph_counties %>% count(county, date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_counties contains multiple rows on the same date.")
 
 # at this point we should have full
 # do rolling average
-ct %>% arrange(county, date) %>%  group_by(county) %>% mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_)) %>% View()
+dph_counties <- dph_counties %>%
+  arrange(county, date) %>%
+  group_by(county) %>%
+  mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
+         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_))
+dph_counties <- dph_counties %>% ungroup()
 
 dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
@@ -61,7 +68,12 @@ dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
   mutate(date = as_date(lastupdatedate), cases = as.numeric(confirmedcases),
          deaths = as.numeric(deaths), caserate = as.numeric(caserate)) %>%
   rename(per_100k = caserate) %>%
-  select(-lastupdatedate, -confirmedcases, -town_no)
+  select(-lastupdatedate, -confirmedcases, -town_no) %>%
+  arrange(town, date) %>%
+  group_by(town) %>%
+  mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
+         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_))
+dph_towns <- dph_towns %>% ungroup()
 
 dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
@@ -71,8 +83,29 @@ dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
   mutate_at(vars(starts_with("cases_")), as.numeric) %>%
   select( -hospitalizations)
 
+if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
+  bind_rows(
+    nyt_series %>% filter(date < min(dph_total$date)) %>%
+      select(cases, deaths, date) %>%
+      group_by(date) %>%
+      summarise(cases = sum(cases), deaths = sum(deaths)) %>%
+      ungroup() %>%
+      mutate(hospital = NA_real_, state = "CONNECTICUT",
+             cases_age0_9 = NA_real_, cases_age10_19 = NA_real_,
+             cases_age20_29 = NA_real_, cases_age30_39 = NA_real_,
+             cases_age40_49 = NA_real_, cases_age50_59 = NA_real_,
+             cases_age60_69 = NA_real_,cases_age70_79 = NA_real_,
+             cases_age80_older = NA_real_)) %>%
+  arrange(date) %>%
+  mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
+         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_))
+
+usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
+if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
+
+
 last_date <- max(dph_total$date)
-usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}")
+usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")
 usethis::ui_info("Confirmed cases:            {usethis::ui_value(dph_total$cases[dph_total$date == last_date])}")
 usethis::ui_info("Confirmed deaths:           {usethis::ui_value(dph_total$deaths[dph_total$date == last_date])}")
 usethis::ui_info("Confirmed hospitalizations: {usethis::ui_value(dph_total$hospital[dph_total$date == last_date])}")
@@ -100,9 +133,12 @@ if ((max(dph_total$date) != max(dph_counties$date)) |
   usethis::ui_stop(paste("CT DPH dates. \ntotal:", max(dph_total$date), " counties:", max(dph_counties$date),
                           " towns:", max(dph_towns$date), " age:", max(dph_age$date), " gender:", max(dph_gender$date)))
 
+# there's also zip code level monitoring at: https://data.ct.gov/resource/javn-ujwr.json
+
 exec_orders <- tibble(
-  date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26")),
-  label = c("prohibit large\ngatherings", "cancel\nclasses", "restrict\nbusiness", "5 or fewer")
+  date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26", "2020-04-11")),
+  label = c("prohibit large\ngatherings", "cancel\nclasses", "restrict\nbusiness", "5 or fewer",
+            "covid-19 death\nchanged")
 ) %>%
   left_join(dph_counties %>% filter(county == "Fairfield") %>% select(date, cases), by = "date") %>%
   mutate(county = "Fairfield")
