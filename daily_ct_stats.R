@@ -18,15 +18,15 @@ library(RcppRoll)
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 
 
-if (!exists("county_geometries")) load("dph_population.RData")
+if (!exists("county_geometries")) load("census_population.RData")
 if (!exists("county_geometries")) {
   county_geometries <- counties(state = "CT", cb = FALSE)
-  dph_population <- get_acs(geography = "county",
+  census_population <- get_acs(geography = "county",
                            variables = "B01003_001",
                            state = "CT",
                            geometry = TRUE) %>%
     mutate(county = str_replace(NAME, " County, Connecticut", ""))
-  # save(county_geometries, dph_population, file = "dph_population.RData")
+  # save(county_geometries, census_population, file = "census_population.RData")
 }
 
 if (!exists("nyt_series")) load("nyt_series.RData")
@@ -59,8 +59,12 @@ dph_counties <- dph_counties %>%
   arrange(county, date) %>%
   group_by(county) %>%
   mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
-         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_))
+         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
+         new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
+         rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 dph_counties <- dph_counties %>% ungroup()
+
 
 dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
@@ -72,7 +76,10 @@ dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
   arrange(town, date) %>%
   group_by(town) %>%
   mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
-         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_))
+         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
+         new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
+         rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 dph_towns <- dph_towns %>% ungroup()
 
 dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
@@ -98,7 +105,10 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
              cases_age80_older = NA_real_)) %>%
   arrange(date) %>%
   mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
-         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_))
+         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
+         new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
+         rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
@@ -153,20 +163,22 @@ week_setup <- tibble(
          week = str_replace_all(week, "-", "/"))
 
 ct <- dph_counties %>%
-  mutate(county = fct_reorder2(county, date, cases)) %>%
+  mutate(county = fct_reorder2(county, date, rcases)) %>%
   fuzzyjoin::interval_left_join(week_setup,
                                 by = c("date" = "start_period", "date" = "end_period"))
+
+save_county_levels <- levels(ct$county)
 
 date_range <- unique(ct$date)
 label_height_cases <- function(county, date) {
   # ht <- ct$cases[(ct$county == county) & (ct$date == date)]
-  ht <- ct$cases[(ct$county == county) & (ct$date == max(ct$date))]
+  ht <- ct$rcases[(ct$county == county) & (ct$date == max(ct$date))]
   # ht <- ct$cases[(ct$county == county) & (ct$date == date_range[length(date_range) - 2])]
   if (length(ht) == 0) ht <- 0.5
   return(ht)
 }
 label_height_deaths <- function(county, date) {
-  ht <- ct$deaths[(ct$county == county) & (ct$date == max(ct$date))]
+  ht <- ct$rdeaths[(ct$county == county) & (ct$date == max(ct$date))]
   if (length(ht) == 0) ht <- 0.5
   return(ht)
 }
@@ -175,71 +187,94 @@ label_height_hospital <- function(county, date) {
   if (length(ht) == 0) ht <- 0.5
   return(ht)
 }
-for_labels <- tibble(
+label_height_new_cases <- function(county, date) {
+  ht <- ct$rnew_cases[(ct$county == county) & (ct$date == max(ct$date))]
+  if (length(ht) == 0) ht <- 0.5
+  return(ht)
+}
+label_height_new_deaths <- function(county, date) {
+  ht <- ct$rnew_deaths[(ct$county == county) & (ct$date == max(ct$date))]
+  if (length(ht) == 0) ht <- 0.5
+  return(ht)
+}
+for_county_labels <- tibble(
   # date = date_range[seq(length(date_range) - 2 + 1, length(date_range) - 1 + 1 - length(unique(ct$county)), -1)],
   date = max(date_range),
   county = levels(ct$county),
-  cases = 0,
-  deaths = 0,
-  hospital = 0
+  rcases = 0,
+  rdeaths = 0,
+  hospital = 0,
+  rnew_cases = 0,
+  rnew_deaths = 0
 ) %>%
-  mutate(cases = map2_dbl(county, date, label_height_cases),
-         deaths = map2_dbl(county, date, label_height_deaths),
-         hospital = map2_dbl(county, date, label_height_hospital))
+  mutate(rcases = map2_dbl(county, date, label_height_cases),
+         rdeaths = map2_dbl(county, date, label_height_deaths),
+         hospital = map2_dbl(county, date, label_height_hospital),
+         rnew_cases = map2_dbl(county, date, label_height_new_cases),
+         rnew_deaths = map2_dbl(county, date, label_height_new_deaths)
+  )
 # log minor breaks taken from https://stackoverflow.com/questions/30179442/plotting-minor-breaks-on-a-log-scale-with-ggplot
 log10_minor_break = function (...){
   function(x) {
-    minx         = floor(min(log10(x), na.rm=T))-1;
-    maxx         = ceiling(max(log10(x), na.rm=T))+1;
-    n_major      = maxx-minx+1;
-    major_breaks = seq(minx, maxx, by=1)
+    minx         = floor(min(log10(x), na.rm = TRUE)) - 1;
+    maxx         = ceiling(max(log10(x), na.rm = TRUE)) + 1;
+    n_major      = maxx - minx + 1;
+    major_breaks = seq(minx, maxx, by = 1)
     minor_breaks =
-      rep(log10(seq(1, 9, by=1)), times = n_major)+
+      rep(log10(seq(1, 9, by = 1)), times = n_major)+
       rep(major_breaks, each = 9)
     return(10^(minor_breaks))
   }
 }
-pcases <- ggplot(data = ct, aes(x = date, y = cases, colour = county)) +
+
+as_week <- function(d) {
+  sprintf("%s-%02d", month(d, label = TRUE, abbr = TRUE), day(d))
+}
+# down below I change levels so that facet chart will match geography
+# ct$county <- factor(ct$county, levels = save_county_levels)
+pcases <- ggplot(data = ct, aes(x = date, y = rcases, colour = county)) +
   geom_point() + geom_line() + xlab(NULL) +
-  scale_x_date(date_minor_breaks = "1 day") +
+  scale_x_date(date_minor_breaks = "1 day", date_breaks = "1 week", labels = as_week) +
   theme_minimal() +
   theme(legend.position = "none")
-
-pcases <- pcases + geom_text_repel(data = for_labels, aes(label = county),
-                                   hjust = 0, vjust = 0.5,
-                                   # check_overlap = FALSE,
-                                   show.legend = FALSE,
-                                   # nudge_x = 0.21,
-                                   direction = "y") +
+pcases <- pcases +
+  geom_text_repel(data = for_county_labels, aes(label = county),
+                  show.legend = FALSE, hjust = 0, vjust = 0.5,
+                  # check_overlap = FALSE,
+                  # nudge_x = 0.21,
+                  direction = "y") +
   expand_limits(x = max(ct$date) + 1) +
   labs(
     title = "Cumulative COVID19 Cases in Connecticut by County",
-    subtitle = NULL,
-    caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html & CT DPH"
+    caption = "Source: CT Department of Public Health (data.ct.gov) & New York Times"
   )
 pcases_nonlog <- pcases  +
-  ylab("confirmed cases")
+  ylab("confirmed cases") +
+  labs(subtitle = "(seven-day rolling average)")
+
 # annotation_custom(grob = ggplotGrob(county_map), xmin = date_range[2], xmax = date_range[13],
 #                   ymin = 10 ^ (log10(max(ct$cases)) * 0.66),
 #                   ymax = max(ct$cases))
 pcases <- pcases +
   ylab("confirmed cases (log scale)") +
+  labs(subtitle = "(seven-day rolling average, log scale)") +
   scale_y_log10(minor_breaks=log10_minor_break()) +
-  geom_text(data = exec_orders, aes(y = cases * 1.2, label = label),
-            hjust = 0.5, vjust = 0, size = 3, colour = "darkgrey")
+  geom_text(data = exec_orders, aes(y = cases , label = label),
+            hjust = 0.5, vjust = 0, size = 3, colour = "darkgrey", nudge_y = 0)
 
 
-pdeaths <- ggplot(data = ct %>% filter(deaths > 0) %>%
-                    mutate(deaths = ifelse(deaths == 0, NA_real_, deaths))
-                  , aes(x = date, y = deaths, colour = county)) +
+pdeaths <- ggplot(data = ct %>% filter(rdeaths > 0) %>%
+                    mutate(rdeaths = ifelse(rdeaths == 0, NA_real_, rdeaths))
+                  , aes(x = date, y = rdeaths, colour = county)) +
   geom_point() + geom_line() + xlab(NULL) +
-  scale_x_date(date_minor_breaks = "1 day", limits = c(min(ct$date), NA)) +
+  scale_x_date(date_minor_breaks = "1 day", limits = c(ymd("2020-03-14"), NA),
+               date_breaks = "1 week", labels = as_week) +
   theme_minimal() +
   theme(legend.position = "none")
 
-pdeaths <- pdeaths + geom_text_repel(data = for_labels %>% filter(deaths > 0),
+pdeaths <- pdeaths + geom_text_repel(data = for_county_labels %>% filter(rdeaths > 0),
                                      aes(label = county),
-                                     hjust = 0, vjust = 0.5,
+                                     hjust = 0, vjust = 0.0,
                                      # check_overlap = FALSE,
                                      show.legend = FALSE,
                                      # nudge_x = 0.21,
@@ -250,24 +285,72 @@ pdeaths_log <- pdeaths +
   ylab("deaths (log scale)") +
   labs(
     title = "Cumulative COVID19 Deaths in Connecticut by County",
-    subtitle = NULL,
-    caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html"
+    subtitle = "(seven-day rolling average, log scale)",
+    caption = "Source: CT Department of Public Health (data.ct.gov) & New York Times"
   )
 pdeaths <- pdeaths +
   ylab("deaths") +
   labs(
     title = "Cumulative COVID19 Deaths in Connecticut by County",
-    subtitle = NULL,
-    caption = "Source: https://www.nytimes.com/interactive/2020/us/coronavirus-us-cases.html & CT DPH"
+    subtitle = "(seven-day rolling average)",
+    caption = "Source: CT Department of Public Health (data.ct.gov) & New York Times"
   )
+
+pnew_cases <- ggplot(data = ct, aes(x = date, y = rnew_cases, colour = county)) +
+  geom_point() + geom_line() + xlab(NULL) +
+  scale_x_date(date_minor_breaks = "1 day", date_breaks = "1 week", labels = as_week) +
+  theme_minimal() +
+  theme(legend.position = "none")
+pnew_cases <- pnew_cases +
+  geom_text_repel(data = for_county_labels, aes(label = county),
+                  show.legend = FALSE, hjust = 0, vjust = 0.5,
+                  # check_overlap = FALSE,
+                  # nudge_x = 0.21,
+                  direction = "y") +
+  expand_limits(x = max(ct$date) + 1) +
+  ylab("confirmed cases") +
+  labs(
+    subtitle = "(seven-day rolling average)",
+    title = "Daily New COVID19 Cases in Connecticut by County",
+    caption = "Source: CT Department of Public Health (data.ct.gov) & New York Times"
+  )
+
+pnew_deaths <- ggplot(data = ct, aes(x = date, y = rnew_deaths, colour = county)) +
+  geom_point() + geom_line() + xlab(NULL) +
+  scale_x_date(date_minor_breaks = "1 day", date_breaks = "1 week", labels = as_week) +
+  theme_minimal() +
+  theme(legend.position = "none")
+pnew_deaths <- pnew_deaths +
+  geom_text_repel(data = for_county_labels, aes(label = county),
+                  show.legend = FALSE, hjust = 0, vjust = 0.5,
+                  # check_overlap = FALSE,
+                  # nudge_x = 0.21,
+                  direction = "y") +
+  expand_limits(x = max(ct$date) + 1) +
+  ylab("covid-19 deaths") +
+  labs(
+    subtitle = "(seven-day rolling average)",
+    title = "Daily New COVID19 Deaths in Connecticut by County",
+    caption = "Source: CT Department of Public Health (data.ct.gov) & New York Times"
+  )
+# annotation_custom(grob = ggplotGrob(county_map), xmin = date_range[2], xmax = date_range[13],
+#                   ymin = 10 ^ (log10(max(ct$cases)) * 0.66),
+#                   ymax = max(ct$cases))
+# pnew_cases <- pnew_cases +
+#   ylab("confirmed cases (log scale)") +
+#   labs(subtitle = "(seven-day rolling average, log scale)") +
+#   scale_y_log10(minor_breaks=log10_minor_break()) +
+#   geom_text(data = exec_orders, aes(y = cases , label = label),
+#             hjust = 0.5, vjust = 0, size = 3, colour = "darkgrey", nudge_y = 0)
 
 phospital <- ggplot(data = ct %>% filter(!is.na(hospital)),
                     aes(x = date, y = hospital, colour = county)) +
   geom_point() + geom_line() + xlab(NULL) +
-  scale_x_date(date_minor_breaks = "1 day", limits = c(min(ct$date), NA)) +
+  scale_x_date(date_minor_breaks = "1 day", limits = c(ymd("2020-03-14"), NA),
+               date_breaks = "1 week", labels = as_week) +
   theme_minimal() +
   theme(legend.position = "none")
-phospital <- phospital + geom_text_repel(data = for_labels %>% filter(hospital > 0),
+phospital <- phospital + geom_text_repel(data = for_county_labels %>% filter(hospital > 0),
                                          aes(label = county),
                                          hjust = 0, vjust = 0.5,
                                          # check_overlap = FALSE,
@@ -282,7 +365,7 @@ phospital <- phospital +
     caption = "Source: Connecticut Hospital Association, via CT DPH"
   )
 
-dph_pop <- dph_population %>%
+dph_pop <- census_population %>%
   left_join(ct %>% filter(date == max(date))) %>%
   mutate(cases_per_pop = cases / (estimate / 100000),
          per_pop_label =  as.character(round(cases_per_pop, 1)))
@@ -367,6 +450,10 @@ ggsave("county_map.png", plot = county_map, path = path_to_post,
 ggsave("deaths.png", plot = pdeaths, path = path_to_post,
        width = 7, height = 6, units = "in")
 ggsave("log_deaths.png", plot = pdeaths_log, path = path_to_post,
+       width = 7, height = 6, units = "in")
+ggsave("new_cases.png", plot = pnew_cases, path = path_to_post,
+       width = 7, height = 6, units = "in")
+ggsave("new_deaths.png", plot = pnew_deaths, path = path_to_post,
        width = 7, height = 6, units = "in")
 ggsave("hospitalizations.png", plot = phospital, path = path_to_post,
        width = 7, height = 6, units = "in")
