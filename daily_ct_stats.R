@@ -16,9 +16,9 @@ library(RSocrata)
 library(RcppRoll)
 
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
+path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
 
-
-if (!exists("county_geometries")) load("census_population.RData")
+if (!exists("county_geometries")) load(paste(path_to_ctcorona, "census_population.RData"))
 if (!exists("county_geometries")) {
   county_geometries <- counties(state = "CT", cb = FALSE)
   census_population <- get_acs(geography = "county",
@@ -26,18 +26,19 @@ if (!exists("county_geometries")) {
                            state = "CT",
                            geometry = TRUE) %>%
     mutate(county = str_replace(NAME, " County, Connecticut", ""))
-  # save(county_geometries, census_population, file = "census_population.RData")
+  # save(county_geometries, census_population, file = paste(path_to_ctcorona, "census_population.RData"))
 }
 
-if (!exists("nyt_series")) load("nyt_series.RData")
+if (!exists("nyt_series")) load(paste(path_to_ctcorona, "nyt_series.RData"))
 if (!exists("nyt_series")) {
   # from https://github.com/nytimes/covid-19-data
   nyt_counties <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
   nyt_series <- nyt_counties %>%
     filter(state == "Connecticut")
-  # save(nyt_series, file = "nyt_series.RData")
+  # save(nyt_series, file = "paste(path_to_ctcorona, nyt_series.RData"))
 }
 
+# ct covid data resources: https://data.ct.gov/stories/s/wa3g-tfvc
 dph_counties <- read.socrata("https://data.ct.gov/resource/bfnu-rgqt.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
@@ -89,6 +90,22 @@ dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
          deaths = as.numeric(deaths), hospital = as.numeric(hospitalizations)) %>%
   mutate_at(vars(starts_with("cases_")), as.numeric) %>%
   select( -hospitalizations)
+
+if (!exists("dph_nursing_facilities")) load(paste(path_to_ctcorona, "dph_nursing_facilities.RData"))
+if (!exists("dph_nursing_facilities")) {
+  dph_nursing_facilities <- read.socrata("https://data.ct.gov/resource/rm6f-b9qj.json",
+                                         app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+    as_tibble() %>%
+    select(level_of_care, facility_name, address, town, county, state,
+           medicare_certified, medicaid_certified, total_licensed_beds,
+           licensed_ccnh_beds, licensed_ccnh_beds_occupied,
+           licensed_rhns_beds, licensed_rhns_beds_occupied,
+           X_18:unknown_age, male, female, unknown_gender,
+           white:other_or_unknown, reporting_year, geocoded_column.type,
+           geocoded_column.coordinates)
+  # save(dph_nursing_facilities, file = paste(path_to_ctcorona, "dph_nursing_facilities.RData"))
+}
+
 
 if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
   bind_rows(
