@@ -17,25 +17,72 @@ library(RcppRoll)
 
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
+vars_65_plus <- paste0("B01001_0", c(20:25, 44:49))
 
-if (!exists("county_geometries")) load(paste(path_to_ctcorona, "census_population.RData"))
+if (!exists("county_geometries")) load(paste0(path_to_ctcorona, "census_population.RData"))
 if (!exists("county_geometries")) {
-  county_geometries <- counties(state = "CT", cb = FALSE)
+  county_geometries <- tigris::counties(state = "CT", cb = FALSE)
   census_population <- get_acs(geography = "county",
                            variables = "B01003_001",
                            state = "CT",
                            geometry = TRUE) %>%
     mutate(county = str_replace(NAME, " County, Connecticut", ""))
-  # save(county_geometries, census_population, file = paste(path_to_ctcorona, "census_population.RData"))
+  # save(county_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
+}
+if (!exists("town_geometries")) {
+  # town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE)
+  # census_population_town <- get_acs(geography = "county subdivision",
+  #                              variables = "B01003_001",
+  #                              state = "CT",
+  #                              geometry = FALSE) %>%
+  #   mutate(town = str_replace(NAME, " town, .* County, Connecticut", ""))
+  age_town_acs <- get_acs(geography = "county subdivision",  # for CT, that means towns
+                          state = "CT",
+                          # county = "New Haven",
+                          geometry = "FALSE", # no map at this time
+                          survey = "acs5",
+                          variables = vars_65_plus,
+                          summary_var = "B01001_001") %>%
+    filter(estimate > 0) %>%
+    mutate(town = str_replace(NAME, " town, .* County, Connecticut", "")) %>%
+    group_by(GEOID, town) %>%
+    summarize(age65plus = sum(estimate),
+              age65plus_moe = moe_sum(moe, estimate),
+              total_pop = max(summary_est),
+              total_pop_moe = max(summary_moe)
+    ) %>%
+    mutate(pct65plus = age65plus / total_pop) %>%
+    left_join(tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
+                filter(NAME != "County subdivisions not defined") %>%
+                select(GEOID, INTPTLAT, INTPTLON, geometry),
+              by = "GEOID")
+  # save(county_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
 }
 
-if (!exists("nyt_series")) load(paste(path_to_ctcorona, "nyt_series.RData"))
+age_county_acs <- get_acs(geography = "county",  # for CT, that means towns
+                          state = "CT",
+                          # county = "New Haven",
+                          geometry = "FALSE", # no map at this time
+                          survey = "acs5",
+                          variables = vars_65_plus,
+                          summary_var = "B01001_001") %>%
+  filter(estimate > 0) %>%
+  mutate(COUNTY = str_replace(NAME, " County, Connecticut", "")) %>%
+  group_by(GEOID, COUNTY) %>%
+  summarize(age65plus = sum(estimate),
+            age65plus_moe = moe_sum(moe, estimate),
+            total_pop = max(summary_est, na.rm = TRUE),
+            total_pop_moe = NA_real_ # max(summary_moe, na.rm = TRUE)
+  )
+
+
+if (!exists("nyt_series")) load(paste0(path_to_ctcorona, "nyt_series.RData"))
 if (!exists("nyt_series")) {
   # from https://github.com/nytimes/covid-19-data
   nyt_counties <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
   nyt_series <- nyt_counties %>%
     filter(state == "Connecticut")
-  # save(nyt_series, file = "paste(path_to_ctcorona, nyt_series.RData"))
+  # save(nyt_series, file = "paste0(path_to_ctcorona, nyt_series.RData"))
 }
 
 # ct covid data resources: https://data.ct.gov/stories/s/wa3g-tfvc
@@ -91,7 +138,7 @@ dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
   mutate_at(vars(starts_with("cases_")), as.numeric) %>%
   select( -hospitalizations)
 
-if (!exists("dph_nursing_facilities")) load(paste(path_to_ctcorona, "dph_nursing_facilities.RData"))
+if (!exists("dph_nursing_facilities")) if (file.exists(paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))) load(paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 if (!exists("dph_nursing_facilities")) {
   dph_nursing_facilities <- read.socrata("https://data.ct.gov/resource/rm6f-b9qj.json",
                                          app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
@@ -103,7 +150,7 @@ if (!exists("dph_nursing_facilities")) {
            X_18:unknown_age, male, female, unknown_gender,
            white:other_or_unknown, reporting_year, geocoded_column.type,
            geocoded_column.coordinates)
-  # save(dph_nursing_facilities, file = paste(path_to_ctcorona, "dph_nursing_facilities.RData"))
+  # save(dph_nursing_facilities, file = paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 }
 
 
@@ -163,9 +210,9 @@ if ((max(dph_total$date) != max(dph_counties$date)) |
 # there's also zip code level monitoring at: https://data.ct.gov/resource/javn-ujwr.json
 
 exec_orders <- tibble(
-  date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26", "2020-04-11")),
+  date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26", "2020-04-11", "2020-04-20")),
   label = c("prohibit large\ngatherings", "cancel\nclasses", "restrict\nbusiness", "5 or fewer",
-            "covid-19 death\nchanged")
+            "covid-19 death\nchanged", "masks required")
 ) %>%
   left_join(dph_counties %>% filter(county == "Fairfield") %>% select(date, cases), by = "date") %>%
   mutate(county = "Fairfield")
