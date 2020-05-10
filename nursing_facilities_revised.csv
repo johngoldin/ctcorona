@@ -1,0 +1,277 @@
+level_of_care,facility_name,address,town,county,state,medicare_certified,medicaid_certified,total_licensed_beds,licensed_ccnh_beds,licensed_ccnh_beds_occupied,licensed_rhns_beds,licensed_rhns_beds_occupied,X_18,X_18_24,X_25_34,X_35_44,X_45_54,X_55_64,X_65_74,X_75_84,X_85_94,X_95_and_older,unknown_age,male,female,unknown_gender,white,african_american,hispanic_or_latino_origin,american_indian_or_alaskan_native,asian_or_pacific_islander,other_or_unknown,reporting_year,geocoded_column.type,original_facility_name,long,lat
+CCNH,60 West,60 West Street,Rocky Hill,Hartford,CT,TRUE,TRUE,95,95,87,0,0,0,0,1,6,15,28,23,10,4,0,0,71,16,0,50,16,21,0,0,0,2019,Point,Securecare Options Inc. dba 60 West,-72.643245,41.65413
+CCNH,Aaron Manor Nursing and Rehabilitation,3 South Wig Hill Road,Chester,MIDDLESEX,CT,TRUE,TRUE,60,60,53,0,0,0,0,0,0,2,1,4,11,23,12,0,12,41,0,53,0,0,0,0,0,2019,Point,Aaron Manor Nursing and Rehabilitation Center,-72.474826,41.400691
+CCNH,Abbott Terrace Health Center,44 Abbott Terrace,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,205,205,205,0,0,0,0,1,6,15,36,51,45,44,7,0,88,117,0,123,47,32,0,2,1,2019,Point,,-73.038022,41.556464
+CCNH,Advanced Center For Nursing And Rehabilitation,169 Davenport Avenue,New Haven,NEW_HAVEN,CT,TRUE,TRUE,226,226,204,0,0,0,0,3,3,18,54,62,39,23,2,0,114,90,0,47,83,23,0,0,51,2019,Point,Advanced Nursing and Rehabilitation Center of New Haven,-72.939089,41.302291
+CCNH,Alexandria Manor,55 Tunxis Avenue,Bloomfield,HARTFORD,CT,TRUE,TRUE,120,120,94,0,0,0,0,0,0,5,8,18,22,33,8,0,35,59,0,23,64,6,0,0,1,2015,Point,,-72.739442,41.836881
+CCNH,"Alzheimer's Resource Center of Connecticut, Inc.",1261 South Main Street,Plantsville,HARTFORD,CT,TRUE,TRUE,120,120,119,0,0,0,0,0,0,0,3,11,44,55,6,0,38,81,0,117,0,1,1,0,0,2014,Point,,-72.895847,41.573158
+CCNH,Amberwoods of Farmington,416 Colt Highway,Farmington,HARTFORD,CT,TRUE,TRUE,130,130,113,0,0,0,0,2,1,6,13,28,30,31,2,0,54,59,0,93,10,9,0,0,1,2014,Point,,-72.801542,41.715385
+CCNH,Andrew House Health Care,66 Clinic Drive,New Britain,HARTFORD,CT,TRUE,TRUE,90,90,87,0,0,0,0,0,0,6,8,16,21,32,4,0,29,58,0,66,11,10,0,0,0,2014,Point,,-72.786309,41.648365
+CCNH,Apple Rehab Avon,220 Scoville Road,Avon,HARTFORD,CT,TRUE,TRUE,60,60,52,0,0,0,0,0,0,4,8,9,15,9,7,0,16,36,0,45,2,0,2,1,2,2019,Point,Apple Rehab Avon d/b/a Brightview Nursing and Retirement,-72.860962,41.7759
+CCNH,Apple Rehab Coccomo,33 Cone Avenue,Meriden,NEW_HAVEN,CT,TRUE,TRUE,100,100,83,0,0,0,0,0,0,0,9,11,27,26,10,0,23,60,0,62,5,16,0,0,0,2019,Point,,-72.752952,41.524968
+CCNH,Apple Rehab Colchester,36 Broadway,Colchester,NEW_LONDON,CT,TRUE,TRUE,60,60,53,0,0,0,0,0,0,0,0,16,14,18,5,0,16,37,0,51,0,2,0,0,0,2019,Point,,-72.332985,41.576683
+CCNH,Apple Rehab Cromwell,156 Berlin Road,Cromwell,MIDDLESEX,CT,TRUE,TRUE,75,75,66,0,0,0,0,0,0,1,4,6,19,31,5,0,14,52,0,59,2,2,2,1,0,2019,Point,,-72.712975,41.607341
+CCNH,Apple Rehab Farmington Valley,269 Farmington Avenue,Plainville,HARTFORD,CT,TRUE,TRUE,130,130,121,0,0,0,0,1,2,7,10,15,40,39,7,0,41,80,0,106,2,11,0,2,0,2019,Point,,-72.852841,41.685968
+CCNH,Apple Rehab Guilford,10 Boston Post Road,Guilford,NEW_HAVEN,CT,TRUE,TRUE,90,90,72,0,0,0,0,0,0,0,3,15,22,24,8,0,19,53,0,71,1,0,0,0,0,2019,Point,,-72.64783,41.285595
+CCNH,Apple Rehab Laurel Woods,451 North High Street,East Haven,NEW_HAVEN,CT,TRUE,TRUE,120,120,111,0,0,0,0,0,0,2,11,15,37,39,7,0,30,81,0,96,12,2,0,1,0,2019,Point,,-72.866922,41.292497
+CCNH,Apple Rehab Middletown,600 Highland Avenue,Middletown,MIDDLESEX,CT,TRUE,TRUE,70,70,60,0,0,0,0,0,0,2,7,6,11,24,10,0,20,40,0,55,4,0,0,1,0,2019,Point,Apple Rehab Middletown (dba Highview Health Care Center),-72.654814,41.532381
+CCNH,Apple Rehab Mystic,28 Broadway,Mystic,NEW_LONDON,CT,TRUE,TRUE,60,60,41,0,0,0,0,0,0,0,6,8,11,12,4,0,10,31,0,38,1,2,0,0,0,2019,Point,,-72.863351,41.388839
+CCNH,Apple Rehab Rocky Hill,45 Elm Street,Rocky Hill,HARTFORD,CT,TRUE,TRUE,120,120,85,0,0,0,0,0,0,2,5,13,32,30,3,0,28,57,0,74,4,5,0,2,0,2019,Point,Apple Rehab of Rocky Hill,-72.641595,41.664617
+CCNH,Apple Rehab Saybrook,1775 Boston Post Road,Old Saybrook,MIDDLESEX,CT,TRUE,TRUE,120,120,84,0,0,0,0,0,0,2,3,16,31,24,8,0,33,51,0,84,0,0,0,0,0,2019,Point,,-72.420475,41.28446
+CCNH,Apple Rehab Shelton Lakes,5 Lake Road,Shelton,FAIRFIELD,CT,TRUE,TRUE,106,106,104,0,0,0,0,0,0,5,6,15,22,43,13,0,32,72,0,93,8,3,0,0,0,2019,Point,,-73.115165,41.313756
+CCNH,Apple Rehab Uncasville,5 Richard Brown Drive,Uncasville,NEW_LONDON,CT,TRUE,TRUE,130,130,113,0,0,0,0,0,0,3,5,30,36,34,5,0,29,84,0,99,6,7,1,0,0,2019,Point,,-72.112266,41.49273
+CCNH,Apple Rehab Watertown,35 Bunker Hill Road,Watertown,LITCHFIELD,CT,TRUE,TRUE,110,110,104,0,0,0,0,0,0,1,1,2,33,41,26,0,22,82,0,98,3,3,0,0,0,2019,Point,,-73.099293,41.577182
+CCNH/RHNS,Apple Rehab West Haven,308 Savin Avenue,West Haven,NEW_HAVEN,CT,TRUE,TRUE,90,89,80,1,1,0,0,0,1,3,4,15,19,35,4,0,30,51,0,54,17,10,0,0,0,2019,Point,,-72.950838,41.260554
+CCNH,Arden House,850 Mix Avenue,Hamden,NEW_HAVEN,CT,TRUE,TRUE,360,360,250,0,0,0,0,0,2,12,42,56,74,46,18,0,98,152,0,129,96,23,0,2,0,2019,Point,,-72.920536,41.375964
+CCNH,Astoria Park,725 Park Avenue,Bridgeport,FAIRFIELD,CT,TRUE,TRUE,135,135,105,0,0,0,0,0,1,4,17,28,20,31,4,0,42,63,0,29,45,28,0,3,0,2015,Point,,-73.196349,41.171871
+CCNH,Aurora Senior Living of Bucks Hill,2817 North Main Street,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,90,90,87,0,0,0,0,0,0,1,10,12,20,38,6,0,30,57,0,72,8,7,0,0,0,2014,Point,,-73.02705,41.592653
+CCNH/RHNS,"Aurora Senior Living of Cromwell, LLC",385 Main Street,Cromwell,MIDDLESEX,CT,TRUE,TRUE,175,174,145,1,0,0,0,1,2,24,36,41,19,20,2,0,82,63,0,121,14,9,1,0,0,2014,Point,,-72.646205,41.600635
+CCNH,"Aurora Senior Living of East Hartford, LLC",51 Applegate Lane,East Hartford,HARTFORD,CT,TRUE,TRUE,145,145,119,0,0,0,1,1,6,16,37,25,19,12,2,0,58,61,0,75,22,18,0,4,0,2013,Point,,-72.60967,41.766425
+CCNH,Aurora Senior Living of New Britain,400 Brittany Farms Road,New Britain,HARTFORD,CT,TRUE,TRUE,282,282,255,0,0,0,0,3,1,13,33,33,55,101,16,0,93,162,0,190,28,34,0,3,0,2014,Point,,-72.768712,41.712681
+CCNH,"Aurora Senior Living of Norwalk, LLC",34 Midrocks Road,Norwalk,FAIRFIELD,CT,TRUE,TRUE,150,150,140,0,0,0,0,0,1,1,8,19,28,58,25,0,47,93,0,99,37,4,0,0,0,2014,Point,,-73.415254,41.142315
+CCNH,Autumn Lake Healthcare at Bucks Hill,2817 North Main Street,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,90,90,78,0,0,0,0,1,0,1,7,13,19,29,8,0,22,56,0,57,8,13,0,0,0,2019,Point,,-73.02705,41.592653
+CCNH,Autumn Lake Healthcare at Cromwell,385 Main Street,Cromwell,MIDDLESEX,CT,TRUE,TRUE,175,175,119,0,0,0,0,0,3,7,36,34,22,13,4,0,47,72,0,98,13,8,0,0,0,2019,Point,,-72.646205,41.600635
+CCNH,Autumn Lake Healthcare at New Britain,400 Brittany Farms Road,New Britain,HARTFORD,CT,TRUE,TRUE,282,282,236,0,0,0,0,1,3,20,41,63,58,44,6,0,101,135,0,164,32,36,1,3,0,2019,Point,,-72.768712,41.712681
+CCNH,Autumn Lake Healthcare at Norwalk,34 Midrocks Road,Norwalk,FAIRFIELD,CT,TRUE,TRUE,150,150,134,0,0,0,0,1,0,2,10,15,35,59,12,0,51,83,0,106,24,2,0,2,0,2019,Point,,-73.415254,41.142315
+CCNH,Avalon Health Center,186 Jerry Browne Road,Mystic,NEW_LONDON,CT,TRUE,FALSE,40,40,35,0,0,0,0,0,0,0,0,1,12,12,10,0,11,24,0,35,0,0,0,0,0,2019,Point,,-71.949571,41.37512
+CCNH/RHNS,Avery Nursing Home/Noble Building,705 New Britain Avenue,Hartford,HARTFORD,CT,TRUE,TRUE,199,130,119,69,55,0,0,0,0,0,5,27,46,72,24,0,54,120,0,112,21,41,0,0,0,2019,Point,Avery Heights Health Care Center,-72.705383,41.733277
+CCNH,Avon Health Center,652 West Avon Road,Avon,HARTFORD,CT,TRUE,TRUE,120,120,115,0,0,0,0,0,0,2,1,10,32,54,16,0,22,93,0,108,2,1,0,4,0,2019,Point,,-72.861534,41.773418
+CCNH,Bayview Health Care,301 Rope Ferry Road,Waterford,NEW_LONDON,CT,TRUE,TRUE,127,127,120,0,0,0,1,0,0,3,10,23,31,42,10,0,36,84,0,107,6,6,1,0,0,2019,Point,,-72.165413,41.327443
+CCNH,Beacon Brook Health Center,89 Weid Drive,Naugatuck,NEW_HAVEN,CT,TRUE,TRUE,126,126,124,0,0,0,0,1,0,5,19,24,34,31,10,0,38,86,0,106,14,4,0,0,0,2019,Point,,-73.031936,41.469642
+CCNH,Beechwood,31 Vauxhall Street,New London,NEW_LONDON,CT,TRUE,TRUE,60,60,57,0,0,0,0,0,0,2,2,9,7,32,5,0,13,44,0,46,2,5,0,0,4,2019,Point,,-72.104438,41.361035
+CCNH,Bel Air Manor,256 New Britain Avenue,Newington,HARTFORD,CT,TRUE,TRUE,71,71,67,0,0,0,0,0,1,0,3,7,17,30,9,0,20,47,0,63,3,1,0,0,0,2019,Point,Bel-Air Manor Nursing & Rehabilitation Center,-72.73245,41.674685
+CCNH,Bethel Health Care Center,13 Parklawn Drive,Bethel,FAIRFIELD,CT,TRUE,TRUE,161,161,141,0,0,0,1,0,1,5,14,22,34,47,17,0,51,90,0,127,12,2,0,0,0,2019,Point,,-73.398195,41.425007
+CCNH,Bickford Health Care Center,14 Main Street,Windsor Locks,HARTFORD,CT,TRUE,TRUE,48,48,42,0,0,0,0,0,0,0,2,5,10,18,7,0,11,31,0,35,1,0,0,0,6,2019,Point,,-72.627281,41.926759
+CCNH,Birmingham Health Center,210 Chatfield Street,Derby,NEW_HAVEN,CT,TRUE,TRUE,120,120,116,0,0,0,0,0,4,8,17,24,33,26,4,0,53,63,0,93,16,6,1,0,0,2017,Point,,-73.09526,41.33828
+CCNH,Bishop-Wicke Health and Rehabilitation,584 Long Hill Avenue,Shelton,FAIRFIELD,CT,TRUE,TRUE,120,120,114,0,0,0,0,0,0,0,2,5,31,51,25,0,23,91,0,109,3,2,0,0,0,2019,Point,Bishop Wicke Health & Rehab Center,-73.098403,41.281872
+CCNH,Blair Manor,612 Hazard Avenue,Enfield,HARTFORD,CT,TRUE,TRUE,98,98,59,0,0,0,0,0,0,0,4,11,17,18,9,0,15,44,0,57,2,0,0,0,0,2017,Point,,-72.506893,41.98519
+CCNH,Bloomfield Center for Nursing and Rehabilitation,355 Park Avenue,Bloomfield,HARTFORD,CT,TRUE,TRUE,120,120,107,0,0,0,0,1,1,3,16,26,28,26,6,0,53,54,0,26,66,3,0,0,12,2019,Point,Bloomfield Health Care Center,-72.713086,41.822502
+CCNH,Bradley Home Infirmary/Pavilion,320 Colony Street,Meriden,NEW_HAVEN,CT,TRUE,TRUE,30,30,25,0,0,0,0,0,0,0,0,0,3,17,5,0,3,22,0,25,0,0,0,0,0,2014,Point,,-72.795609,41.545942
+CCNH,Branford Hills Health Care Center,189 Alps Road,Branford,NEW_HAVEN,CT,TRUE,TRUE,190,190,185,0,0,0,0,0,0,0,5,24,35,83,38,0,48,137,0,179,4,2,0,0,0,2019,Point,,-72.846696,41.264185
+CCNH,Bride Brook Health & Rehabilitation Center,23 Liberty Way,Niantic,NEW_LONDON,CT,TRUE,TRUE,130,130,117,0,0,0,0,0,1,1,7,14,30,51,13,0,48,69,0,111,3,3,0,0,0,2019,Point,Bride Brook Health and Rehabilitation Center,-72.24337,41.320823
+CCNH,Bridgeport Health Care Center,600 Bond Street,Bridgeport,FAIRFIELD,CT,TRUE,TRUE,240,240,180,0,0,0,0,0,3,8,37,56,48,25,3,0,86,94,0,68,53,56,0,2,1,2019,Point,,-73.167047,41.20101
+CCNH,Bridgeport Manor,540 Bond Street,Bridgeport,FAIRFIELD,CT,TRUE,TRUE,240,240,149,0,0,0,0,2,3,11,55,36,24,16,2,0,89,60,0,71,45,31,0,2,0,2017,Point,,-73.167085,41.200764
+CCNH,Caleb Hitchcock Health Center,10 Loeffler Road,Bloomfield,HARTFORD,CT,TRUE,FALSE,60,60,51,0,0,0,0,0,0,0,0,1,10,28,12,0,12,39,0,51,0,0,0,0,0,2019,Point,Caleb Hitchcock Health Center at Duncaster,-72.758049,41.830329
+CCNH,Cambridge Health and Rehabilitation Center,2428 Easton Turnpike,Fairfield,FAIRFIELD,CT,TRUE,TRUE,160,160,150,0,0,0,0,0,0,1,14,17,44,58,16,0,48,102,0,81,14,2,0,1,52,2019,Point,Cambridge Manor,-73.246284,41.211641
+CCNH,Candlewood Valley Health & Rehabilitation Center,30 Park Lane East,New Milford,LITCHFIELD,CT,TRUE,TRUE,148,148,132,0,0,0,0,0,0,0,10,15,38,48,21,0,39,93,0,130,2,0,0,0,0,2019,Point,"New Milford Rehabilitation, LLC",-73.401447,41.59753
+CCNH,Carolton Chronic & Convalescent Hospital,400 Mill Plain Road,Fairfield,FAIRFIELD,CT,TRUE,TRUE,229,229,149,0,0,0,0,0,0,0,4,4,33,81,27,0,45,104,0,147,2,0,0,0,0,2019,Point,"Carolton Chronic & Convalescent Hospital, Inc.",-73.265827,41.14486
+CCNH,Cassena Care at New Britain,66 Clinic Drive,New Britain,HARTFORD,CT,TRUE,TRUE,90,90,85,0,0,0,0,0,0,2,10,21,25,24,3,0,32,53,0,53,12,19,0,0,1,2019,Point,,-72.786309,41.648365
+CCNH,Cassena Care at Norwalk,23 Prospect Avenue,Norwalk,FAIRFIELD,CT,TRUE,TRUE,150,150,124,0,0,0,0,0,0,6,18,41,37,20,2,0,59,65,0,73,35,13,2,1,0,2019,Point,Cassena Care Norwalk,-73.422102,41.114044
+CCNH,Cassena Care at Stamford,53 Courtland Avenue,Stamford,FAIRFIELD,CT,TRUE,TRUE,156,156,136,0,0,0,0,0,1,3,10,37,32,42,11,0,56,80,0,69,43,18,0,6,0,2019,Point,Cassena Care of Stamford,-73.514114,41.060582
+CCNH,Chelsea Place,25 Lorraine Street,Hartford,HARTFORD,CT,TRUE,TRUE,234,234,222,0,0,0,0,6,11,36,71,65,27,6,0,0,139,83,0,92,45,22,1,0,62,2019,Point,"Chelsea Place Care Center, LLC",-72.705431,41.767714
+CCNH,Cherry Brook Health Care Center,102 Dyer Avenue,Canton,HARTFORD,CT,TRUE,TRUE,100,100,98,0,0,0,0,0,0,1,8,10,29,37,13,0,40,58,0,97,1,0,0,0,0,2019,Point,,-72.919257,41.831715
+CCNH,Cheshire House Health Care Facility & Rehabilitation Center,3396 East Main Street,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,75,75,71,0,0,0,0,0,0,1,1,7,14,33,15,0,19,52,0,46,7,1,0,0,17,2019,Point,Cheshire House,-72.977713,41.544185
+CCNH,Cheshire Regional Rehab Center,745 Highland Avenue,Cheshire,NEW_HAVEN,CT,TRUE,TRUE,85,85,79,0,0,0,0,0,1,6,8,13,20,24,7,0,26,53,0,71,6,1,0,1,0,2019,Point,,-72.897694,41.518026
+CCNH/RHNS,Chestelm Health and Rehabilitation Center,"534 Town Street, P.O. Box 719",Moodus,MIDDLESEX,CT,TRUE,TRUE,76,63,56,13,12,0,0,0,0,0,1,2,25,31,9,0,20,48,0,65,1,2,0,0,0,2019,Point,,-72.446752,41.485388
+CCNH,Chesterfields Health Care Center,132 Main Street,Chester,MIDDLESEX,CT,TRUE,TRUE,60,60,43,0,0,0,0,0,0,2,6,10,11,11,3,0,12,31,0,40,3,0,0,0,0,2019,Point,Chesterfield's Health Care Center,-72.444292,41.402072
+CCNH,Cobalt Lodge Health Care and Rehabilitation Center,Post Office Box 246,Cobalt,MIDDLESEX,CT,TRUE,TRUE,60,60,41,0,0,0,0,0,0,0,3,8,18,7,5,0,10,31,0,40,0,0,0,1,0,2019,NA,,NA,NA
+CCNH,"Colonial Health and Rehab Center of Plainfield, LLC",16 Windsor Avenue,Plainfield,WINDHAM,CT,TRUE,TRUE,90,90,85,0,0,0,0,0,0,2,7,11,23,32,10,0,61,24,0,84,1,0,0,0,0,2019,Point,,-71.918016,41.681773
+CCNH/RHNS,"Connecticut Baptist Homes, Inc.",292 Thorpe Avenue,Meriden,NEW_HAVEN,CT,TRUE,TRUE,60,30,27,30,28,0,0,0,0,0,0,2,12,32,9,0,8,47,0,54,0,1,0,0,0,2019,Point,,-72.75518,41.515835
+CCNH,Cook-Willow Health & Rehabilitation Center,81 Hillside Avenue,Plymouth,LITCHFIELD,CT,TRUE,TRUE,60,60,58,0,0,0,0,0,0,0,5,9,16,19,9,0,18,40,0,58,0,0,0,0,0,2019,Point,,-73.059106,41.667181
+CCNH,Countryside Manor of Bristol,1660 Stafford Avenue,Bristol,HARTFORD,CT,TRUE,TRUE,90,90,89,0,0,0,0,0,0,0,11,13,20,35,10,0,34,55,0,85,2,2,0,0,0,2019,Point,,-72.91463,41.721245
+CCNH/RHNS,Crestfield Rehabilitation Center,565 Vernon Street,Manchester,HARTFORD,CT,TRUE,TRUE,120,90,82,30,14,0,1,1,2,3,6,16,20,34,13,0,28,68,0,88,5,0,0,1,2,2019,Point,Crestfield Rehabilitation Center and Fenwood Manor,-72.490893,41.803114
+CCNH,Crossings West Health and Rehabilitation Center,89 Viets Street,New London,NEW_LONDON,CT,TRUE,TRUE,66,66,47,0,0,0,0,0,3,6,18,7,6,5,2,0,25,22,0,35,5,4,3,0,0,2016,Point,,-72.110783,41.338427
+CCNH,CT Watermark at East Hill-Springs,611 East Hill Road,Southbury,NEW_HAVEN,CT,TRUE,FALSE,35,35,33,0,0,0,0,0,0,0,0,4,3,19,7,0,5,28,0,32,0,0,0,1,0,2019,Point,,-73.241049,41.485015
+CCNH,Curtis Home St. Elizabeth Center,380 Crown Street,Meriden,NEW_HAVEN,CT,TRUE,TRUE,60,60,51,0,0,0,0,0,0,2,4,4,16,21,4,0,13,38,0,43,5,3,0,0,0,2014,Point,,-72.805239,41.528723
+CCNH,Danbury Health Care Center,107 Osborne Street,Danbury,FAIRFIELD,CT,TRUE,TRUE,180,180,138,0,0,0,0,1,1,4,12,29,39,41,11,0,49,89,0,81,12,5,0,6,34,2014,Point,,-73.442173,41.403689
+CCNH,Davis Place,111 Westcott Road,Danielson,WINDHAM,CT,TRUE,TRUE,190,190,173,0,0,0,0,0,0,11,32,39,45,40,6,0,75,98,0,160,2,3,0,2,6,2019,Point,,-71.873842,41.809353
+CCNH,Douglas Manor,103 North Road,Windham,WINDHAM,CT,TRUE,TRUE,90,90,83,0,0,0,0,0,0,0,5,12,22,37,7,0,19,64,0,73,3,5,1,0,1,2019,Point,,-72.163347,41.705233
+CCNH,Edgehill Health Center,122 Palmers Hill Road,Stamford,FAIRFIELD,CT,TRUE,FALSE,46,46,36,0,0,0,0,0,0,0,1,4,8,21,2,0,18,18,0,32,0,4,0,0,0,2019,Point,Edgehill,-73.565584,41.059385
+CCNH,Elim Park Baptist Home,140 Cook Hill Road,Cheshire,NEW_HAVEN,CT,TRUE,TRUE,90,90,88,0,0,0,0,0,0,0,3,11,26,36,12,0,22,66,0,74,2,1,0,2,9,2019,Point,"Elim Park Baptist Home, Inc.",-72.900936,41.466811
+CCNH,Ellis Manor,210 George Street,Hartford,HARTFORD,CT,TRUE,TRUE,105,105,85,0,0,0,0,0,2,3,11,20,25,19,5,0,35,50,0,31,9,41,0,1,3,2017,Point,,-72.678464,41.731611
+CCNH,Essex Meadows Health Center,30 Bokum Road,Essex,MIDDLESEX,CT,TRUE,FALSE,45,45,36,0,0,0,0,0,0,0,0,1,8,21,6,0,9,27,0,36,0,0,0,0,0,2019,Point,,-72.410763,41.338327
+CCNH,Evergreen Health Care Center,"205 Chestnut Hill Road, Route 190",Stafford Springs,TOLLAND,CT,TRUE,TRUE,180,180,167,0,0,0,0,0,1,2,12,24,55,54,19,0,51,116,0,157,4,4,0,0,2,2019,NA,,NA,NA
+CCNH,Evergreen Woods Health Center,88 Notch Hill Road,North Branford,NEW_HAVEN,CT,TRUE,FALSE,50,50,43,0,0,0,0,0,0,0,0,1,6,21,15,0,7,36,0,43,0,0,0,0,0,2019,Point,,-72.751087,41.317083
+CCNH,Fairview,235 Lestertown Road,Groton,NEW_LONDON,CT,TRUE,TRUE,120,120,107,0,0,0,0,0,0,0,8,10,30,49,10,0,24,83,0,99,4,3,0,1,0,2019,Point,,-72.083057,41.372077
+CCNH,Fairview Healthcare of Greenwich,1188 King Street,Greenwich,FAIRFIELD,CT,TRUE,TRUE,75,75,69,0,0,0,0,0,0,2,8,18,18,17,6,0,22,47,0,44,10,8,0,0,7,2014,Point,,-73.69491,41.062693
+CCNH,"Fairview Healthcare of Southport, LLC",930 Mill Hill Terrace,Southport,FAIRFIELD,CT,TRUE,TRUE,120,120,110,0,0,0,0,3,5,5,22,20,28,20,7,0,51,59,0,82,21,7,0,0,0,2014,Point,,-73.286615,41.14438
+CCNH,Farmington Rehab Center LLC/dba Amberwoods,416 Colt Highway,Farmington,HARTFORD,CT,TRUE,TRUE,130,130,90,0,0,0,0,0,0,2,7,21,33,22,5,0,42,48,0,74,8,7,0,1,0,2019,Point,,-72.801542,41.715385
+CCNH,Filosa Nursing & Rehabilitation,13 Hakim Street,Danbury,FAIRFIELD,CT,TRUE,TRUE,64,64,59,0,0,0,0,0,0,1,0,1,16,27,14,0,10,49,0,57,0,1,0,1,0,2019,Point,Filosa for Nursing and Rehabilitation,-73.473539,41.395415
+CCNH,Fox Hill Center,1253 Hartford Turnpike,Vernon,TOLLAND,CT,TRUE,TRUE,128,128,109,0,0,0,0,0,0,3,9,21,32,30,14,0,39,70,0,101,5,2,1,0,0,2019,Point,,-72.434371,41.858421
+CCNH,Fresh River Healthcare,96 Prospect Hill Road,East Windsor,HARTFORD,CT,TRUE,TRUE,140,140,134,0,0,0,0,3,3,9,36,32,36,13,2,0,69,65,0,83,28,22,0,1,0,2019,Point,"Kettle Brook Care Center, dba Fresh River Healthcare",-72.606229,41.925372
+CCNH,Gardner Heights Health Care Center,172 Rocky Rest Road,Shelton,FAIRFIELD,CT,TRUE,TRUE,130,130,103,0,0,0,0,1,0,1,7,17,33,37,7,0,34,69,0,84,13,6,0,0,0,2019,Point,"Gardner Heights Health Care Center, Inc.",-73.095187,41.286437
+CCNH,Geer Nursing and Rehabilitation Center,99 South Canaan Road,Canaan,LITCHFIELD,CT,TRUE,TRUE,120,120,101,0,0,0,0,0,0,0,2,8,40,37,14,0,24,77,0,99,0,1,0,0,1,2019,Point,,-73.332471,42.016475
+CCNH,Gladeview Health Care Center,60 Boston Post Road,Old Saybrook,MIDDLESEX,CT,TRUE,TRUE,132,132,112,0,0,0,1,0,0,3,10,15,24,49,10,0,45,67,0,110,0,1,0,1,0,2019,Point,,-72.363403,41.312485
+CCNH,Glastonbury Health Care Center,1175 Hebron Avenue,Glastonbury,HARTFORD,CT,TRUE,TRUE,105,105,95,0,0,0,0,0,1,0,5,9,31,37,12,0,55,40,0,51,15,5,4,0,20,2019,Point,"Glastonbury Health Care Center, Inc.",-72.565754,41.71823
+CCNH,Glen Hill Center,1 Glen Hill Road,Danbury,FAIRFIELD,CT,TRUE,TRUE,100,100,95,0,0,0,0,0,0,1,3,20,21,39,11,0,21,74,0,91,1,3,0,0,0,2019,Point,,-73.449309,41.414466
+CCNH,Glendale Center,4 Hazel Avenue,Naugatuck,NEW_HAVEN,CT,TRUE,TRUE,120,120,111,0,0,0,0,0,0,5,15,15,25,43,8,0,31,80,0,104,4,2,0,1,0,2019,Point,,-73.036733,41.469038
+CCNH,Golden Hill Rehab Pavilion,2028 Bridgeport Avenue,Milford,NEW_HAVEN,CT,TRUE,TRUE,120,120,110,0,0,0,0,0,1,31,24,22,21,10,1,0,58,52,0,84,16,10,0,0,0,2019,Point,,-73.066793,41.21709
+CCNH,Governor's House,36 Firetown Road,Simsbury,HARTFORD,CT,TRUE,TRUE,70,70,51,0,0,0,0,0,0,0,4,10,10,24,3,0,18,33,0,48,1,2,0,0,0,2019,Point,,-72.811606,41.872974
+CCNH,Grandview Rehabilitation and Healthcare Center,55 Grand Street,New Britain,HARTFORD,CT,TRUE,TRUE,160,160,142,0,0,0,0,1,4,12,27,30,35,28,5,0,71,71,0,73,20,47,0,2,0,2019,Point,"Parkside Rehabilitation & Healthcare Center, d/b/a Grandview Rehabilitation and Healthcare Center",-72.785102,41.662108
+CCNH,Green Springs Healthcare and Rehabilitation Center,51 Applegate Lane,East Hartford,HARTFORD,CT,TRUE,TRUE,145,145,97,0,0,0,0,1,1,12,16,23,26,15,3,0,40,57,0,55,23,15,2,2,0,2016,Point,,-72.60967,41.766425
+CCNH,Greentree Manor Nursing and Rehab Center,4 Greentree Drive,Waterford,NEW_LONDON,CT,TRUE,TRUE,90,90,79,0,0,0,0,0,3,2,9,14,19,26,6,0,30,49,0,67,7,5,0,0,0,2019,Point,,-72.145458,41.394072
+CCNH,Greenwich Woods,1165 King Street,Greenwich,FAIRFIELD,CT,TRUE,TRUE,217,217,110,0,0,0,0,0,0,1,6,13,31,45,14,0,26,84,0,100,2,6,0,2,0,2019,Point,Greenwich Woods Rehabilitation,-73.694388,41.059592
+CCNH,Grimes Center,1354 Chapel Street,New Haven,NEW_HAVEN,CT,TRUE,TRUE,114,114,107,0,0,0,3,2,0,10,15,28,40,8,1,0,53,54,0,50,28,25,0,2,2,2019,Point,Grimes  Center,-72.940276,41.310389
+CCNH,Groton Regency Center,1145 Poquonnock Road,Groton,NEW_LONDON,CT,TRUE,TRUE,162,162,112,0,0,0,0,0,0,5,8,32,28,37,2,0,47,65,0,106,4,2,0,0,0,2019,Point,,-72.043241,41.346698
+CCNH,Grove Manor Nursing Home,145 Grove Street,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,60,60,47,0,0,0,0,0,0,1,11,19,15,0,1,0,19,28,0,26,7,14,0,0,0,2019,Point,"Grove Manor Nursing Home, Inc.",-73.041247,41.559964
+CCNH,Guilford House,109 West Lake Avenue,Guilford,NEW_HAVEN,CT,TRUE,TRUE,75,75,61,0,0,0,0,0,0,1,1,4,19,28,8,0,23,38,0,60,0,0,0,1,0,2019,Point,The Guilford House,-72.725116,41.311476999999996
+CCNH,Hamden Rehabilitation & Health Care Center,1270 Sherman Lane,Hamden,NEW_HAVEN,CT,TRUE,TRUE,153,153,146,0,0,0,0,1,1,3,6,24,36,52,23,0,53,93,0,120,23,3,0,0,0,2019,NA,Hamden Rehabilitation and Health Care Center,NA,NA
+CCNH,Hancock Hall,31 Staples Street,Danbury,FAIRFIELD,CT,TRUE,TRUE,96,96,88,0,0,0,0,0,0,0,1,2,22,46,17,0,17,71,0,87,0,1,0,0,0,2019,Point,,-73.47369,41.39683
+CCNH/RHNS,Harbor View Manor,308 Savin Avenue,West Haven,NEW_HAVEN,CT,TRUE,TRUE,90,89,81,1,1,0,0,1,1,0,6,6,22,35,11,0,17,65,0,74,5,3,0,0,0,2013,Point,,-72.950838,41.260554
+CCNH,Harbor Village,78 Viets Street,New London,NEW_LONDON,CT,TRUE,TRUE,128,128,122,0,0,0,0,0,2,6,37,35,33,7,2,0,60,62,0,94,15,12,0,0,1,2019,Point,Harbor Village North,-72.11074,41.338131
+CCNH,Harrington Court,59 Harrington Court Drive,Colchester,NEW_LONDON,CT,TRUE,TRUE,125,125,102,0,0,0,0,0,1,1,5,12,37,37,9,0,32,70,0,98,2,0,0,2,0,2019,Point,,-72.33103,41.577988
+CCNH,Hebrew Center for Health and Rehabilitation,One Abrahms Boulevard,West Hartford,HARTFORD,CT,TRUE,TRUE,257,257,230,0,0,0,0,1,2,5,22,38,73,56,33,0,92,138,0,113,52,18,0,1,46,2019,NA,,NA,NA
+CCNH,Hewitt Health & Rehabilitation Center,45 Maltby Street,Shelton,FAIRFIELD,CT,TRUE,TRUE,160,160,102,0,0,0,0,0,0,1,8,14,30,30,19,0,32,70,0,92,6,4,0,0,0,2019,Point,"Hewitt Health and Rehabilitation Center, Inc.",-73.091344,41.312414
+CCNH,Highlands Health Care Center,745 Highland Avenue,Cheshire,NEW_HAVEN,CT,TRUE,TRUE,120,120,98,0,0,0,0,0,1,6,12,17,23,26,13,0,32,66,0,88,4,4,2,0,0,2014,Point,,-72.897694,41.518026
+CCNH,"Holy Spirit Health Care Center, Inc.",72 Church Street,Putnam,WINDHAM,CT,TRUE,TRUE,22,22,22,0,0,0,0,0,0,0,0,0,3,13,6,0,0,22,0,22,0,0,0,0,0,2015,Point,,-71.913047,41.917444
+CCNH,Hughes Health and Rehabilitation,29 Highland Street,West Hartford,HARTFORD,CT,TRUE,TRUE,170,170,138,0,0,0,0,0,1,3,10,22,35,54,13,0,52,86,0,99,26,10,0,3,0,2019,Point,"Hughes Health and Rehabilitation, Inc.",-72.718027,41.767504
+CCNH,Ingraham Manor,400 North Main Street,Bristol,HARTFORD,CT,TRUE,TRUE,128,128,120,0,0,0,0,0,1,0,11,12,39,42,15,0,34,86,0,116,2,2,0,0,0,2019,Point,Ingraham Manor of Bristol Hospital,-72.947179,41.679214
+CCNH,"JACC Healthcare Center of Norwich, LLC Three Rivers",60 Crouch Avenue,Norwich,NEW_LONDON,CT,TRUE,TRUE,102,102,69,0,0,0,0,1,1,3,17,15,20,9,3,0,27,42,0,60,7,2,0,0,0,2019,Point,,-72.072157,41.504801
+CCNH,JACC Healthcare of Windham DBA Vanderman Place,595 Valley Street,Willimantic,WINDHAM,CT,TRUE,TRUE,114,114,82,0,0,0,0,0,2,3,23,16,22,13,3,0,43,39,0,61,0,19,0,1,1,2019,Point,,-72.229126,41.716836
+CCNH,Jefferson House,1 John H. Stewart Drive,Newington,HARTFORD,CT,TRUE,TRUE,104,104,99,0,0,0,0,0,0,0,0,8,18,51,22,0,26,73,0,98,0,1,0,0,0,2019,Point,,-72.714061,41.696009
+CCNH,Jerome Home,975 Corbin Avenue,New Britain,HARTFORD,CT,TRUE,TRUE,94,94,93,0,0,0,0,0,0,0,1,10,19,42,21,0,22,71,0,87,3,2,0,1,0,2019,Point,,-72.80429,41.662211
+CCNH,Jewish Home for the Elderly,175 Jefferson Street,Fairfield,FAIRFIELD,CT,TRUE,TRUE,360,360,346,0,0,0,0,0,0,0,2,74,72,140,58,0,88,258,0,337,5,3,0,1,0,2014,Point,,-73.245612,41.223328
+CCNH,Jewish Senior Services,4200 Park Avenue,Bridgeport,FAIRFIELD,CT,TRUE,TRUE,294,294,283,0,0,0,0,0,0,0,10,15,66,137,55,0,60,223,0,276,5,2,0,0,0,2019,Point,,-73.23149,41.212038
+CCNH,Kimberly Hall North,1 Emerson Drive,Windsor,HARTFORD,CT,TRUE,TRUE,150,150,145,0,0,0,0,0,0,1,2,22,51,50,19,0,41,104,0,109,25,5,0,1,5,2019,Point,,-72.666767,41.837832
+CCNH,Kimberly Hall South,One Emerson Drive,Windsor,HARTFORD,CT,TRUE,TRUE,180,180,102,0,0,0,0,0,1,6,15,29,27,22,2,0,41,61,0,48,48,4,1,1,0,2019,NA,,NA,NA
+CCNH,Kindred Nursing and Rehabilitation - Crossings East,78 Viets Street Extension,New London,NEW_LONDON,CT,TRUE,TRUE,128,128,111,0,0,0,0,1,2,4,16,37,28,21,2,0,42,69,0,90,12,8,1,0,0,2014,Point,,-72.11074,41.338131
+CCNH,Kindred Nursing and Rehabilitation - Crossings West,89 Viets Street,New London,NEW_LONDON,CT,TRUE,TRUE,66,66,49,0,0,0,0,0,3,9,11,10,9,6,1,0,24,25,0,40,8,1,0,0,0,2014,Point,,-72.110783,41.338427
+CCNH,Kindred Transitional Care and Rehabilitation - Parkway Pavillion,1157 Enfield Street,Enfield,HARTFORD,CT,TRUE,TRUE,130,130,122,0,0,0,0,0,0,6,11,21,35,40,9,0,42,80,0,108,9,0,0,0,5,2014,Point,,-72.593179,41.986582
+CCNH,Kindred Transitional Care and Rehabilitation - Windsor,581 Poquonock Avenue,Windsor,HARTFORD,CT,TRUE,TRUE,108,108,81,0,0,0,0,0,1,3,16,7,21,24,9,0,27,54,0,53,27,1,0,0,0,2014,Point,,-72.658685,41.86911
+CCNH,Laurel Ridge Health Care Center,642 Danbury Road,Ridgefield,FAIRFIELD,CT,TRUE,TRUE,126,126,112,0,0,0,1,1,2,3,13,15,27,43,7,0,40,72,0,91,7,6,0,1,7,2019,Point,,-73.474874,41.32427
+CCNH,Ledgecrest Health Care,154 Kensington Road,Kensington,HARTFORD,CT,TRUE,TRUE,60,60,49,0,0,0,0,0,0,0,2,7,8,17,15,0,9,40,0,44,2,3,0,0,0,2019,Point,"Ledgecrest Health Care Center, Inc.",-72.769758,41.629581
+CCNH,"Leeway, Inc.",40 Albert Street,New Haven,NEW_HAVEN,CT,TRUE,TRUE,30,30,27,0,0,0,0,0,1,5,12,9,0,0,0,0,19,8,0,9,12,6,0,0,0,2019,Point,,-72.89634,41.326544
+CCNH/RHNS,Litchfield Woods,255 Roberts Street,Torrington,LITCHFIELD,CT,TRUE,TRUE,160,130,127,30,29,0,0,1,0,1,16,36,38,47,17,0,37,119,0,152,1,3,0,0,0,2019,Point,Litchfield Woods Health Care Center,-73.141224,41.808768
+CCNH,"LiveWell (formerly Alzheimer's Resource Center of Connecticut, Inc.)",1261 South Main Street,Plantsville,HARTFORD,CT,TRUE,TRUE,120,120,114,0,0,0,0,0,0,1,6,10,38,52,7,0,31,83,0,111,1,1,1,0,0,2019,Point,,-72.895847,41.573158
+CCNH,Long Ridge Post-Acute Care,710 Long Ridge Road,Stamford,FAIRFIELD,CT,TRUE,TRUE,120,120,113,0,0,0,0,1,0,4,14,19,37,32,6,0,42,71,0,71,35,5,0,1,1,2019,Point,,-73.563222,41.095003
+CCNH,Lord Chamberlain Manor,7003 Main Street,Stratford,FAIRFIELD,CT,TRUE,FALSE,60,60,50,0,0,0,0,0,0,2,5,7,22,14,0,0,23,27,0,38,5,0,0,0,7,2019,Point,Chamberlain Healthcare,-73.100682,41.251009
+CCNH,Lord Chamberlain Nursing and Rehabilitation Center,7003 Main Street,Stratford,FAIRFIELD,CT,TRUE,TRUE,190,190,178,0,0,0,0,0,0,2,5,23,51,72,25,0,52,126,0,156,13,8,0,1,0,2019,Point,Lord Chamberlain Nursing & Rehabilitation Center,-73.100682,41.251009
+CCNH,"Lourdes Health Care Center, Inc.",345 Belden Hill Road,Wilton,FAIRFIELD,CT,TRUE,TRUE,40,40,9,0,0,0,0,0,0,0,0,1,2,5,1,0,0,9,0,9,0,0,0,0,0,2019,Point,,-73.438485,41.172601
+CCNH,Ludlowe Center for Health & Rehabilitation,118 Jefferson Street,Fairfield,FAIRFIELD,CT,TRUE,TRUE,144,144,142,0,0,0,0,0,1,1,15,16,46,46,17,0,58,84,0,106,24,11,0,1,0,2019,Point,Ludlowe Center for Health and Rehabilitation,-73.24397,41.223753
+CCNH,Lutheran Home of Southbury,990 Main Street North,Southbury,NEW_HAVEN,CT,TRUE,TRUE,120,120,114,0,0,0,0,0,0,0,2,8,29,59,16,0,30,84,0,113,0,1,0,0,0,2019,Point,The Lutheran Home of Southbury,-73.21103,41.504094
+CCNH,Madison House,34 Wildwood Avenue,Madison,NEW_HAVEN,CT,TRUE,TRUE,89,89,64,0,0,0,0,0,0,3,4,15,16,20,6,0,21,43,0,63,0,1,0,0,0,2019,Point,,-72.638357,41.287548
+CCNH,Maefair Health Care Center,21 Maefair Court,Trumbull,FAIRFIELD,CT,TRUE,TRUE,134,134,131,0,0,0,1,0,2,2,12,28,35,38,13,0,36,95,0,64,53,14,0,0,0,2019,Point,,-73.194834,41.236378
+CCNH,Manchester Manor Health Care Center,385 West Center Street,Manchester,HARTFORD,CT,TRUE,TRUE,126,126,112,0,0,0,0,0,0,0,1,13,31,46,20,1,30,81,1,86,2,4,1,0,19,2019,Point,,-72.552621,41.769734
+CCNH,Mansfield Center for Nursing & Rehabilitation,100 Warren Circle,Storrs,TOLLAND,CT,TRUE,TRUE,98,98,84,0,0,0,0,0,0,1,3,1,24,39,16,0,13,71,0,82,2,0,0,0,0,2019,Point,,-72.253088,41.791899
+CCNH,Maple View Health & Rehabilitation Center,856 Maple Street,Rocky Hill,HARTFORD,CT,TRUE,TRUE,120,120,106,0,0,0,0,0,0,1,3,11,40,44,7,0,29,77,0,96,5,5,0,0,0,2019,Point,Maple View Health and Rehabilitation,-72.666639,41.673965
+CCNH,Marlborough Health Care Center,85 Stage Harbor Road,Marlborough,HARTFORD,CT,TRUE,TRUE,120,120,106,0,0,0,0,0,1,4,10,17,33,34,7,0,36,70,0,103,2,1,0,0,0,2019,Point,Marlborough Health and Rehabilitation Center,-72.476829,41.652591
+RHNS,Marshall Lane Manor,101 Marshall Lane,Derby,NEW_HAVEN,CT,TRUE,TRUE,120,0,0,120,104,0,0,0,0,2,0,14,32,46,10,0,80,24,0,98,2,3,1,0,0,2014,Point,,-73.051417,41.317687
+CCNH,"Mary Wade Home, Inc.",118 Clinton Avenue,New Haven,NEW_HAVEN,CT,TRUE,TRUE,94,94,90,0,0,0,0,0,0,0,3,9,15,53,10,0,17,73,0,78,10,2,0,0,0,2014,Point,,-72.891247,41.312612
+CCNH,Masonicare at Newtown,139 Toddy Hill Road,Newtown,FAIRFIELD,CT,TRUE,TRUE,154,154,125,0,0,0,0,0,0,0,4,16,32,63,10,0,38,87,0,122,2,0,0,0,1,2014,Point,,-73.258982,41.382079
+CCNH,Masonicare Health Center,22 Masonic Avenue,Wallingford,NEW_HAVEN,CT,TRUE,TRUE,357,357,330,0,0,0,0,0,0,5,13,37,79,140,56,0,93,237,0,315,10,4,0,1,0,2019,Point,,-72.836586,41.460698
+RHNS,"Mattatuck Health Care Facility, Inc.",9 Cliff Street,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,43,0,0,43,43,0,0,0,0,7,14,16,2,4,0,0,16,27,0,34,5,2,0,2,0,2019,Point,,-73.045851,41.560756
+CCNH,"Matulaitis Nursing Home, Inc.",10 Thurber Road,Putnam,WINDHAM,CT,TRUE,TRUE,119,119,115,0,0,0,0,0,0,0,4,8,27,53,23,0,25,90,0,114,1,0,0,0,0,2019,Point,,-71.855438,41.927854
+CCNH,McLean Health Center,75 Great Pond Road,Simsbury,HARTFORD,CT,TRUE,TRUE,89,89,79,0,0,0,0,0,1,0,5,9,15,39,10,0,25,54,0,76,1,0,2,0,0,2019,Point,,-72.824809,41.885251
+CCNH,Meadow Ridge,100 Redding Road,Redding,FAIRFIELD,CT,TRUE,FALSE,62,62,51,0,0,0,0,0,0,0,0,1,9,33,8,0,17,34,0,50,0,0,0,1,0,2014,Point,,-73.425508,41.263538
+CCNH/RHNS,Meadowbrook of Granby,350 Salmon Brook Street,Granby,HARTFORD,CT,TRUE,TRUE,90,80,78,10,9,0,0,0,0,1,7,9,21,36,13,0,19,68,0,83,3,0,0,1,0,2019,Point,,-72.790996,41.964404
+CCNH,Meriden Center,845 Paddock Avenue,Meriden,NEW_HAVEN,CT,TRUE,TRUE,130,130,103,0,0,0,0,0,1,4,14,28,30,23,3,0,39,64,0,81,6,16,0,0,0,2019,Point,,-72.777296,41.50681
+CCNH,Meridian Manor Corporation,1132 Meriden Road,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,94,94,51,0,0,0,0,0,0,4,12,10,6,10,9,0,21,30,0,38,6,6,0,1,0,2019,Point,,-72.981851,41.552609
+CCNH,"Middlebury Convalescent Home, Inc.",778 Middlebury Road,Middlebury,NEW_HAVEN,CT,TRUE,TRUE,58,58,56,0,0,0,0,0,0,0,0,2,7,27,20,0,7,49,0,56,0,0,0,0,0,2019,Point,,-73.115064,41.537781
+CCNH,Middlesex Health Care Center,100 Randolph Road,Middletown,MIDDLESEX,CT,TRUE,TRUE,150,150,147,0,0,0,0,0,3,7,27,34,34,35,7,0,64,83,0,126,16,5,0,0,0,2019,Point,,-72.616498000000007,41.534852
+CCNH,Milford Health and Rehabilitation Center,195 Platt Street,Milford,NEW_HAVEN,CT,TRUE,TRUE,120,120,116,0,0,0,0,0,0,1,10,10,30,44,21,0,32,84,0,109,1,4,1,1,0,2019,Point,Milford Health and Rehabilitlation Center,-73.019075,41.212196
+CCNH/RHNS,"Miller Memorial Community, Inc.",360 Broad Street,Meriden,NEW_HAVEN,CT,TRUE,TRUE,90,85,69,5,0,0,0,0,0,3,4,12,17,25,8,0,15,54,0,55,5,9,0,0,0,2019,Point,,-72.795275,41.530336
+CCNH,"Monsignor Bojnowski Manor, Inc",50 Pulaski Street,New Britain,HARTFORD,CT,TRUE,TRUE,60,60,50,0,0,0,0,0,0,0,0,3,4,24,19,0,3,47,0,49,0,1,0,0,0,2019,Point,,-72.798371,41.675475
+CCNH,Montowese Health & Rehabilitation Center,163 Quinnipiac Avenue,North Haven,NEW_HAVEN,CT,TRUE,TRUE,120,120,118,0,0,0,0,2,3,12,22,19,20,28,12,0,60,58,0,87,28,0,0,0,3,2019,Point,,-72.863569,41.346922
+CCNH,Mystic Healthcare & Rehabilitation Center,475 High Street,Mystic,NEW_LONDON,CT,TRUE,TRUE,100,100,88,0,0,0,0,0,0,1,5,19,27,26,10,0,32,56,0,81,4,0,0,3,0,2019,Point,Mystic Healthcare and Rehabilitation Center,-71.974014,41.364388
+CCNH,Nathaniel Witherall,70 Parsonage Road,Greenwich,FAIRFIELD,CT,TRUE,TRUE,202,202,185,0,0,0,0,0,0,2,9,19,36,90,29,0,37,148,0,139,14,10,0,12,10,2019,Point,The Nathaniel Witherell,-73.624382,41.059487
+CCNH,New London Sub-Acute and Nursing,88 Clark Lane,Waterford,NEW_LONDON,CT,TRUE,TRUE,120,120,100,0,0,0,0,0,0,2,11,33,27,21,6,0,37,63,0,83,6,8,0,3,0,2019,Point,,-72.127527,41.34864
+CCNH,Newington Rapid Recovery Rehab Center,240 Church Street,Newington,HARTFORD,CT,TRUE,TRUE,180,180,163,0,0,0,0,0,2,8,15,29,45,49,15,0,57,106,0,126,14,23,0,0,0,2019,Point,,-72.739363,41.665919
+CCNH,Newtown Rehabilitation & Health Care Center,139 Toddy Hill Road,Newtown,FAIRFIELD,CT,TRUE,TRUE,154,154,133,0,0,0,0,0,0,4,9,18,42,49,11,0,41,92,0,122,3,8,0,0,0,2019,Point,Newtown Rehabilitation and Health Care Center,-73.258982,41.382079
+CCNH/RHNS,Noble Horizons,17 Cobble road,Salisbury,LITCHFIELD,CT,TRUE,TRUE,91,61,51,30,26,0,0,0,0,1,1,10,19,37,9,0,25,52,0,76,0,0,0,1,0,2019,Point,,-73.42822,41.988049
+CCNH,Northbridge Healthcare Center,2875 Main Street,Bridgeport,FAIRFIELD,CT,TRUE,TRUE,145,145,139,0,0,0,0,1,1,3,22,33,40,32,7,0,54,85,0,42,58,37,0,1,1,2019,Point,,-73.203493,41.201508
+CCNH,Norwich Sub-acute and Nursing,93 West Town Street,Norwich,NEW_LONDON,CT,TRUE,TRUE,120,120,104,0,0,0,0,0,0,1,5,14,33,38,13,0,33,71,0,95,5,0,0,2,2,2019,Point,,-72.102507,41.551457
+CCNH,Notre Dame Health and Rehabilitation Center,76 West Rocks Road,Norwalk,FAIRFIELD,CT,TRUE,TRUE,60,60,56,0,0,0,0,0,0,0,1,1,17,32,5,0,7,49,0,51,2,3,0,0,0,2019,Point,"Notre Dame Convalescent Homes, Inc. (dba) Notre Dame Health and Rehab Center",-73.413866,41.133415
+CCNH,Orange Health Care Center,225 Boston Post Road,Orange,NEW_HAVEN,CT,TRUE,TRUE,60,60,55,0,0,0,0,0,0,0,1,3,33,16,2,0,19,36,0,43,6,4,0,1,1,2019,Point,Orange Healthcare Rehabilitation Center,-72.998279,41.269422
+CCNH,"Orchard Grove Specialty Care Center, LLC",5 Richard Brown Drive,Uncasville,NEW_LONDON,CT,TRUE,TRUE,130,130,120,0,0,0,0,0,0,1,13,24,31,34,17,0,28,92,0,111,5,3,0,1,0,2014,Point,,-72.112266,41.49273
+CCNH,Paradigm at Bentley Gardens,310 Terrace Avenue,West Haven,NEW_HAVEN,CT,TRUE,TRUE,98,98,90,0,0,0,0,0,0,2,19,15,22,27,5,0,37,53,0,59,19,6,0,0,6,2014,Point,,-72.969025,41.283035
+CCNH,"Paradigm Healthcare Center of New Haven, LLC",181 Clifton Street,New Haven,NEW_HAVEN,CT,TRUE,TRUE,150,150,141,0,0,0,0,0,2,18,48,32,26,15,0,0,76,65,0,71,48,16,1,0,5,2014,Point,,-72.878853,41.309366
+CCNH,"Paradigm Healthcare Center of South Windsor, LLC",1060 Main Street,South Windsor,HARTFORD,CT,TRUE,TRUE,100,100,75,0,0,0,1,1,0,3,7,8,20,28,7,0,28,47,0,68,3,4,0,0,0,2015,Point,,-72.617166,41.831909
+CCNH,"Paradigm Healthcare Center of Torrington, LLC",80 Fern Drive,Torrington,LITCHFIELD,CT,TRUE,TRUE,75,75,70,0,0,0,0,1,1,2,18,14,12,18,4,0,31,39,0,66,2,2,0,0,0,2014,Point,,-73.109,41.81049
+CCNH,Paradigm Healthcare Center of Waterbury,177 Whitewood Road,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,120,120,112,0,0,0,2,4,2,13,19,21,18,28,5,0,50,62,0,83,10,19,0,0,0,2014,Point,,-73.081309,41.576911
+CCNH,"Paradigm Healthcare Center Prospect, LLC",25 Royal Crest Drive,Prospect,NEW_HAVEN,CT,TRUE,TRUE,120,120,114,0,0,0,0,0,0,3,6,15,31,44,15,0,23,91,0,102,2,3,1,0,6,2014,Point,,-72.972096,41.513545
+CCNH,Parkville Care Center,5 Greenwood Street,Hartford,HARTFORD,CT,TRUE,TRUE,150,150,139,0,0,0,0,4,4,12,29,47,25,15,3,0,64,75,0,25,30,62,4,1,17,2019,Point,,-72.709971,41.754837
+CCNH,Parkway Pavilion Health and Rehabilitation Center,1157 Enfield Street,Enfield,HARTFORD,CT,TRUE,TRUE,130,130,116,0,0,0,0,0,3,0,20,24,35,27,7,0,46,70,0,111,3,1,0,0,1,2019,Point,,-72.593179,41.986582
+CCNH,Pendleton Health and Rehabilitation Center,44 Maritime Drive,Mystic,NEW_LONDON,CT,TRUE,TRUE,120,120,97,0,0,0,0,2,2,2,20,27,23,17,4,0,48,49,0,86,7,0,0,4,0,2019,Point,,-71.950839,41.369335
+CCNH,"Pierce Memorial Baptist Home, Inc.","44 Canterbury Road,  P.O. Box 326",Brooklyn,WINDHAM,CT,TRUE,TRUE,72,72,66,0,0,0,0,1,0,0,1,4,16,32,12,0,17,49,0,65,0,0,0,0,1,2019,Point,,-71.949585,41.78502
+CCNH,Pilgrim Manor Care Center,52 Missionary Road,Cromwell,MIDDLESEX,CT,TRUE,TRUE,60,60,51,0,0,0,0,0,0,0,0,4,11,23,13,0,9,42,0,51,0,0,0,0,0,2019,Point,,-72.660908,41.600427
+CCNH,Pines At Bristol Center for Nursing & Rehabilitation,61 Bellevue Avenue,Bristol,HARTFORD,CT,TRUE,TRUE,132,132,126,0,0,0,0,0,0,0,8,16,26,56,20,0,34,92,0,121,1,4,0,0,0,2019,Point,The Pines at Bristol,-72.940458,41.675186
+CCNH,Pomperaug Woods Health Center,80 Heritage Road,Southbury,NEW_HAVEN,CT,TRUE,FALSE,37,37,30,0,0,0,0,0,0,0,0,0,1,19,10,0,7,23,0,30,0,0,0,0,0,2019,Point,,-73.217482,41.482196
+CCNH,Pope John Paul II Center,33 Lincoln Avenue,Danbury,FAIRFIELD,CT,TRUE,TRUE,141,141,128,0,0,0,1,0,0,4,10,17,41,42,13,0,58,70,0,116,7,4,0,1,0,2014,Point,,-73.454729,41.384584
+CCNH,Portland Care and Rehabilitation,333 Main Street,Portland,MIDDLESEX,CT,TRUE,TRUE,65,65,61,0,0,0,0,0,0,0,0,6,11,35,9,0,17,44,0,55,2,0,0,0,4,2019,Point,Portland  Care and Rehabilitation Centre,-72.636328,41.578561
+CCNH,Quinnipiac Valley Center,55 Kondracki Lane,Wallingford,NEW_HAVEN,CT,TRUE,TRUE,180,180,104,0,0,0,0,0,1,2,18,23,24,28,8,0,42,62,0,87,6,11,0,0,0,2019,Point,,-72.811781,41.435947
+CCNH,RegalCare at Greenwich,1188 King Street,Greenwich,FAIRFIELD,CT,TRUE,TRUE,75,75,66,0,0,0,0,0,0,1,11,16,23,8,7,0,22,44,0,46,13,6,0,1,0,2019,Point,,-73.69491,41.062693
+CCNH,RegalCare at New Haven,181 Clifton Street,New Haven,NEW_HAVEN,CT,TRUE,TRUE,150,150,146,0,0,0,0,1,5,13,46,44,25,10,2,0,91,55,0,69,59,17,0,0,1,2019,Point,,-72.878853,41.309366
+CCNH,RegalCare at Prospect,25 Royal Crest Drive,Prospect,NEW_HAVEN,CT,TRUE,TRUE,120,120,106,0,0,0,0,0,1,2,6,11,38,34,14,0,18,88,0,98,4,4,0,0,0,2016,Point,,-72.972096,41.513545
+CCNH,RegalCare at Southport,930 Mill Hill Terrace,Southport,FAIRFIELD,CT,TRUE,TRUE,120,120,103,0,0,0,1,0,2,6,18,40,23,10,3,0,57,46,0,68,22,11,0,2,0,2019,Point,,-73.286615,41.14438
+CCNH,RegalCare at Torrington,80 Fern Drive,Torrington,LITCHFIELD,CT,TRUE,TRUE,75,75,70,0,0,0,0,0,0,3,14,26,19,7,1,0,33,37,0,63,4,3,0,0,0,2019,Point,,-73.109,41.81049
+CCNH,RegalCare at Waterbury,177 Whitewood Road,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,120,120,108,0,0,0,0,0,2,7,21,24,28,21,5,0,55,53,0,78,19,9,0,0,2,2019,Point,,-73.081309,41.576911
+CCNH,RegalCare at West Haven,310 Terrace Avenue,West Haven,NEW_HAVEN,CT,TRUE,TRUE,98,98,93,0,0,0,0,0,2,5,23,26,24,13,0,0,49,44,0,56,29,8,0,0,0,2019,Point,,-72.969025,41.283035
+CCNH,Regency Heights of Danielson,111 Westcott Road,Danielson,WINDHAM,CT,TRUE,TRUE,190,190,183,0,0,0,1,1,8,10,21,37,62,31,12,0,64,119,0,173,3,4,1,0,2,2014,Point,,-71.873842,41.809353
+CCNH,Regency Heights of Norwich,60 Crouch Avenue,Norwich,NEW_LONDON,CT,TRUE,TRUE,114,114,107,0,0,0,0,0,4,9,23,27,21,18,5,0,50,57,0,97,5,4,0,1,0,2014,Point,,-72.072157,41.504801
+CCNH,"Regency Heights of Stamford, LLC",53 Courtland Avenue,Stamford,FAIRFIELD,CT,TRUE,TRUE,156,156,145,0,0,0,0,1,1,5,15,39,45,31,8,0,58,87,0,84,45,12,0,2,2,2014,Point,,-73.514114,41.060582
+CCNH,"Regency Heights of Windham, LLC",595 Valley Street,Willimantic,WINDHAM,CT,TRUE,TRUE,124,124,100,0,0,0,0,1,3,8,15,27,26,16,4,0,44,56,0,81,2,16,0,1,0,2014,Point,,-72.229126,41.716836
+CCNH,Regency House Nursing and Rehabilitation Center,181 East Main Street,Wallingford,NEW_HAVEN,CT,TRUE,TRUE,130,130,128,0,0,0,0,0,1,1,3,14,30,68,11,0,40,88,0,115,11,2,0,0,0,2019,Point,Regency House of Wallingford,-72.799632,41.454112
+CCNH,Ridge Crest at Meadow Ridge,100 Redding Road,Redding,FAIRFIELD,CT,TRUE,FALSE,62,62,45,0,0,0,0,0,0,0,1,3,13,22,6,0,17,28,0,45,0,0,0,0,0,2019,Point,,-73.425508,41.263538
+CCNH,River Glen Health Care Center,162 South Britain Road,Southbury,NEW_HAVEN,CT,TRUE,TRUE,120,120,103,0,0,0,0,0,0,0,1,12,27,49,14,0,33,70,0,101,1,1,0,0,0,2019,Point,,-73.238498,41.461186
+CCNH,Riverside Health & Rehabilitation Center,745 Main Street,East Hartford,HARTFORD,CT,TRUE,TRUE,345,345,307,0,0,0,1,0,3,13,43,76,93,67,11,0,120,187,0,166,73,59,0,8,1,2019,Point,Riverside Health and Rehabilitation Center,-72.64546,41.766505
+CCNH,Rose Garden Health & Rehabilitation Center,3584 East Main Street,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,82,82,45,0,0,0,1,0,2,10,15,8,9,0,0,0,26,19,0,28,12,5,0,0,0,2017,Point,,-72.968432,41.542733
+CCNH,"Rose Haven, LLP.","33 North Street, P.O. Box 157",Litchfield,LITCHFIELD,CT,TRUE,TRUE,25,25,21,0,0,0,0,0,0,0,1,0,7,11,2,0,9,12,0,21,0,0,0,0,0,2014,Point,,-73.190329,41.748332
+CCNH,"Rose Haven, Ltd.","33 North Street,  P.O. Box 157",Litchfield,LITCHFIELD,CT,TRUE,TRUE,25,25,22,0,0,0,0,0,0,0,1,1,7,10,3,0,4,18,0,22,0,0,0,0,0,2018,Point,,-72.718334,41.497878
+CCNH,Rosegarden Health & Rehabilitation Center,3584 East Main Street,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,82,82,53,0,0,0,0,0,5,6,11,10,14,7,0,0,21,32,0,37,10,6,0,0,0,2013,Point,,-72.968432,41.542733
+CCNH,Saint John Paul II Center,33 Lincoln Avenue,Danbury,FAIRFIELD,CT,TRUE,TRUE,141,141,133,0,0,0,0,0,0,2,12,25,27,65,2,0,48,85,0,114,7,10,0,2,0,2019,Point,,-73.454729,41.384584
+CCNH,Saint Mary Home,2021 Albany Avenue,West Hartford,HARTFORD,CT,TRUE,TRUE,256,256,251,0,0,0,0,1,0,2,24,33,76,83,32,0,88,163,0,183,47,16,3,2,0,2019,Point,St. Mary Home,-72.726476,41.786082
+CCNH,Salmon Brook Rehab and Nursing,72 Slamon Brook Drive,Glastonbury,HARTFORD,CT,TRUE,TRUE,126,126,96,0,0,0,0,0,0,2,9,15,32,32,6,0,34,62,0,88,4,3,0,1,0,2019,Point,,-72.603458,41.716521
+CCNH,Seabury,200 Seabury Drive,Bloomfield,HARTFORD,CT,TRUE,TRUE,72,72,66,0,0,0,0,0,0,2,2,3,15,32,12,0,14,52,0,61,5,0,0,0,0,2019,Point,Seabury Health Center,-72.706488,41.833335
+CCNH,Shady Knoll Health Center,41 Skokorat Street,Seymour,NEW_HAVEN,CT,TRUE,TRUE,128,128,122,0,0,0,0,0,1,3,13,21,34,39,11,0,45,77,0,113,5,4,0,0,0,2019,Point,,-73.055532,41.401644
+CCNH,Sharon Health Care Center,27 Hospital Hill Road,Sharon,LITCHFIELD,CT,TRUE,TRUE,88,88,82,0,0,0,0,2,0,1,8,19,26,21,5,0,30,52,0,72,7,0,0,3,0,2019,Point,,-73.480208,41.879551
+CCNH,Sheridan Woods Health Care Center,321 Stonecrest Drive,Bristol,HARTFORD,CT,TRUE,TRUE,146,146,144,0,0,0,0,0,1,4,19,28,42,37,13,0,50,94,0,137,2,2,0,1,2,2019,Point,Sheriden Woods Health Care Center,-72.92134,41.681398
+CCNH,Silver Springs Care Center,33 Roy Street,Meriden,NEW_HAVEN,CT,TRUE,TRUE,159,159,153,0,0,0,0,2,3,16,57,46,23,6,0,0,87,66,0,41,32,80,0,0,0,2019,Point,,-72.804701,41.525279
+CCNH,Skyview Rehab and Nursing,35 Marc Drive,Wallingford,NEW_HAVEN,CT,TRUE,TRUE,97,97,81,0,0,0,0,1,0,4,17,18,18,16,2,5,31,45,5,62,6,5,0,3,5,2019,Point,,-72.846279,41.453355
+CCNH,Smith House Health Care Center,88 Rockrimmon Road,Stamford,FAIRFIELD,CT,TRUE,TRUE,128,128,116,0,0,0,0,1,4,9,11,14,27,41,9,0,44,72,0,94,14,6,0,2,0,2014,Point,,-73.5614,41.139958
+CCNH,Southington Care Center,45 Meriden Avenue,Southington,HARTFORD,CT,TRUE,TRUE,130,130,122,0,0,0,0,0,0,0,3,14,29,54,22,0,33,89,0,122,0,0,0,0,0,2019,Point,,-72.876623,41.59615
+CCNH,Spectrum Healthcare Torrington,225 Wyoming Avenue,Torrington,LITCHFIELD,CT,TRUE,TRUE,126,126,115,0,0,0,0,0,3,4,16,17,27,41,7,0,46,69,0,112,2,1,0,0,0,2014,Point,,-73.142107,41.796128
+CCNH,Springs at Watermark 3030 Park,3030 Park Avenue,Bridgeport,FAIRFIELD,CT,TRUE,FALSE,23,23,16,0,0,0,0,0,0,0,1,0,2,10,3,0,3,13,0,16,0,0,0,0,0,2019,Point,The Springs @ Watermark 3030 Park,-73.219717,41.198599
+CCNH,St. Camillus Center,494 Elm Street,Stamford,FAIRFIELD,CT,TRUE,TRUE,124,124,111,0,0,0,0,0,0,9,10,26,30,31,5,0,45,66,0,52,32,17,0,1,9,2019,Point,,-73.526723,41.049972
+CCNH,St. Joseph's Center,6448 Main Street,Trumbull,FAIRFIELD,CT,TRUE,TRUE,269,269,247,0,0,0,1,1,1,6,24,49,53,85,27,0,93,154,0,174,22,27,0,4,20,2019,Point,,-73.226931,41.27423
+CCNH,St. Joseph's Living Center,14 Club Road,Windham,WINDHAM,CT,TRUE,TRUE,120,120,111,0,0,0,0,0,0,0,3,13,26,54,15,0,17,94,0,106,1,4,0,0,0,2019,Point,"St. Joseph's Living Center, Inc.",-72.187138,41.715224
+CCNH/RHNS,St. Joseph's Residence,1365 Enfield Street,Enfield,HARTFORD,CT,TRUE,TRUE,83,25,25,58,57,0,0,0,0,0,1,7,22,39,13,0,15,67,0,79,0,1,0,2,0,2019,Point,,-72.592407,41.972614
+CCNH,Suffield House,One Canal Road,Suffield,HARTFORD,CT,TRUE,TRUE,128,128,123,0,0,0,0,0,0,2,3,10,27,62,19,0,22,101,0,122,1,0,0,0,0,2019,NA,The Suffield House,NA,NA
+CCNH,Summit at Plantsville,261 Summit Street,Plantsville,HARTFORD,CT,TRUE,TRUE,150,150,148,0,0,0,0,0,0,5,15,25,34,56,13,0,47,101,0,139,4,5,0,0,0,2019,Point,The Summit at Plantsville,-72.89307,41.591965
+CCNH,Talmadge Park Health Care,38 Talmadge Avenue,East Haven,NEW_HAVEN,CT,TRUE,TRUE,90,90,84,0,0,0,0,0,0,0,1,14,25,30,14,0,20,64,0,76,4,2,0,2,0,2014,Point,,-72.86361,41.263459
+CCNH,The Bradley Home,320 Colony Street,Meriden,NEW_HAVEN,CT,TRUE,TRUE,30,30,27,0,0,0,0,0,0,0,0,0,6,10,11,0,1,26,0,27,0,0,0,0,0,2019,Point,,-72.795609,41.545942
+CCNH,The Curtis Home,380 Crown Street,Meriden,NEW_HAVEN,CT,TRUE,TRUE,60,60,53,0,0,0,0,0,1,1,7,14,12,14,4,0,32,21,0,48,1,1,1,2,0,2019,Point,,-72.805239,41.528723
+CCNH,The Kent Specialty Care Center,46 Maple Street,Kent,LITCHFIELD,CT,TRUE,TRUE,90,90,19,0,0,0,0,0,0,0,6,5,5,3,0,0,8,11,0,18,1,0,0,0,0,2015,Point,,-73.473481,41.720625
+CCNH,The Mary Wade Home,118 Clinton Avenue,New Haven,NEW_HAVEN,CT,TRUE,TRUE,94,94,92,0,0,0,0,0,0,1,3,6,23,41,18,0,26,66,0,66,21,4,0,1,0,2019,Point,"The Mary Wade Home, Inc.",-72.891247,41.312612
+CCNH,The Reservoir,1 Emily Way,West Hartford,HARTFORD,CT,TRUE,TRUE,75,75,68,0,0,0,0,0,0,1,6,10,14,28,9,0,14,54,0,50,10,2,0,3,3,2019,Point,,-72.77641,41.74291
+CCNH,"The Springs at Watermark, East Hill",611 East Hill Road,Southbury,NEW_HAVEN,CT,TRUE,FALSE,34,34,34,0,0,0,0,0,0,0,0,9,5,17,3,0,11,23,0,33,0,0,0,1,0,2014,Point,,-73.241049,41.485015
+CCNH,The Villa at Stamford,88 Rock Rimmon Road,Stamford,FAIRFIELD,CT,TRUE,TRUE,128,128,126,0,0,0,0,0,0,3,12,13,80,16,2,0,54,72,0,53,57,14,0,2,0,2019,Point,,-73.5614,41.139958
+CCNH,The Watermark at 3030,3030 Park Avenue,Bridgeport,FAIRFIELD,CT,TRUE,FALSE,23,23,21,0,0,0,0,0,0,0,0,2,7,11,1,0,7,14,0,19,1,1,0,0,0,2014,Point,,-73.219717,41.198599
+CCNH,The Willows,225 Amity Road,Woodbridge,NEW_HAVEN,CT,TRUE,TRUE,90,90,81,0,0,0,0,0,1,2,3,10,24,34,7,0,28,53,0,53,25,0,0,0,3,2019,Point,,-72.983417,41.342128
+CCNH,Torrington Health and Rehabilitation Center,225 Wyoming Avenue,Torrington,LITCHFIELD,CT,TRUE,TRUE,126,126,99,0,0,0,0,0,1,4,19,18,23,31,3,0,40,59,0,94,2,1,0,0,2,2016,Point,,-73.142107,41.796128
+CCNH,Touchpoints at Bloomfield,140 Park Avenue,Bloomfield,HARTFORD,CT,TRUE,TRUE,150,150,146,0,0,0,0,1,2,13,50,41,27,9,3,0,78,68,0,73,67,5,0,0,1,2019,Point,,-72.703607,41.822945
+CCNH,Touchpoints at Chestnut,171 Main Street,East Windsor,HARTFORD,CT,TRUE,TRUE,60,60,56,0,0,0,0,0,0,2,12,16,8,14,4,0,26,30,0,48,5,3,0,0,0,2019,Point,,-72.617846,41.925994
+CCNH,Touchpoints at Farmington,20 Scott Swamp Road,Farmington,HARTFORD,CT,TRUE,TRUE,105,105,98,0,0,0,0,1,3,6,15,18,27,22,6,0,40,58,0,81,9,8,0,0,0,2019,Point,,-72.845561,41.704553
+CCNH,Touchpoints at Manchester,333 Bidwell Street,Manchester,HARTFORD,CT,TRUE,TRUE,131,131,118,0,0,0,0,1,2,11,39,42,17,5,1,0,56,62,0,87,23,5,1,2,0,2019,Point,"Bidwell Care Center, LLC of Manchester, CT d/b/a/ Touchpoints at Manchester",-72.545849,41.759594
+CCNH,Trinity Hill Care Center,151 Hillside Avenue,Hartford,HARTFORD,CT,TRUE,TRUE,144,144,139,0,0,0,0,5,5,30,53,38,8,0,0,0,95,44,0,44,42,52,0,1,0,2019,Point,,-72.698044,41.748736
+CCNH,Twin Maples Health Care Facility,"809 R New Haven Road,  P.O. Box 423",Durham,MIDDLESEX,CT,TRUE,TRUE,44,44,40,0,0,0,0,0,0,1,9,8,10,11,1,0,16,24,0,37,2,1,0,0,0,2019,Point,,-72.720881,41.436968
+CCNH,"Twin Maples Home, Inc.","809 R New Haven Road, P.O. Box 423",Durham,MIDDLESEX,CT,TRUE,TRUE,44,44,43,0,0,0,0,0,0,4,10,5,12,11,1,0,8,35,0,40,2,1,0,0,0,2014,Point,,-72.720881,41.436968
+CCNH,Valerie Manor,1360 Torringford Street,Torrington,LITCHFIELD,CT,TRUE,TRUE,151,151,148,0,0,0,0,0,0,1,13,26,42,54,12,0,46,102,0,146,0,1,0,0,1,2019,Point,,-73.079132,41.827508
+CCNH,Vernon Manor Health Care Center,180 Regan Road,Vernon,TOLLAND,CT,TRUE,TRUE,120,120,104,0,0,0,0,0,1,0,2,7,32,50,12,0,27,77,0,99,1,1,0,1,2,2019,Point,,-72.477917,41.852217
+CCNH,"Villa Maria Nursing and Rehabilitation Community, Inc.",20 Babcock Avenue,Plainfield,WINDHAM,CT,TRUE,TRUE,62,62,55,0,0,0,0,0,0,0,0,4,18,22,11,0,11,44,0,54,0,1,0,0,0,2019,Point,,-71.917758,41.678696
+CCNH,Village Crest Center for Health & Rehabilitation,19 Poplar Street,New Milford,LITCHFIELD,CT,TRUE,TRUE,95,95,85,0,0,0,0,0,1,2,9,20,23,21,9,0,27,58,0,63,1,3,0,0,18,2019,Point,Village Crest Center for Health and Rehabilitation,-73.408736,41.58294
+CCNH,Village Green of Bristol Rehabilitation and Health Center,23 Fair Street,Bristol,HARTFORD,CT,TRUE,TRUE,120,120,91,0,0,0,0,2,7,7,17,26,23,8,1,0,49,42,0,60,3,10,0,0,18,2019,Point,,-72.902506,41.679856
+CCNH,Village Green of Wallingford Rehabilitation and Health Center,55 Kondracki Lane,Wallingford,NEW_HAVEN,CT,TRUE,TRUE,180,180,130,0,0,0,1,0,2,3,22,33,26,37,6,0,46,84,0,116,11,2,0,1,0,2014,Point,,-72.811781,41.435947
+CCNH,Village Green of Waterbury Rehabilitation and Health Center,128 Cedar Avenue,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,180,180,128,0,0,0,0,3,7,16,36,24,19,20,3,0,57,71,0,90,13,24,0,1,0,2014,Point,,-72.996781,41.549392
+CCNH,Wadsworth Glen Health Care Center,30 Boston Road,Middletown,MIDDLESEX,CT,TRUE,TRUE,102,102,100,0,0,0,0,0,3,6,7,15,23,31,15,0,28,72,0,80,16,2,0,0,2,2019,Point,,-72.676519,41.554164
+CCNH,Walnut Hill Care Center,55 Grand Street,New Britain,HARTFORD,CT,TRUE,TRUE,160,160,114,0,0,0,0,0,1,5,21,22,23,31,11,0,46,68,0,85,6,23,0,0,0,2014,Point,,-72.785102,41.662108
+CCNH,Water's Edge Center for Health & Rehabilitation,111 Church Street,Middletown,MIDDLESEX,CT,TRUE,TRUE,150,150,133,0,0,0,0,0,0,2,23,36,32,33,7,0,51,82,0,114,12,5,0,2,0,2019,Point,Water's Edge Center for Health and Rehabilitation,-72.651675,41.555227
+CCNH,Waterbury Gardens Nursing and Rehabilitation,128 Cedar Avenue,Waterbury,NEW_HAVEN,CT,TRUE,TRUE,150,150,108,0,0,0,1,3,0,10,30,26,25,8,5,0,55,53,0,71,16,12,0,1,8,2019,Point,Waterbury Gardens Nursing and Rehab,-72.996781,41.549392
+CCNH,Watertown Convalarium,560 Woodbury Road,Watertown,LITCHFIELD,CT,TRUE,TRUE,46,46,33,0,0,0,0,0,0,0,2,2,7,15,7,0,9,24,0,31,1,0,0,1,0,2019,Point,,-73.138173,41.60198
+CCNH,Watrous Nursing Center,9 Neck Road,Madison,NEW_HAVEN,CT,TRUE,TRUE,45,45,37,0,0,0,0,0,0,1,2,6,7,13,8,0,13,24,0,36,1,0,0,0,0,2019,Point,,-72.626633,41.277675
+CCNH,Waveny Care Center,3 Farm Road,New Canaan,FAIRFIELD,CT,TRUE,TRUE,76,76,69,0,0,0,0,0,0,0,1,4,15,32,17,0,18,51,0,67,1,1,0,0,0,2019,Point,,-73.493667,41.128529
+CCNH,West Hartford Health and Rehabilitation Center,130 Loomis Drive,West Hartford,HARTFORD,CT,TRUE,TRUE,160,160,128,0,0,0,0,0,1,3,16,25,37,32,14,0,46,82,0,77,28,21,0,2,0,2019,Point,Brookview Corp.  d/b/a West Hartford Health and Rehabilitation Center,-72.73995,41.76687
+CCNH,West River Rehab Center,245 Orange Avenue,Milford,NEW_HAVEN,CT,TRUE,TRUE,120,120,114,0,0,0,0,0,0,2,5,15,33,47,12,0,31,83,0,90,6,1,0,1,16,2019,Point,West River Rehabilitation Center,-73.050224,41.237712
+CCNH,Western Rehabilitation Care Center,107 Osborne Street,Danbury,FAIRFIELD,CT,TRUE,TRUE,120,120,112,0,0,0,1,0,0,4,26,25,24,27,5,0,52,60,0,82,12,9,0,3,6,2019,Point,,-73.442173,41.403689
+CCNH,Westfield Care and Rehabilitation Center,65 Westfield Road,Meriden,NEW_HAVEN,CT,TRUE,TRUE,90,90,57,0,0,0,0,0,0,1,7,9,9,27,4,0,22,35,0,43,4,8,0,0,2,2019,Point,,-72.780579,41.547965
+CCNH,Westport Rehabilitation Complex,1 Burr Road,Westport,FAIRFIELD,CT,TRUE,TRUE,99,99,70,0,0,0,0,1,0,2,17,19,14,13,4,0,37,32,1,42,19,7,0,1,1,2019,Point,,-73.367176,41.136945
+CCNH,Westside Care Center,349 Bidwell Street,Manchester,HARTFORD,CT,TRUE,TRUE,162,162,154,0,0,0,0,3,3,16,42,42,29,17,2,0,88,66,0,108,24,20,0,0,2,2019,Point,"Westside Care Center, LLC",-72.544459,41.759532
+CCNH,"Westview Nursing Care & Rehabilitation Center, Inc.",150 Ware Road,Dayville,WINDHAM,CT,TRUE,TRUE,103,103,103,0,0,0,0,0,0,0,2,5,31,49,16,0,23,80,0,103,0,0,0,0,0,2019,Point,,-71.872542,41.880358
+CCNH,Whispering Pines,38 Talmadge Avenue,East Haven,NEW_HAVEN,CT,TRUE,TRUE,90,90,85,0,0,0,0,0,0,0,4,13,29,34,5,0,25,60,0,73,8,3,0,1,0,2019,Point,Whispering Pines Rehabilitation and Nursing Center LLC,-72.86361,41.263459
+CCNH,Whitney Center,200 Leeder Hill Drive,Hamden,NEW_HAVEN,CT,TRUE,TRUE,59,59,46,0,0,0,0,0,0,0,0,3,11,25,7,0,10,36,0,43,3,0,0,0,0,2019,Point,,-72.920674,41.34892
+CCNH,Whitney Rehabilitation Care Center,2798 Whitney Avenue,Hamden,NEW_HAVEN,CT,TRUE,TRUE,150,150,117,0,0,0,0,0,0,0,2,12,31,46,26,0,30,87,0,91,19,4,0,3,0,2019,Point,,-72.897242,41.398068
+CCNH,Wilton Meadows Health Care Center,"439 Danbury Road, Rt 7",Wilton,FAIRFIELD,CT,TRUE,TRUE,148,148,133,0,0,0,0,0,0,1,3,8,34,71,16,0,43,90,0,110,18,3,0,1,1,2019,NA,,NA,NA
+CCNH,Windsor Health and Rehabilitation Center,581 Poquonock Avenue,Windsor,HARTFORD,CT,TRUE,TRUE,108,108,99,0,0,0,0,1,0,7,20,26,23,16,6,0,58,41,0,54,37,7,0,1,0,2019,Point,"Windsor Health and Rehabilitation Center, LLC",-72.658685,41.86911
+CCNH,Wolcott Hall Nursing Center,215 Forest Street,Torrington,LITCHFIELD,CT,TRUE,TRUE,87,87,51,0,0,0,0,0,2,1,6,9,17,11,5,0,14,37,0,51,0,0,0,0,0,2019,Point,"Wolcott Hall Nursing Center, Inc.",-73.128142,41.80896
+CCNH,Wolcott View Manor,50 Beach Road,Wolcott,NEW_HAVEN,CT,TRUE,TRUE,129,129,95,0,0,0,0,1,1,4,8,18,27,28,8,0,42,53,0,78,8,8,0,1,0,2019,Point,,-72.989834,41.605219
+CCNH,Woodlake at Tolland Rehabilitation and Nursing Center,26 Shenipsit Lake Road,Tolland,TOLLAND,CT,TRUE,TRUE,130,130,126,0,0,0,0,0,0,1,9,15,36,54,11,0,33,93,0,118,1,0,0,0,7,2019,Point,Prospect ECHN ElderCare Serv. dba Woodlake at Tolland,-72.414389,41.871808
+CCNH,Yale Health In-Patient Care,"55 Lock Street, P.O. Box 208237",New Haven,NEW_HAVEN,CT,FALSE,FALSE,2,2,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,2019,Point,,-72.928332,41.31551

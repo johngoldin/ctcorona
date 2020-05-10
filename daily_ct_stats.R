@@ -1,5 +1,5 @@
 # New process for daily CT stats
-library(dplyr)
+#library(dplyr)
 library(tidyverse, quietly = TRUE)
 library(sf, quietly = TRUE)
 options(tigris_use_cache = TRUE)
@@ -152,6 +152,27 @@ if (!exists("dph_nursing_facilities")) {
            geocoded_column.coordinates)
   # save(dph_nursing_facilities, file = paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 }
+dph_nursing_homes <- read.socrata("https://data.ct.gov/resource/wyn3-qphu.json",
+                          app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>%
+  rename(date = date_last_updated, cases = residents_with_covid,
+         deaths = covid_19_associated_deaths_probable, beds = licensed_beds) %>%
+  mutate(date = as_date(date), cases = as.numeric(cases),
+         deaths = as.numeric(deaths),
+         beds = as.numeric(beds))
+dph_towns <- dph_towns %>%
+  left_join(dph_nursing_homes %>%
+              group_by(date, town) %>%
+              summarise(cases_nh = sum(cases, na.rm = TRUE), deaths_nh = sum(deaths, na.rm = TRUE)),
+            by = c("date", "town"))
+
+where_increase <- dph_towns %>% filter(!is.na(deaths_nh)) %>%
+  arrange(town, date) %>%
+  group_by(town) %>%
+  summarise(cases = cases - lag(cases), deaths = deaths - lag(deaths),
+            cases_nh = cases_nh - lag(cases_nh), deaths_nh = deaths_nh - lag(deaths_nh)) %>%
+  ungroup() %>%
+  mutate(cases_nh_incr = cases_nh / cases, deaths_nh_incr = deaths_nh / deaths)
 
 
 if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
