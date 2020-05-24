@@ -19,7 +19,7 @@ path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
 vars_65_plus <- paste0("B01001_0", c(20:25, 44:49))
 
-if (!exists("county_geometries")) load(paste0(path_to_ctcorona, "census_population.RData"))
+if (!exists("county_geometries")) load(paste0(path_to_ctcorona, "census_population.RData")) %>% print()
 if (!exists("county_geometries")) {
   county_geometries <- tigris::counties(state = "CT", cb = FALSE)
   census_population <- get_acs(geography = "county",
@@ -56,8 +56,10 @@ if (!exists("town_geometries")) {
                 filter(NAME != "County subdivisions not defined") %>%
                 select(GEOID, INTPTLAT, INTPTLON, geometry),
               by = "GEOID")
-  # save(county_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
+  # save(age_town_acs, file = paste0(path_to_ctcorona, "age_town_acs.RData"))
 }
+
+
 
 age_county_acs <- get_acs(geography = "county",  # for CT, that means towns
                           state = "CT",
@@ -239,7 +241,7 @@ exec_orders <- tibble(
   mutate(county = "Fairfield")
 
 # Setup week ranges starting with most recent week and working backward
-nweeks = 4
+nweeks = 7
 week_setup <- tibble(
   start_period = (max(dph_counties$date) + 1) - weeks(seq(nweeks, 1, -1)),
 ) %>%
