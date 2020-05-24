@@ -51,13 +51,13 @@ if (!exists("town_geometries")) {
               total_pop = max(summary_est),
               total_pop_moe = max(summary_moe)
     ) %>%
-    mutate(pct65plus = age65plus / total_pop) %>%
-    left_join(tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
+    mutate(pct65plus = age65plus / total_pop)
+  town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
                 filter(NAME != "County subdivisions not defined") %>%
-                select(GEOID, INTPTLAT, INTPTLON, geometry),
-              by = "GEOID")
-  # save(county_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
+    left_join(age_town_acs, by = "GEOID")
+  # save(county_geometries, town_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
 }
+# ggplot(data = town_geometries + geom_sf(aes(fill = pct65plus))
 
 age_county_acs <- get_acs(geography = "county",  # for CT, that means towns
                           state = "CT",
@@ -218,7 +218,7 @@ exec_orders <- tibble(
   mutate(county = "Fairfield")
 
 # Setup week ranges starting with most recent week and working backward
-nweeks = 4
+nweeks = 5
 week_setup <- tibble(
   start_period = (max(dph_counties$date) + 1) - weeks(seq(nweeks, 1, -1)),
 ) %>%
@@ -230,6 +230,14 @@ ct <- dph_counties %>%
   mutate(county = fct_reorder2(county, date, rcases)) %>%
   fuzzyjoin::interval_left_join(week_setup,
                                 by = c("date" = "start_period", "date" = "end_period"))
+town_history <- dph_towns %>%
+  left_join(week_setup, by = c("date" =  "end_period")) %>%
+  filter(!is.na(week)) %>%
+  left_join(town_geometries, by = "town")
+p <- ggplot(data = town_history) +
+  geom_sf(data = town_history, aes(fill = rnew_cases, geometry = geometry)) +
+  facet_wrap(~ week)
+
 
 save_county_levels <- levels(ct$county)
 
