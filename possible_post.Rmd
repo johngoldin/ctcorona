@@ -1,0 +1,107 @@
+---
+title: "version_2"
+author: "John Goldin"
+date: "5/16/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The hope is that this will grow into a replacement blog post for Connecticut Covid-19 stats, but baased
+on RMarkdown rather than simple markdown.
+
+
+Assumes all the info in daily_ct_stats.R is available.
+Using week_setup to get as-of dates,
+age_town_acs to get populaton and town geometries
+and dph_towns to get Covid-19 cases and deaths
+
+```{r setup_town_info}
+town_info <- dph_towns %>% 
+  left_join(age_town_acs, by = "town") %>% 
+  filter(date %in% week_setup$end_period)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r t, echo=FALSE}
+# note: need aes(geometry = geometry) because operation that turns sf object into tibble loses someting that specifies geometry column for ggplot
+p <- ggplot() + 
+  geom_sf(data = town_info, aes(geometry = geometry),
+  fill = "gray", colour = "darkgray", show.legend = FALSE) +
+  geom_sf(data = dph_pop, colour = "yellow", fill = NA) +
+  # geom_sf_text(data = county_centroid, aes(label = county), color = "yellow") +
+  coord_sf(datum = NA, label_axes = "----") +
+  xlab("") + ylab("") + theme_minimal() +
+  labs(title = "Connecticut Counties and Towns", 
+       subtitle = "county boundary in yellow",
+       caption = "Source: US Census, tidycensus package")  
+```
+
+```{r}
+county_centroid <- st_centroid(dph_pop) # use to place town labels
+county_map <- ggplot() +
+  geom_sf(data = dph_pop, aes(fill = cases_per_pop)) +
+  scale_fill_gradient(low = "white", high = "grey") +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", per_pop_label, " per 100K")), color = "black", size = 3) +
+  coord_sf(datum = NA, label_axes = "----") +
+  xlab("") + ylab("") + theme_minimal()  +
+  # theme(legend.position = "none") +
+  labs(title = "Cumulative Confirmed Cases by Connecticut County",
+       subtitle = "cases per 100K of population for most recent report date",
+       fill = "cases per 100K",
+       caption = "Source: US Census, tidycensus package")
+```
+
+
+```{r}
+ct <- ct %>% mutate(wday = factor(weekdays(date),
+                                  levels = c("Monday", "Tuesday",
+                                             "Wednesday", "Thursday", "Friday", "Saturday","Sunday")))
+p <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = date, y = new_cases)) +
+  geom_col(aes(fill = factor(wday))) + 
+  scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.9, option = "viridis")+ 
+  geom_line(aes(y = rnew_cases), size = 1) +
+  xlab(NULL) + ylab("New Confirmed Cases Per Day")
+
+p_deaths <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = date, y = new_deaths)) +
+  # geom_col(aes(fill = factor(wday))) +
+  # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.9, option = "viridis") +
+  geom_line(colour = "lightgreen", size = 0.2) +
+  labs(fill = "Day of Report") +
+  geom_line(aes(y = rnew_deaths), size = 1, colour = "darkgreen") +
+  xlab(NULL) + ylab("Covid19 Deaths Per Day") +
+  labs(title = "Connecticut Covid-19 Deaths Per Day", 
+       subtitle = "Trend line is Smoothed Over the Last Seven Days",
+       caption = "Source: US Census, tidycensus package") +
+  scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
+               date_breaks = "1 month", date_labels = "%B") +
+  # scale_y_log10() +
+  theme_minimal() 
+
+p_deaths_cases1 <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = date, y = new_deaths)) +
+  # geom_col(aes(fill = factor(wday))) + 
+  # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.9, option = "viridis") + 
+  geom_line(colour = "lightgreen", size = 0.2) +
+  labs(fill = "Day of Report") +
+  geom_line(aes(y = rnew_deaths), size = 1, colour = "darkgreen") +
+  xlab(NULL) + ylab("Covid19 Deaths Per Day") +
+  labs(title = "Connecticut Covid-19 Deaths Per Day", 
+       subtitle = "Trend line is Smoothed Over the Last Seven Days",
+       caption = "Source: US Census, tidycensus package") +
+  scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
+               date_breaks = "1 month", date_labels = "%B") +
+  geom_line(aes(y = new_cases), size = 0.2, colour = "lightblue") +
+  geom_line(aes(y = rnew_cases), size = 1, colour = "darkblue") +
+  scale_y_log10() +
+  theme_minimal()
+
+xx <- dph_total %>% select(date, rnew_cases, new_cases)  %>%  pivot_longer(cols = c("rnew_cases", "new_cases"), names_to = "cases") %>% 
+  full_join(
+dph_total %>% select(date, rnew_deaths, new_deaths)  %>%  pivot_longer(cols = c("rnew_deaths", "new_deaths"), names_to = "deaths"), by = "date"  )
+```
+
