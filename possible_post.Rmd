@@ -100,8 +100,22 @@ p_deaths_cases1 <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = d
   scale_y_log10() +
   theme_minimal()
 
-xx <- dph_total %>% select(date, rnew_cases, new_cases)  %>%  pivot_longer(cols = c("rnew_cases", "new_cases"), names_to = "cases") %>% 
-  full_join(
-dph_total %>% select(date, rnew_deaths, new_deaths)  %>%  pivot_longer(cols = c("rnew_deaths", "new_deaths"), names_to = "deaths"), by = "date"  )
+xx <- dph_total %>% select(date, cases = rnew_cases, deaths = rnew_deaths)  %>%  pivot_longer(cols = c("cases", "deaths"), names_to = "type", values_to = "rolling") %>% 
+  inner_join(
+    dph_total %>% select(date, cases = new_cases, deaths = new_deaths)  %>%
+      pivot_longer(cols = c("cases", "deaths"), 
+                   names_to = "type", values_to = "new"), 
+    by = c("date", "type")  ) %>%
+  ggplot(data = xx, aes(x = date, colour = type)) +
+  geom_line(aes(y = new), size = 0.1) +
+  geom_line(aes(y = rolling), size = 1) +
+  facet_wrap(~ type, scales = "free") +
+  scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
+               date_breaks = "1 month", date_labels = "%B") +
+  xlab(NULL) + ylab(NULL) +
+  labs(title = "Connecticut Covid-19 Cases and Deaths Per Day", 
+       subtitle = "Trend line is Smoothed Over the Last Seven Days",
+       caption = "Source: Connecticut Department of Public Health") +
+  theme_minimal()
 ```
 
