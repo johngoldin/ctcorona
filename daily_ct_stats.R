@@ -36,6 +36,21 @@ if (!exists("town_geometries")) {
   #                              state = "CT",
   #                              geometry = FALSE) %>%
   #   mutate(town = str_replace(NAME, " town, .* County, Connecticut", ""))
+  age_state_acs <- get_acs(geography = "state",
+                          state = "CT",
+                          # county = "New Haven",
+                          geometry = "FALSE", # no map at this time
+                          survey = "acs5",
+                          variables = vars_65_plus,
+                          summary_var = "B01001_001") %>%
+    filter(estimate > 0) %>%
+    group_by(GEOID) %>%
+    summarize(age65plus = sum(estimate),
+              age65plus_moe = moe_sum(moe, estimate),
+              total_pop = max(summary_est),
+              total_pop_moe = max(summary_moe)
+    ) %>%
+    mutate(pct65plus = age65plus / total_pop)
   age_town_acs <- get_acs(geography = "county subdivision",  # for CT, that means towns
                           state = "CT",
                           # county = "New Haven",
@@ -55,7 +70,7 @@ if (!exists("town_geometries")) {
   town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
                 filter(NAME != "County subdivisions not defined") %>%
     left_join(age_town_acs, by = "GEOID")
-  # save(county_geometries, town_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
+  # save(county_geometries, town_geometries, census_population, age_state_acs, file = paste0(path_to_ctcorona, "census_population.RData"))
 }
 # ggplot(data = town_geometries + geom_sf(aes(fill = pct65plus))
 
@@ -110,6 +125,7 @@ dph_counties <- dph_counties %>%
          rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
          new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
          rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+         current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
          rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 dph_counties <- dph_counties %>% ungroup()
 
@@ -127,6 +143,7 @@ dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
          rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
          new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
          rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+         current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
          rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 dph_towns <- dph_towns %>% ungroup()
 
@@ -136,6 +153,13 @@ dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
   mutate(date = as_date(date), cases = as.numeric(cases),
          deaths = as.numeric(deaths), hospital = as.numeric(hospitalizations)) %>%
   mutate_at(vars(starts_with("cases_")), as.numeric) %>%
+  mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
+         rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
+         new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
+         rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+         current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
+         current_per_100k =  (age_state_acs$total_pop[1] / 100000) / current_cases,
+         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_)) %>%
   select( -hospitalizations)
 
 if (!exists("dph_nursing_facilities")) if (file.exists(paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))) load(paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
@@ -153,7 +177,7 @@ if (!exists("dph_nursing_facilities")) {
   # save(dph_nursing_facilities, file = paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 }
 
-
+# NYT series may go back earlier than the state dataset
 if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
   bind_rows(
     nyt_series %>% filter(date < min(dph_total$date)) %>%
@@ -172,6 +196,7 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
          rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
          new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
          rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+         current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
          rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
@@ -229,7 +254,9 @@ week_setup <- tibble(
 ct <- dph_counties %>%
   mutate(county = fct_reorder2(county, date, rcases)) %>%
   fuzzyjoin::interval_left_join(week_setup,
-                                by = c("date" = "start_period", "date" = "end_period"))
+                                by = c("date" = "start_period", "date" = "end_period")) %>%
+  left_join(age_county_acs %>% ungroup() %>% select(county = COUNTY, total_pop, age65plus), by = "county") %>%
+  mutate(cases_per_100k =  current_cases /(total_pop / 100000))
 town_history <- dph_towns %>%
   left_join(week_setup, by = c("date" =  "end_period")) %>%
   filter(!is.na(week)) %>%
@@ -269,6 +296,11 @@ label_height_new_deaths <- function(county, date) {
   if (length(ht) == 0) ht <- 0.5
   return(ht)
 }
+ct <- ct %>%
+  mutate(county = factor(county,
+                         levels = c("Litchfield", "Hartford", "Tolland", "Windham", "Fairfield", "New Haven", "Middlesex", "New London")),
+         week = fct_rev(factor(week)))
+
 for_county_labels <- tibble(
   # date = date_range[seq(length(date_range) - 2 + 1, length(date_range) - 1 + 1 - length(unique(ct$county)), -1)],
   date = max(date_range),
@@ -454,10 +486,6 @@ county_map <- ggplot() +
        fill = "cases per 100K",
        caption = "Source: US Census, tidycensus package")
 
-ct <- ct %>%
-  mutate(county = factor(county,
-                         levels = c("Litchfield", "Hartford", "Tolland", "Windham", "Fairfield", "New Haven", "Middlesex", "New London")),
-         week = fct_rev(factor(week)))
 
 doubling_cases <- ct %>%
   filter(!is.na(week), cases > 0) %>%

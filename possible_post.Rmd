@@ -100,22 +100,78 @@ p_deaths_cases1 <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = d
   scale_y_log10() +
   theme_minimal()
 
-xx <- dph_total %>% select(date, cases = rnew_cases, deaths = rnew_deaths)  %>%  pivot_longer(cols = c("cases", "deaths"), names_to = "type", values_to = "rolling") %>% 
+p_state_new <- dph_total %>% select(date, cases = rnew_cases, deaths = rnew_deaths)  %>%  pivot_longer(cols = c("cases", "deaths"), names_to = "type", values_to = "rolling") %>% 
   inner_join(
     dph_total %>% select(date, cases = new_cases, deaths = new_deaths)  %>%
       pivot_longer(cols = c("cases", "deaths"), 
                    names_to = "type", values_to = "new"), 
-    by = c("date", "type")  ) %>%
-  ggplot(data = xx, aes(x = date, colour = type)) +
-  geom_line(aes(y = new), size = 0.1) +
+    by = c("date", "type")  ) %>% 
+  mutate(type = factor(type, levels = c("cases", "deaths"), 
+                       labels = c("New Confirmed Cases", "Covid-19 Deaths"))) %>% 
+  ggplot(aes(x = date, colour = type)) +
+  geom_line(aes(y = new), size = 0.2) +
   geom_line(aes(y = rolling), size = 1) +
   facet_wrap(~ type, scales = "free") +
-  scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
-               date_breaks = "1 month", date_labels = "%B") +
+  # scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
+  #              date_breaks = "1 month", date_labels = "%B") +
   xlab(NULL) + ylab(NULL) +
-  labs(title = "Connecticut Covid-19 Cases and Deaths Per Day", 
+  labs(title = "Connecticut Covid-19 New Cases and Deaths Per Day", 
        subtitle = "Trend line is Smoothed Over the Last Seven Days",
        caption = "Source: Connecticut Department of Public Health") +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "none", strip.text = element_text(size = 11))
+
+counties_new_data <- dph_counties %>% select(date, county, cases = rnew_cases, deaths = rnew_deaths)  %>%  
+  pivot_longer(cols = c("cases", "deaths"), names_to = "type", values_to = "rolling") %>% 
+  inner_join(
+    dph_counties %>% select(date, county, cases = new_cases, deaths = new_deaths)  %>%
+      pivot_longer(cols = c("cases", "deaths"), names_to = "type", values_to = "new"), 
+    by = c("county", "date", "type")  ) %>% 
+  mutate(type = factor(type, levels = c("cases", "deaths"), 
+                       labels = c("New Confirmed Cases", "Covid-19 Deaths"))) 
+aplot1 <- function(d, pick_counties) {
+  d %>% filter(county %in% pick_counties) %>% 
+  ggplot(aes(x = date, colour = type)) +
+  geom_line(aes(y = new), size = 0.2) +
+  geom_line(aes(y = rolling), size = 1) +
+  facet_wrap(county ~ type, scales = "free",nrow = 4) +
+  # scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
+  #              date_breaks = "1 month", date_labels = "%B") +
+  xlab(NULL) + ylab(NULL) +
+  labs(title = "Connecticut Covid-19 New Cases and Deaths Per Day", 
+       subtitle = "Trend line is Smoothed Over the Last Seven Days",
+       caption = "Source: Connecticut Department of Public Health") +
+  theme_minimal() +
+  theme(legend.position = "none", strip.text = element_text(size = 11))
+}
+p_counties_new1 <- aplot1(p_counties_new_data, pick_counties = c("New Haven", "Fairfield", "Hartford", "Litchfield"))
+p_counties_new2 <- aplot1(p_counties_new_data, pick_counties = c("Tolland", "New London", "Middlesex", "Windham"))
+
+
+p_counties_new2 <- counties_new_data %>%  
+  ggplot(aes(x = date, colour = county)) +
+  geom_line(aes(y = new), size = 0.2) +
+  geom_line(aes(y = rolling), size = 1) +
+  facet_wrap(~ type, scales = "free",nrow = 4) +
+  # scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
+  #              date_breaks = "1 month", date_labels = "%B") +
+  xlab(NULL) + ylab(NULL) +
+  labs(title = "Connecticut Covid-19 New Cases and Deaths Per Day", 
+       subtitle = "Trend line is Smoothed Over the Last Seven Days",
+       caption = "Source: Connecticut Department of Public Health") +
+  theme_minimal() +
+  theme(legend.position = "none", strip.text = element_text(size = 11))
+
+p_counties_current <- ct %>% 
+  ggplot(aes(x = date, colour = county)) +
+  geom_line(aes(y = cases_per_100k), size = 0.8) +
+  # scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
+  #              date_breaks = "1 month", date_labels = "%B") +
+  xlab(NULL) + ylab(NULL) +
+  labs(title = "Connecticut Covid-19 Active Confirmed Cases per 100K of Population", 
+       subtitle = "(Assumes cases remain active for two weeks.)",
+       caption = "Source: Connecticut Department of Public Health") +
+  theme_minimal() 
+
 ```
 

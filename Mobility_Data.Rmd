@@ -1,0 +1,34 @@
+---
+title: "Mobility Data"
+author: "John Goldin"
+date: "5/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Looking at Mobility Data
+
+I started with an article by [Nick Bailey](https://www.ubdc.ac.uk/about-ubdc/who-we-are/team-profiles/directors/nick-bailey/) that
+[directly compares Google and Apple mobility data](https://www.ubdc.ac.uk/news-media/2020/may/apples-and-pears-comparing-google-and-apple-mobility-data/). 
+([His R code](https://github.com/nick-bailey/Google-and-Apple-mobility-data/blob/master/Google%20and%20Apple%20-%20four%20cities.Rmd) is available on Github.)
+
+```{r cars}
+library(readr)
+google_mobility_report <- read_csv("https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv?cachebust=2dcf78defb92930a", 
+    col_types = cols(sub_region_1 = col_character(), 
+        sub_region_2 = col_character()))
+View(google_mobility_report)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
