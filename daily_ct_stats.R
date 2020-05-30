@@ -18,6 +18,12 @@ library(RcppRoll)
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
 vars_65_plus <- paste0("B01001_0", c(20:25, 44:49))
+vars_under_25 <- c(paste0("B01001_00", c(3:9)), paste0("B01001_0", c(10, 27:34)))
+vars_enrolled_student <- paste0("B14004_0", c("03", "08", "19", "24"))
+# B19013001 is median household income CPI adjusted dollars
+# B11001001 is total number of households
+
+vars_poverty <- "B17001002" # B17001001 is total
 
 if (!exists("county_geometries")) load(paste0(path_to_ctcorona, "census_population.RData"))
 if (!exists("county_geometries")) {
@@ -30,6 +36,32 @@ if (!exists("county_geometries")) {
   # save(county_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
 }
 if (!exists("town_geometries")) {
+  vars <- load_variables(2017, "acs5", cache = TRUE) %>%
+  mutate(table_id = str_sub(name, 1, 6),
+         # Race generally is in parentheses after the concept name.
+         # But for a few cases, something else is in parentheses first. So I
+         # am going to blank out that stuff and then assume whatever I find inside
+         # of parentheses is race.
+         concept = str_replace_all(concept,
+           c("\\(IN 2017 INFLATION-ADJUSTED DOLLARS\\)" = "",
+             "\\(EXCLUDING HOUSEHOLDERS, SPOUSES, AND UNMARRIED PARTNERS\\)" = "",
+             "\\(SSI\\)" = "",
+             "\\(INCLUDING LIVING ALONE\\)" = "",
+             "\\(IN MINUTES\\)" = "",
+             "\\(DOLLARS\\)" = "",
+             "\\(CT, ME, MA, MI, MN, NH, NJ, NY, PA, RI, VT, WI\\)" = "--CT, ME, MA, MI, MN, NH, NJ, NY, PA, RI, VT, WI--",
+             "\\(CAR, TRUCK, OR VAN\\)" = "--CAR, TRUCK, OR VAN--",
+             "\\(\\)" = ""
+         )),
+         race = str_extract(concept, "\\(.+\\)"),
+         race = str_replace(race, "\\(", ""),
+         race = str_replace(race, "\\)", ""))
+         # I should have been able to do this in one line, but it doesn't seem to work:
+         # race = str_extract(concept, "\\((.*?)\\)"))
+B17010_variables <- vars %>%
+  filter(table_id == "B17010", is.na(race)) %>%
+  pluck("name")
+
   # town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE)
   # census_population_town <- get_acs(geography = "county subdivision",
   #                              variables = "B01003_001",
@@ -69,6 +101,7 @@ if (!exists("town_geometries")) {
     mutate(pct65plus = age65plus / total_pop)
   town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
                 filter(NAME != "County subdivisions not defined") %>%
+    mutate(area =  st_area(geometry) / 2.59e+6) %>%
     left_join(age_town_acs, by = "GEOID")
   # save(county_geometries, town_geometries, census_population, age_state_acs, file = paste0(path_to_ctcorona, "census_population.RData"))
 }
@@ -202,6 +235,7 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
 
+save(dph_total, dph_towns, dph_counties, file = "dph_datasets.RData")
 
 last_date <- max(dph_total$date)
 usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")

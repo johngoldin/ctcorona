@@ -9,6 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(tidyverse)
+library(sparkline)
+library(kableExtra)
+```
+
 The hope is that this will grow into a replacement blog post for Connecticut Covid-19 stats, but baased
 on RMarkdown rather than simple markdown.
 
@@ -58,7 +64,7 @@ county_map <- ggplot() +
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 ct <- ct %>% mutate(wday = factor(weekdays(date),
                                   levels = c("Monday", "Tuesday",
                                              "Wednesday", "Thursday", "Friday", "Saturday","Sunday")))
@@ -173,5 +179,15 @@ p_counties_current <- ct %>%
        caption = "Source: Connecticut Department of Public Health") +
   theme_minimal() 
 
+
+```
+
+```{r sparkline_experiment}
+test <- town_info %>% 
+  filter(town %in% c("Guilford", "New Haven", "Madison"),
+         !is.na(rnew_cases))
+sparkline(test$rnew_cases[3])
+# sparkline(test$rnew_cases[2])
+# sparkline(test$rnew_cases[3])
 ```
 
