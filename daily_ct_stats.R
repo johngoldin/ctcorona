@@ -21,11 +21,11 @@ path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
 if (!exists("county_geometries")) load(paste0(path_to_ctcorona, "census_population.RData"))
 if (!exists("county_geometries")) {
   county_geometries <- tigris::counties(state = "CT", cb = FALSE)
-  census_population <- get_acs(geography = "county",
-                           variables = "B01003_001",
-                           state = "CT",
-                           geometry = TRUE) %>%
-    mutate(county = str_replace(NAME, " County, Connecticut", ""))
+  # census_population <- get_acs(geography = "county",
+  #                          variables = "B01003_001",
+  #                          state = "CT",
+  #                          geometry = TRUE) %>%
+  #   mutate(county = str_replace(NAME, " County, Connecticut", ""))
   # save(county_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
 }
 if (!exists("town_geometries")) {
@@ -54,93 +54,63 @@ if (!exists("town_geometries")) {
 # B17010_variables <- vars %>%
 #   filter(table_id == "B17010", is.na(race)) %>%
 #   pluck("name")
-  test_function <- function(df, var_name = item){
-    df %>%
-      mutate({{var_name}} := 1, "{{ var_name }}_two" := 2)
-  }
-  test_function(college_plus_state_acs, var_name = stuff)
-
-  # see this article to glue together var names: https://www.tidyverse.org/blog/2020/02/glue-strings-and-tidy-eval/
-  var_acs <- function(variables, var_for_summary, var_name = item, as_pct = TRUE, geography) {
-       get_acs(geography = geography,
-                             state = "CT",
-                             geometry = "FALSE", # no map at this time
-                             survey = "acs5",
-                             variables = variables,
-                             summary_var = var_for_summary) %>%
-      filter(estimate > 0) %>%
-      group_by(NAME, GEOID) %>%
-      summarize("{{ var_name }}" := sum(estimate),
-                moe := moe_sum(moe, estimate),
-                total_pop = max(summary_est),
-                total_pop_moe = max(summary_moe)
-      ) %>%
-     mutate(NAME = str_replace(NAME, " town, .* County, Connecticut", "")) %>%
-     mutate(NAME = str_replace(NAME, " County, Connecticut", "")) %>%
-     # mutate("{{var_name}}_pct" := {{ var_name }} / total_pop) %>%
-     mutate(item_pct := {{ var_name }} / total_pop,
-            item_pct_moe := moe_ratio({{var_name}}, total_pop, moe, total_pop_moe)) %>%
-      select(GEOID, NAME, {{var_name}}, moe, item_pct, item_pct_moe, total_pop) %>%
-      rename("{{var_name}}_moe" := moe,
-             "{{var_name}}_pct" := item_pct, "{{var_name}}_pct_moe" := item_pct_moe)
-  }
-  # test2 <- var_acs(variables = vars_65_plus, var_for_summary = "B01001_001", geography = "county", var_name = age_65_plus)
+  # test_function <- function(df, var_name = item){
+  #   df %>%
+  #     mutate({{var_name}} := 1, "{{ var_name }}_two" := 2)
+  # }
+  # test_function(college_plus_state_acs, var_name = stuff)
+  # test2 <- fetch_acs(variables = vars_65_plus, var_for_summary = "B01001_001", geography = "county", var_name = age_65_plus)
   # test <- get_acs(variables = vars_65_plus, geography = "county", survey = "acs5", geometry = FALSE, summary_var = "B01001_001")
-vars_65_plus <- paste0("B01001_0", c(20:25, 44:49))
-vars_under_25 <- c(paste0("B01001_00", c(3:9)), paste0("B01001_0", c(10, 27:34)))
-vars_enrolled_student <- paste0("B14004_0", c("03", "08", "19", "24"))
-# B19013001 is median household income CPI adjusted dollars
-# B11001001 is total number of households
-vars_college_plus <- c("B15003_022", "B15003_023", "B15003_024", "B15003_025") # total B15003_001   college or grad, 25 years and older
-get_acs(geography = "state",
-                             state = "CT",
-                             geometry = "FALSE", # no map at this time
-                             survey = "acs5",
-                             variables = "B17001_001",
-                             summary_var = NULL)
+  vars_65_plus <- paste0("B01001_0", c(20:25, 44:49))
+  vars_under_25 <- c(paste0("B01001_00", c(3:9)), paste0("B01001_0", c(10, 27:34)))
+  vars_enrolled_student <- paste0("B14004_0", c("03", "08", "19", "24"))
+  # B19013001 is median household income CPI adjusted dollars
+  # B11001001 is total number of households
+  vars_college_plus <- c("B15003_022", "B15003_023", "B15003_024", "B15003_025") # total B15003_001   college or grad, 25 years and older
+  vars_poverty <- "B17001_002" # "B17001_001" is total
+  source("R/fetch_acs.R")
 
-vars_poverty <- "B17001_002" # "B17001_001" is total
-  college_plus_state_acs <- var_acs(variables = vars_college_plus, var_for_summary = "B15003_001",
+  college_plus_state_acs <- fetch_acs(variables = vars_college_plus, var_for_summary = "B15003_001",
                            geography = "state", var_name = college_plus)
-  college_plus_county_acs <- var_acs(variables = vars_college_plus, var_for_summary = "B15003_001",
+  college_plus_county_acs <- fetch_acs(variables = vars_college_plus, var_for_summary = "B15003_001",
                            geography = "county", var_name = college_plus)
-  college_plus_town_acs <- var_acs(variables = vars_college_plus, var_for_summary = "B15003_001",
+  college_plus_town_acs <- fetch_acs(variables = vars_college_plus, var_for_summary = "B15003_001",
                            geography = "county subdivision", var_name = college_plus)
 
-  poverty_state_acs <- var_acs(variables = "B17001_002", var_for_summary = "B17001_001",
+  poverty_state_acs <- fetch_acs(variables = "B17001_002", var_for_summary = "B17001_001",
                            geography = "state", var_name = poverty)
-  poverty_county_acs <- var_acs(variables = "B17001_002", var_for_summary = "B17001_001",
+  poverty_county_acs <- fetch_acs(variables = "B17001_002", var_for_summary = "B17001_001",
                            geography = "county", var_name = poverty)
-  poverty_town_acs <- var_acs(variables = "B17001_002", var_for_summary = "B17001_001",
+  poverty_town_acs <- fetch_acs(variables = "B17001_002", var_for_summary = "B17001_001",
                            geography = "county subdivision", var_name = poverty)
 
-  hh_inc_state_acs <- var_acs(variables = "B19013_001", var_for_summary = "B19013_001",
+  hh_inc_state_acs <- fetch_acs(variables = "B19013_001", var_for_summary = "B19013_001",
                            geography = "state", var_name = hh_income) %>%
     select(-hh_income_pct, -hh_income_pct_moe, -total_pop)
-  hh_inc_county_acs <- var_acs(variables = "B19013_001", var_for_summary = "B19013_001",
+  hh_inc_county_acs <- fetch_acs(variables = "B19013_001", var_for_summary = "B19013_001",
                            geography = "county", var_name = hh_income)  %>%
     select(-hh_income_pct, -hh_income_pct_moe, -total_pop)
-  hh_inc_town_acs <- var_acs(variables = "B19013_001", var_for_summary = "B19013_001",
+  hh_inc_town_acs <- fetch_acs(variables = "B19013_001", var_for_summary = "B19013_001",
                            geography = "county subdivision", var_name = hh_income)  %>%
     select(-hh_income_pct, -hh_income_pct_moe, -total_pop)
-  old_65_state_acs <- var_acs(variables = vars_65_plus, var_for_summary = "B01001_001",
+  old_65_state_acs <- fetch_acs(variables = vars_65_plus, var_for_summary = "B01001_001",
                            geography = "state", var_name = age_65_plus)
-  old_65_county_acs <- var_acs(variables = vars_65_plus, var_for_summary = "B01001_001",
+  old_65_county_acs <- fetch_acs(variables = vars_65_plus, var_for_summary = "B01001_001",
                            geography = "county", var_name = age_65_plus)
-  old_65_town_acs <- var_acs(variables = vars_65_plus, var_for_summary = "B01001_001",
+  old_65_town_acs <- fetch_acs(variables = vars_65_plus, var_for_summary = "B01001_001",
                            geography = "county subdivision", var_name = age_65_plus)
-  young_state_acs <- var_acs(variables = vars_under_25, var_for_summary = "B01001_001",
+  young_state_acs <- fetch_acs(variables = vars_under_25, var_for_summary = "B01001_001",
                            geography = "state", var_name = under_25)
-  young_county_acs <- var_acs(variables = vars_under_25, var_for_summary = "B01001_001",
+  young_county_acs <- fetch_acs(variables = vars_under_25, var_for_summary = "B01001_001",
                            geography = "county", var_name = under_25)
-  young_town_acs <- var_acs(variables = vars_under_25, var_for_summary = "B01001_001",
+  young_town_acs <- fetch_acs(variables = vars_under_25, var_for_summary = "B01001_001",
                            geography = "county subdivision", var_name = under_25)
   # of population over 25, percent college degree or higher
-  college_state_acs <- var_acs(variables = vars_enrolled_student, var_for_summary = "B01001_001",
+  college_state_acs <- fetch_acs(variables = vars_enrolled_student, var_for_summary = "B01001_001",
                            geography = "state", var_name = coll_student)
-  college_county_acs <- var_acs(variables = vars_enrolled_student, var_for_summary = "B01001_001",
+  college_county_acs <- fetch_acs(variables = vars_enrolled_student, var_for_summary = "B01001_001",
                            geography = "county", var_name = coll_student)
-  college_town_acs <- var_acs(variables = vars_enrolled_student, var_for_summary = "B01001_001",
+  college_town_acs <- fetch_acs(variables = vars_enrolled_student, var_for_summary = "B01001_001",
                            geography = "county subdivision", var_name = coll_student)
   state_info <- college_plus_state_acs %>%
     select(-total_pop) %>%
@@ -178,16 +148,26 @@ vars_poverty <- "B17001_002" # "B17001_001" is total
               by = c("GEOID", "NAME")) %>%
     left_join(college_town_acs %>% select(-total_pop),
               by = c("GEOID", "NAME"))
-  ggplot(data = town_geometries, aes(x = density, total_pop)) + geom_text(aes(label = NAME))
-town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
-                filter(NAME != "County subdivisions not defined") %>%
-  select(-NAME) %>%
+  county_geometries <- tigris::counties(state = "CT", cb = FALSE) %>%
+    select(-NAME) %>%
+    left_join(county_info, by = "GEOID") %>%
+    rename(county = NAME) %>%
+    mutate(density = total_pop / (ALAND / 2589988.1103))
+  town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
+    filter(NAME != "County subdivisions not defined") %>%
+    select(-NAME) %>%
     left_join(town_info, by = "GEOID") %>%
     rename(town = NAME) %>%
-    mutate(density = total_pop / (ALAND / 2589988.1103))
-  # save(county_geometries, town_geometries, census_population, age_state_acs, file = paste0(path_to_ctcorona, "census_population.RData"))
+    mutate(density = total_pop / (ALAND / 2589988.1103)) %>%
+    left_join(county_geometries %>% as_tibble() %>% select(COUNTYFP, county), by = "COUNTYFP")
+  if (!("county" %in% names(town_info))) town_info <- town_info %>%
+    left_join(town_geometries %>% select(town, county) %>% as_tibble(), by = "town")
+  # ggplot(data = town_geometries, aes(x = density, total_pop)) + geom_text(aes(label = NAME))
+  # ggplot(data = town_geometries) + geom_sf(aes(fill = density)) + scale_fill_continuous(breaks = c(100, 250, 500, 1000, 1500, 2500, 5000, 7500, 10000))
+  # ggplot(data = town_geometries) + geom_density(aes(x = density))
+
+  # save(county_geometries, town_geometries, age_state_acs, town_info, county_info, state_info, file = paste0(path_to_ctcorona, "census_population.RData"))
 }
-# ggplot(data = town_geometries + geom_sf(aes(fill = pct65plus))
 
 
 
