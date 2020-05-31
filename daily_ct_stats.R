@@ -18,16 +18,8 @@ library(RcppRoll)
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
 
-if (!exists("county_geometries")) load(paste0(path_to_ctcorona, "census_population.RData"))
-if (!exists("county_geometries")) {
-  county_geometries <- tigris::counties(state = "CT", cb = FALSE)
-  # census_population <- get_acs(geography = "county",
-  #                          variables = "B01003_001",
-  #                          state = "CT",
-  #                          geometry = TRUE) %>%
-  #   mutate(county = str_replace(NAME, " County, Connecticut", ""))
-  # save(county_geometries, census_population, file = paste0(path_to_ctcorona, "census_population.RData"))
-}
+if (!exists("town_geometries") &
+    file.exists(paste0(path_to_ctcorona, "census_population.RData"))) load(paste0(path_to_ctcorona, "census_population.RData"))
 if (!exists("town_geometries")) {
 #   acs_vars <- load_variables(2017, "acs5", cache = TRUE) %>%
 #   mutate(table_id = str_sub(name, 1, 6),
@@ -83,7 +75,15 @@ if (!exists("town_geometries")) {
                            geography = "county", var_name = poverty)
   poverty_town_acs <- fetch_acs(variables = "B17001_002", var_for_summary = "B17001_001",
                            geography = "county subdivision", var_name = poverty)
-
+  family_inc_state_acs <- fetch_acs(variables = "B19113_001", var_for_summary = "B19113_001",
+                           geography = "state", var_name = family_income) %>%
+    select(-family_income_pct, -family_income_pct_moe, -total_pop)
+  family_inc_county_acs <- fetch_acs(variables = "B19113_001", var_for_summary = "B19113_001",
+                           geography = "county", var_name = family_income)  %>%
+    select(-family_income_pct, -family_income_pct_moe, -total_pop)
+  family_inc_town_acs <- fetch_acs(variables = "B19113_001", var_for_summary = "B19113_001",
+                           geography = "county subdivision", var_name = family_income)  %>%
+    select(-family_income_pct, -family_income_pct_moe, -total_pop)
   hh_inc_state_acs <- fetch_acs(variables = "B19013_001", var_for_summary = "B19013_001",
                            geography = "state", var_name = hh_income) %>%
     select(-hh_income_pct, -hh_income_pct_moe, -total_pop)
@@ -116,6 +116,8 @@ if (!exists("town_geometries")) {
     select(-total_pop) %>%
     left_join(poverty_state_acs %>% select(-total_pop),
               by = c("GEOID", "NAME")) %>%
+    left_join(family_inc_state_acs,
+              by = c("GEOID", "NAME")) %>%
     left_join(hh_inc_state_acs,
               by = c("GEOID", "NAME")) %>%
     left_join(old_65_state_acs,
@@ -127,6 +129,8 @@ if (!exists("town_geometries")) {
   county_info <- college_plus_county_acs %>%
     select(-total_pop) %>%
     left_join(poverty_county_acs %>% select(-total_pop),
+              by = c("GEOID", "NAME")) %>%
+    left_join(family_inc_county_acs,
               by = c("GEOID", "NAME")) %>%
     left_join(hh_inc_county_acs,
               by = c("GEOID", "NAME")) %>%
@@ -140,6 +144,8 @@ if (!exists("town_geometries")) {
     select(-total_pop) %>%
     left_join(poverty_town_acs %>% select(-total_pop),
               by = c("GEOID", "NAME")) %>%
+    left_join(family_inc_town_acs,
+              by = c("GEOID", "NAME")) %>%
     left_join(hh_inc_town_acs,
               by = c("GEOID", "NAME")) %>%
     left_join(old_65_town_acs,
@@ -150,27 +156,56 @@ if (!exists("town_geometries")) {
               by = c("GEOID", "NAME"))
   county_geometries <- tigris::counties(state = "CT", cb = FALSE) %>%
     select(-NAME) %>%
+    mutate(INTPTLAT = as.numeric(INTPTLAT), INTPTLON = as.numeric(INTPTLON)) %>%
     left_join(county_info, by = "GEOID") %>%
     rename(county = NAME) %>%
     mutate(density = total_pop / (ALAND / 2589988.1103))
   town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
     filter(NAME != "County subdivisions not defined") %>%
     select(-NAME) %>%
+    mutate(INTPTLAT = as.numeric(INTPTLAT), INTPTLON = as.numeric(INTPTLON)) %>%
     left_join(town_info, by = "GEOID") %>%
     rename(town = NAME) %>%
     mutate(density = total_pop / (ALAND / 2589988.1103)) %>%
     left_join(county_geometries %>% as_tibble() %>% select(COUNTYFP, county), by = "COUNTYFP")
   if (!("county" %in% names(town_info))) town_info <- town_info %>%
-    left_join(town_geometries %>% select(town, county) %>% as_tibble(), by = "town")
+    rename(town = NAME) %>%
+    left_join(town_geometries %>% as_tibble() %>% select(town, county), by = "town")
   # ggplot(data = town_geometries, aes(x = density, total_pop)) + geom_text(aes(label = NAME))
+  # p <- ggplot(data = town_geometries) + geom_sf(aes(fill = age_65_plus_pct)) + geom_sf(data = county_geometries, colour = "gray", fill = NA)
   # ggplot(data = town_geometries) + geom_sf(aes(fill = density)) + scale_fill_continuous(breaks = c(100, 250, 500, 1000, 1500, 2500, 5000, 7500, 10000))
   # ggplot(data = town_geometries) + geom_density(aes(x = density))
 
-  # save(county_geometries, town_geometries, age_state_acs, town_info, county_info, state_info, file = paste0(path_to_ctcorona, "census_population.RData"))
+  save(county_geometries, town_geometries, town_info, county_info, state_info, file = paste0(path_to_ctcorona, "census_population.RData"))
+  # load(paste0(path_to_ctcorona, "census_population.RData"))
 }
-
-
-
+add_names <- function(p, df, color = "darkgray", size = 3) {
+  p + geom_text(data = df,
+                aes(label = names, x = lon, y = lat), size = size, colour = color) +
+    xlab(NULL) + ylab(NULL) + coord_sf(datum = NA) + theme_minimal()
+}
+if (1 == 2) {
+  p_old <- ggplot(data = town_geometries) + geom_sf(aes(fill = age_65_plus_pct)) +
+    geom_sf(data = county_geometries, colour = "gray", fill = NA)
+  p_old <-add_names(p_old, df = town_geometries %>% filter(total_pop > 70000) %>%
+             select(names = town, lat = INTPTLAT, lon = INTPTLON) )
+  p_income <- ggplot(data = town_geometries) + geom_sf(aes(fill = family_income)) +
+    geom_sf(data = county_geometries, colour = "gray", fill = NA)
+  p_income <-add_names(p_income, df = town_geometries %>% filter(total_pop > 70000) %>%
+             select(names = town, lat = INTPTLAT, lon = INTPTLON) )
+  p_poverty <- ggplot(data = town_geometries) + geom_sf(aes(fill = poverty_pct)) +
+    geom_sf(data = county_geometries, colour = "gray", fill = NA)
+  p_poverty <-add_names(p_poverty, df = town_geometries %>% filter(total_pop > 70000) %>%
+             select(names = town, lat = INTPTLAT, lon = INTPTLON) )
+  p_college_plus <- ggplot(data = town_geometries) + geom_sf(aes(fill = college_plus_pct)) +
+    geom_sf(data = county_geometries, colour = "gray", fill = NA)
+  p_college_plus <-add_names(p_college_plus, df = town_geometries %>% filter(total_pop > 70000) %>%
+             select(names = town, lat = INTPTLAT, lon = INTPTLON) )
+  p_density <- ggplot(data = town_geometries) + geom_sf(aes(fill = density)) +
+    geom_sf(data = county_geometries, colour = "gray", fill = NA)
+  p_density <-add_names(p_density, df = town_geometries %>% filter(total_pop > 70000) %>%
+             select(names = town, lat = INTPTLAT, lon = INTPTLON) )
+}
 
 if (!exists("nyt_series")) load(paste0(path_to_ctcorona, "nyt_series.RData"))
 if (!exists("nyt_series")) {
