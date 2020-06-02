@@ -220,8 +220,14 @@ if (!exists("nyt_series")) {
 dph_counties <- read.socrata("https://data.ct.gov/resource/bfnu-rgqt.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
-  mutate(date = as_date(dateupdated), cases = as.numeric(cases),
-         deaths = as.numeric(deaths), hospital = as.numeric(hospitalization)) %>%
+  rename(cases = totalcases, deaths = totaldeaths) %>%
+  mutate(date = as_date(dateupdated),
+         cases = as.numeric(cases), deaths = as.numeric(deaths),
+         hospital = as.numeric(hospitalization),
+         confirmedcases = as.numeric(confirmedcases),
+         confirmeddeaths = as.numeric(confirmeddeaths),
+         probablecases = as.numeric(probablecases),
+         probabledeaths = as.numeric(probabledeaths)) %>%
   select(-dateupdated, -hospitalization)
 if (min(dph_counties$date) != ymd("2020-03-08")) dph_counties <- dph_counties %>%
   bind_rows(
@@ -249,10 +255,23 @@ dph_counties <- dph_counties %>% ungroup()
 dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
-  mutate(date = as_date(lastupdatedate), cases = as.numeric(confirmedcases),
-         deaths = as.numeric(deaths), caserate = as.numeric(caserate)) %>%
-  rename(per_100k = caserate) %>%
-  select(-lastupdatedate, -confirmedcases, -town_no) %>%
+  rename(cases = towntotalcases, deaths = towntotaldeaths,
+         confirmedcases = townconfirmedcases, confirmeddeaths = townconfirmeddeaths,
+         probablecases = townprobablecases, probabledeaths = townprobabledeaths) %>%
+  mutate(date = as_date(lastupdatedate),
+         cases = as.numeric(cases), deaths = as.numeric(deaths),
+         confirmedcases = as.numeric(confirmedcases),
+         confirmeddeaths = as.numeric(confirmeddeaths),
+         probablecases = as.numeric(probablecases),
+         probabledeaths = as.numeric(probabledeaths),
+         towncaserate = as.numeric(towncaserate),
+         peopletested = as.numeric(peopletested),
+         ratetested100k = as.numeric(ratetested100k), numberoftests = as.numeric(numberoftests),
+         numberofpositives = as.numeric(numberofpositives),
+         numberofnegatives = as.numeric(numberofnegatives),
+         numberofindeterminates = as.numeric(numberofindeterminates)) %>%
+  rename(per_100k = towncaserate) %>%
+  select(-lastupdatedate,  -town_no) %>%
   arrange(town, date) %>%
   group_by(town) %>%
   mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
@@ -266,18 +285,24 @@ dph_towns <- dph_towns %>% ungroup()
 dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
-  mutate(date = as_date(date), cases = as.numeric(cases),
-         deaths = as.numeric(deaths), hospital = as.numeric(hospitalizations)) %>%
-  mutate_at(vars(starts_with("cases_")), as.numeric) %>%
+  rename(cases = totalcases, deaths = totaldeaths,
+         hospital = hospitalizedcases) %>%
+  mutate(date = as_date(date),
+         cases = as.numeric(cases), deaths = as.numeric(deaths),
+         covid_19_pcr_tests_reported = as.numeric(covid_19_pcr_tests_reported),
+         hospital = as.numeric(hospital),
+         confirmedcases = as.numeric(confirmedcases),
+         confirmeddeaths = as.numeric(confirmeddeaths),
+         probablecases = as.numeric(probablecases),
+         probabledeaths = as.numeric(probabledeaths)) %>%
+   mutate_at(vars(starts_with("cases_")), as.numeric) %>%
   mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
          rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
          new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
          rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
          current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
          current_per_100k =  (age_state_acs$total_pop[1] / 100000) / current_cases,
-         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_)) %>%
-  select( -hospitalizations)
-
+         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 if (!exists("dph_nursing_facilities")) if (file.exists(paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))) load(paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 if (!exists("dph_nursing_facilities")) {
   dph_nursing_facilities <- read.socrata("https://data.ct.gov/resource/rm6f-b9qj.json",
@@ -289,7 +314,9 @@ if (!exists("dph_nursing_facilities")) {
            licensed_rhns_beds, licensed_rhns_beds_occupied,
            X_18:unknown_age, male, female, unknown_gender,
            white:other_or_unknown, reporting_year, geocoded_column.type,
-           geocoded_column.coordinates)
+           geocoded_column.coordinates,
+           ct_full_credential_code, ct_credential_number,
+           rhns_room_rate_private_1_bed, rhns_room_rate_semi_private_2_beds)
   # save(dph_nursing_facilities, file = paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 }
 
@@ -329,17 +356,17 @@ usethis::ui_info("Confirmed hospitalizations: {usethis::ui_value(dph_total$hospi
 dph_age <- read.socrata("https://data.ct.gov/resource/ypz6-8qyf.json",
                          app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
+  rename(cases = totalcases, deaths = totaldeaths, per_100k = totalcaserate) %>%
   mutate(date = as_date(dateupdated), cases = as.numeric(cases),
-         deaths = as.numeric(deaths), rate = as.numeric(rate)) %>%
-         rename(per_100k = rate) %>%
+         deaths = as.numeric(deaths)) %>%
   select(-dateupdated)
 
 dph_gender <- read.socrata("https://data.ct.gov/resource/qa53-fghg.json",
                        app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
+  rename(cases = totalcases, deaths = totaldeaths, per_100k = totalcaserate) %>%
   mutate(date = as_date(dateupdated), cases = as.numeric(cases),
-         deaths = as.numeric(deaths), rate = as.numeric(rate)) %>%
-  rename(per_100k = rate) %>%
+         deaths = as.numeric(deaths)) %>%
   select(-dateupdated)
 
 if ((max(dph_total$date) != max(dph_counties$date)) |

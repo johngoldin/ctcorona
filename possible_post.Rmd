@@ -24,9 +24,12 @@ Using week_setup to get as-of dates,
 age_town_acs to get populaton and town geometries
 and dph_towns to get Covid-19 cases and deaths
 
+
+
+
 ```{r setup_town_info}
-town_info <- dph_towns %>% 
-  left_join(age_town_acs, by = "town") %>% 
+town_info_plus <- town_info %>% 
+  left_join(dph_towns, by = "town") %>% 
   filter(date %in% week_setup$end_period)
 ```
 
@@ -178,16 +181,22 @@ p_counties_current <- ct %>%
        subtitle = "(Assumes cases remain active for two weeks.)",
        caption = "Source: Connecticut Department of Public Health") +
   theme_minimal() 
-
-
 ```
 
+
+
 ```{r sparkline_experiment}
-test <- town_info %>% 
+test <- town_info_plus %>% 
   filter(town %in% c("Guilford", "New Haven", "Madison"),
          !is.na(rnew_cases))
 sparkline(test$rnew_cases[3])
 # sparkline(test$rnew_cases[2])
 # sparkline(test$rnew_cases[3])
 ```
+
+
+```{r}
+
+```
+
 

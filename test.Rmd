@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-```{r, echo = FALSE}
+```{r, echo = FALSE, message = FALSE}
 library(tidyverse)
 library(sparkline)
 library(kableExtra)
@@ -57,7 +57,7 @@ test <- town_info %>%
   group_by(town) %>% 
   summarise(sparks = spk_chr(rnew_cases)) %>% 
   formattable::format_table(
-    x = .,
+    # x = .,
     formatters = list(
       align=c("l")
     )
@@ -97,15 +97,16 @@ test <- town_info %>%
          !is.na(rnew_cases)) %>% 
   group_by(town) %>% 
   summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
+            
     `daily cases` = spk_chr(rnew_cases)) %>% 
   formattable::format_table(
-    x = .,
-    formatters = list(
-      align=c("l")
-    ), align = c("l", "r", "l")
+    # x = .,
+    # formatters = list(align=c("l")), 
+    format = "html",
+    align = c("c", "r", "l")
   ) %>%
   # kable_styling("striped", full_width = F) %>%
-  kable_styling(full_width = F) %>%
+  # kable_styling(full_width = F) %>%
   # group_rows("group1", 1, 2) %>%
   # group_rows("group1", 1, 2) %>%
   # group_rows("group2", 3,3) %>%
