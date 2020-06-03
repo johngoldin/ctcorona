@@ -17,6 +17,10 @@ library(RcppRoll)
 
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
+# from https://www.ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf
+# The Changing Demographics of Connecticut — 1990 to 2000. by Center for Population Research  May. 31, 2004
+Five_Connecticuts <- read_delim("Five_Connecticuts.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+
 
 if (!exists("town_geometries") &
     file.exists(paste0(path_to_ctcorona, "census_population.RData"))) load(paste0(path_to_ctcorona, "census_population.RData"))
@@ -139,7 +143,18 @@ if (!exists("town_geometries")) {
     left_join(young_county_acs %>% select(-total_pop),
               by = c("GEOID", "NAME")) %>%
     left_join(college_county_acs %>% select(-total_pop),
-              by = c("GEOID", "NAME"))
+              by = c("GEOID", "NAME")) %>%
+    rename(county = NAME)
+  # do town and county geometries here because I need it to fetch county name
+  county_geometries <- tigris::counties(state = "CT", cb = FALSE) %>%
+    select(-NAME) %>%
+    mutate(INTPTLAT = as.numeric(INTPTLAT), INTPTLON = as.numeric(INTPTLON)) %>%
+    left_join(county_info, by = "GEOID") %>%
+    mutate(density = total_pop / (ALAND / 2589988.1103))
+  town_geometries_save <- tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
+    filter(NAME != "County subdivisions not defined") %>%
+    mutate(INTPTLAT = as.numeric(INTPTLAT), INTPTLON = as.numeric(INTPTLON)) %>%
+    left_join(county_geometries %>% as_tibble() %>% select(COUNTYFP, county), by = "COUNTYFP")
   town_info <- college_plus_town_acs %>%
     select(-total_pop) %>%
     left_join(poverty_town_acs %>% select(-total_pop),
@@ -153,28 +168,16 @@ if (!exists("town_geometries")) {
     left_join(young_town_acs %>% select(-total_pop),
               by = c("GEOID", "NAME")) %>%
     left_join(college_town_acs %>% select(-total_pop),
-              by = c("GEOID", "NAME"))
-  county_geometries <- tigris::counties(state = "CT", cb = FALSE) %>%
-    select(-NAME) %>%
-    mutate(INTPTLAT = as.numeric(INTPTLAT), INTPTLON = as.numeric(INTPTLON)) %>%
-    left_join(county_info, by = "GEOID") %>%
-    rename(county = NAME) %>%
-    mutate(density = total_pop / (ALAND / 2589988.1103))
-  town_geometries <- tigris::county_subdivisions(state = "CT", cb = FALSE) %>%
-    filter(NAME != "County subdivisions not defined") %>%
-    select(-NAME) %>%
-    mutate(INTPTLAT = as.numeric(INTPTLAT), INTPTLON = as.numeric(INTPTLON)) %>%
-    left_join(town_info, by = "GEOID") %>%
-    rename(town = NAME) %>%
+              by = c("GEOID", "NAME")) %>%
+    left_join(Five_Connecticuts, by = c("NAME" = "town")) %>%
+    left_join(town_geometries_save %>% as_tibble() %>% select(NAME, county, ALAND), by = "NAME") %>%
     mutate(density = total_pop / (ALAND / 2589988.1103)) %>%
-    left_join(county_geometries %>% as_tibble() %>% select(COUNTYFP, county), by = "COUNTYFP")
-  if (!("county" %in% names(town_info))) town_info <- town_info %>%
-    rename(town = NAME) %>%
-    left_join(town_geometries %>% as_tibble() %>% select(town, county), by = "town")
-  # ggplot(data = town_geometries, aes(x = density, total_pop)) + geom_text(aes(label = NAME))
-  # p <- ggplot(data = town_geometries) + geom_sf(aes(fill = age_65_plus_pct)) + geom_sf(data = county_geometries, colour = "gray", fill = NA)
-  # ggplot(data = town_geometries) + geom_sf(aes(fill = density)) + scale_fill_continuous(breaks = c(100, 250, 500, 1000, 1500, 2500, 5000, 7500, 10000))
-  # ggplot(data = town_geometries) + geom_density(aes(x = density))
+    rename(town = NAME)
+
+  town_geometries <- town_geometries_save %>%
+    select(-NAME) %>%
+    left_join(town_info, by = "GEOID")
+  town_categories <- town_info %>% group_by(county, category) %>%
 
   save(county_geometries, town_geometries, town_info, county_info, state_info, file = paste0(path_to_ctcorona, "census_population.RData"))
   # load(paste0(path_to_ctcorona, "census_population.RData"))
@@ -319,6 +322,32 @@ if (!exists("dph_nursing_facilities")) {
            rhns_room_rate_private_1_bed, rhns_room_rate_semi_private_2_beds)
   # save(dph_nursing_facilities, file = paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 }
+
+# dph_nursing_cases has one row per nursing home per date of nursing home report
+dph_nursing_cases <- read.socrata("https://data.ct.gov/resource/wyn3-qphu.json",
+                                  app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>%
+  mutate(date = as_date(date_last_updated), nh_cases = as.numeric(residents_with_covid),
+                        licensed_beds = as.numeric(licensed_beds),
+                        lab_confirmed = as.numeric(covid_19_associated_lab_confirmed),
+                        nh_deaths = as.numeric(covid_19_associated_deaths_probable)) %>%
+  select(-date_last_updated, -covid_19_associated_lab_confirmed, -covid_19_associated_deaths_probable) %>%
+  mutate(nh_cases = ifelse(is.na(nh_cases), 0, nh_cases),
+         nh_deaths = ifelse(is.na(nh_deaths), 0, nh_deaths))
+# town_with_nursing is dph_towns but only with the same dates as used for
+# the nursing home reports. Idea is to be able to remove nursing homes from town data
+town_with_nursing <- dph_towns %>%
+  filter(date %in% unique(dph_nursing_cases$date)) %>%
+  left_join(dph_nursing_cases %>% group_by(town, date) %>%
+              summarise(nh_cases = sum(nh_cases), nh_deaths = sum(nh_deaths), beds = sum(licensed_beds)),
+            by = c("date", "town")) %>%
+  left_join(town_info %>% select(town, total_pop, age_65_plus, age_65_plus_pct, category, county), by = "town") %>%
+  mutate(nh_cases = ifelse(is.na(nh_cases), 0, nh_cases),
+         nh_deaths = ifelse(is.na(nh_deaths), 0, nh_deaths)) %>%
+  mutate(nh_death_pct = if_else(deaths > 0, nh_deaths / deaths, NA_real_)) %>%
+  arrange(desc(nh_death_pct))
+
+
 
 # NYT series may go back earlier than the state dataset
 if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%

@@ -1,0 +1,137 @@
+---
+title: "test"
+author: "John Goldin"
+date: "5/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(sparkline)
+library(kableExtra)
+library(formattable)
+```
+```{r setup_town_info, echo = FALSE}
+load("dph_datasets.RData")
+
+town_info <- dph_towns 
+```
+
+Here is some text.
+
+
+```{r sparkline_experiment, results = "asis", eval = FALSE, echo = FALSE}
+test <- town_info %>% 
+  filter(town %in% c("Guilford", "New Haven", "Madison"),
+         !is.na(rnew_cases)) %>% 
+  group_by(town) %>% 
+  summarise(sparks = spk_chr(rnew_cases)) %>% 
+  # formattable::formattable() %>% 
+  # formattable::as.htmlwidget() %>% 
+  sparkline::spk_add_deps()
+
+data.frame(a = c("A", "B"), 
+           b = c(1, 2), 
+           c = c(sparkline::spk_chr(rnorm(10)), sparkline::spk_chr(rnorm(10), width = 100)), 
+           stringsAsFactors = FALSE) %>% 
+  formattable::formattable() %>% 
+  formattable::as.htmlwidget() %>% 
+  sparkline::spk_add_deps()
+
+
+df2 %>%
+  kable("html", caption="Title", escape=T) %>% 
+  kable_styling("striped", full_width = F) %>%
+  # group_rows("group1", 1, 2) %>%
+  # group_rows("group2", 3,3) %>% 
+  formattable::formattable(align=c("l")) %>% 
+  as.htmlwidget() %>% 
+  spk_add_deps()
+
+test <- town_info %>% 
+  filter(town %in% c("Guilford", "New Haven", "Madison"),
+         !is.na(rnew_cases)) %>% 
+  group_by(town) %>% 
+  summarise(sparks = spk_chr(rnew_cases)) %>% 
+  formattable::format_table(
+    # x = .,
+    formatters = list(
+      align=c("l")
+    )
+  ) %>%
+  kable_styling("striped", full_width = F) %>%
+  # group_rows("group1", 1, 2) %>%
+  # group_rows("group2", 3,3) %>%
+  htmltools::HTML() %>%
+  shiny::div() %>%
+  sparkline::spk_add_deps()
+
+df2 %>%
+formattable::format_table(
+  x = .,
+  formatters = list(
+    align=c("l")
+  )
+) %>%
+  kable_styling("striped", full_width = F) %>%
+  group_rows("group1", 1, 2) %>%
+  group_rows("group2", 3,3) %>%
+  htmltools::HTML() %>%
+  shiny::div() %>%
+  sparkline::spk_add_deps()
+
+```
+
+Here is some more text:
+r sparkline(test$rnew_cases[test$town == "Guilford"])
+More text here.
+
+```{r, echo = FALSE, results = "asis"}
+# based on https://stackoverflow.com/questions/54244718/combining-sparkline-in-kableextra-table
+county_sparklines <- dph_counties %>% 
+  group_by(county) %>% 
+  summarise(`county cases` = spk_chr(rnew_cases),
+            `county deaths` = spk_chr(rnew_deaths))
+test <- dph_towns %>% 
+  filter(town %in% c("Guilford", "New Haven", "Madison", "Hartford", "Bridgeport",
+                     "Westport", "Branford", "Hamden"),
+         !is.na(rnew_cases)) %>% 
+  group_by(town) %>% 
+  summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
+            `cases trend` = spk_chr(rnew_cases)) #%>% 
+  left_join(town_info %>% select(town, county, category, total_pop), by = "town")  %>%
+  left_join(county_sparklines, by = "county") %>% 
+  select(town, county, `cases trend`)
+test2 <- test %>% 
+  formattable::format_table(
+    # x = .,
+    formatters = list(align=c("l")),
+    format = "html",
+    align = c("c", "r", "l")
+  ) %>%
+  # kable_styling("striped", full_width = F) %>%
+  # kable_styling(full_width = F) %>%
+  # group_rows("group1", 1, 2) %>%
+  # group_rows("group1", 1, 2) %>%
+  # group_rows("group2", 3,3) %>%
+  htmltools::HTML() %>%
+  shiny::div() %>%
+  sparkline::spk_add_deps()
+View(test2)
+test2
+
+# town_info %>% 
+#   filter(town %in% c("Guilford", "New Haven", "Madison", "Hartford", "Bridgeport",
+#                      "Westport", "Branford", "Hamden"),
+#          !is.na(rnew_cases)) %>% 
+#   group_by(town) %>% 
+#   summarise(`daily cases` = spk_chr(rnew_cases)) %>% 
+#   formattable::formattable(align=c("l")) %>% 
+#   as.htmlwidget() %>% 
+#   spk_add_deps()
+```
+
+
