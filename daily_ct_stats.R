@@ -276,6 +276,7 @@ dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
   rename(per_100k = towncaserate) %>%
   select(-lastupdatedate,  -town_no) %>%
   arrange(town, date) %>%
+  left_join(town_info %>% select(town, county, category, total_pop)) %>%
   group_by(town) %>%
   mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
          rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
@@ -341,10 +342,10 @@ town_with_nursing <- dph_towns %>%
   left_join(dph_nursing_cases %>% group_by(town, date) %>%
               summarise(nh_cases = sum(nh_cases), nh_deaths = sum(nh_deaths), beds = sum(licensed_beds)),
             by = c("date", "town")) %>%
-  left_join(town_info %>% select(town, total_pop, age_65_plus, age_65_plus_pct, category, county), by = "town") %>%
+  left_join(town_info %>% select(town, age_65_plus, age_65_plus_pct), by = "town") %>%
   mutate(nh_cases = ifelse(is.na(nh_cases), 0, nh_cases),
          nh_deaths = ifelse(is.na(nh_deaths), 0, nh_deaths)) %>%
-  mutate(nh_death_pct = if_else(deaths > 0, nh_deaths / deaths, NA_real_)) %>%
+  mutate(nh_death_pct = if_else(deaths > 0, nh_deaths / deaths, NA_real_) %>% round(3)) %>%
   arrange(desc(nh_death_pct))
 
 
@@ -374,7 +375,7 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
 
-save(dph_total, dph_towns, dph_counties, file = "dph_datasets.RData")
+save(dph_total, dph_towns, dph_counties, dph_nursing_cases, town_with_nursing, file = "dph_datasets.RData")
 
 last_date <- max(dph_total$date)
 usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")

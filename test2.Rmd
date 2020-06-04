@@ -1,7 +1,7 @@
 ---
-title: "test"
+title: "Exploring Covid-19 Trends by Town"
 author: "John Goldin"
-date: "5/29/2020"
+date: "6/3/2020"
 output: html_document
 ---
 
@@ -15,102 +15,57 @@ library(kableExtra)
 library(formattable)
 ```
 ```{r setup_town_info, echo = FALSE}
-load("dph_datasets.RData")
-
-town_info <- dph_towns 
+path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
+path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
+load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+load(paste0(path_to_ctcorona, "census_population.RData"))
 ```
 
-Here is some text.
+This table summarizes trends in towns with a population greater than 14,000. It's sorted by county and by category of town as
+developed in the report [The Five Connecticuts](https://ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf).
 
+For each town it shows the population, the largest average number of daily new cases
+(based on rolling 14 day average), and the percentage of deaths
+attributed to nursing home residents. 
 
-```{r sparkline_experiment, results = "asis", eval = FALSE, echo = FALSE}
-test <- town_info %>% 
-  filter(town %in% c("Guilford", "New Haven", "Madison"),
-         !is.na(rnew_cases)) %>% 
-  group_by(town) %>% 
-  summarise(sparks = spk_chr(rnew_cases)) %>% 
-  # formattable::formattable() %>% 
-  # formattable::as.htmlwidget() %>% 
-  sparkline::spk_add_deps()
+Next there are a series of [sparklines](https://en.wikipedia.org/wiki/Sparkline)
+that show the trend in daily new cases and daily deaths (based on 
+14 day moving average) and the same for the county containing that
+town. 
 
-data.frame(a = c("A", "B"), 
-           b = c(1, 2), 
-           c = c(sparkline::spk_chr(rnorm(10)), sparkline::spk_chr(rnorm(10), width = 100)), 
-           stringsAsFactors = FALSE) %>% 
-  formattable::formattable() %>% 
-  formattable::as.htmlwidget() %>% 
-  sparkline::spk_add_deps()
+The goal is to try to quickly scan the towns looking for patterns.
 
-
-df2 %>%
-  kable("html", caption="Title", escape=T) %>% 
-  kable_styling("striped", full_width = F) %>%
-  # group_rows("group1", 1, 2) %>%
-  # group_rows("group2", 3,3) %>% 
-  formattable::formattable(align=c("l")) %>% 
-  as.htmlwidget() %>% 
-  spk_add_deps()
-
-test <- town_info %>% 
-  filter(town %in% c("Guilford", "New Haven", "Madison"),
-         !is.na(rnew_cases)) %>% 
-  group_by(town) %>% 
-  summarise(sparks = spk_chr(rnew_cases)) %>% 
-  formattable::format_table(
-    # x = .,
-    formatters = list(
-      align=c("l")
-    )
-  ) %>%
-  kable_styling("striped", full_width = F) %>%
-  # group_rows("group1", 1, 2) %>%
-  # group_rows("group2", 3,3) %>%
-  htmltools::HTML() %>%
-  shiny::div() %>%
-  sparkline::spk_add_deps()
-
-df2 %>%
-formattable::format_table(
-  x = .,
-  formatters = list(
-    align=c("l")
-  )
-) %>%
-  kable_styling("striped", full_width = F) %>%
-  group_rows("group1", 1, 2) %>%
-  group_rows("group2", 3,3) %>%
-  htmltools::HTML() %>%
-  shiny::div() %>%
-  sparkline::spk_add_deps()
-
-```
-
-Here is some more text:
-r sparkline(test$rnew_cases[test$town == "Guilford"])
-More text here.
 
 ```{r, echo = FALSE, results = "asis"}
+# THE ORIGINAL VERSION
 # based on https://stackoverflow.com/questions/54244718/combining-sparkline-in-kableextra-table
+# jQuery sparklines https://omnipotent.net/jquery.sparkline/#s-docs
 county_sparklines <- dph_counties %>% 
   group_by(county) %>% 
   summarise(`county cases` = spk_chr(rnew_cases),
-            `county deaths` = spk_chr(rnew_deaths))
-test <- dph_towns %>% 
-  filter(town %in% c("Guilford", "New Haven", "Madison", "Hartford", "Bridgeport",
-                     "Westport", "Branford", "Hamden"),
-         !is.na(rnew_cases)) %>% 
-  group_by(town) %>% 
-  summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
-            `cases trend` = spk_chr(rnew_cases)) #%>% 
-  left_join(town_info %>% select(town, county, category, total_pop), by = "town")  %>%
+            `county deaths` = spk_chr(rnew_deaths), .groups = "drop")
+test <- dph_towns %>%
+  filter(total_pop > 14000,
+         !is.na(rnew_cases))# %>%
+test <- test %>% 
+  # left_join(town_info %>% select(county, category, town)) %>% 
+  group_by(county, category, town) %>% 
+  # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
+  summarise(`max cases` = max(rnew_cases) %>% round(1),
+    `town cases` = spk_chr(rnew_cases),
+    `town deaths` = spk_chr(rnew_deaths), .groups = "drop") %>% 
   left_join(county_sparklines, by = "county") %>% 
-  select(town, county, `cases trend`)
-test2 <- test %>% 
+  left_join(town_info %>% select(town, total_pop), by = "town") %>% 
+  left_join(town_with_nursing %>% 
+              filter(date == max(date)) %>% 
+              select(town, nh_death_pct), by = "town") %>% 
+  select(town, category, county, total_pop, nh_death_pct, `max cases`, `town cases`,
+         `town deaths`, `county cases`, `county deaths`) %>% 
   formattable::format_table(
     # x = .,
-    formatters = list(align=c("l")),
+    # formatters = list(align=c("l")),
     format = "html",
-    align = c("c", "r", "l")
+    align = c("l", "l", "l", "l", "c", "c", "c", "c")
   ) %>%
   # kable_styling("striped", full_width = F) %>%
   # kable_styling(full_width = F) %>%
@@ -120,18 +75,9 @@ test2 <- test %>%
   htmltools::HTML() %>%
   shiny::div() %>%
   sparkline::spk_add_deps()
-View(test2)
-test2
-
-# town_info %>% 
-#   filter(town %in% c("Guilford", "New Haven", "Madison", "Hartford", "Bridgeport",
-#                      "Westport", "Branford", "Hamden"),
-#          !is.na(rnew_cases)) %>% 
-#   group_by(town) %>% 
-#   summarise(`daily cases` = spk_chr(rnew_cases)) %>% 
-#   formattable::formattable(align=c("l")) %>% 
-#   as.htmlwidget() %>% 
-#   spk_add_deps()
+test
 ```
+
+
 
 
