@@ -51,9 +51,11 @@ test <- test %>%
   # left_join(town_info %>% select(county, category, town)) %>% 
   group_by(county, category, town) %>% 
   # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
-  summarise(`max cases` = max(rnew_cases) %>% round(1),
-    `town cases` = spk_chr(rnew_cases),
-    `town deaths` = spk_chr(rnew_deaths), .groups = "drop") %>% 
+  summarise(`max cases` = (max(rnew_cases_per1k, na.rm = TRUE) %>% round(4)),
+    `town cases` = spk_chr(rnew_cases, chartRangeMin = 0, 
+                           chartRangeMax = max(rnew_cases_per1k, na.rm = TRUE)),
+    `town deaths` = spk_chr(rnew_deaths, chartRangeMin = 0, 
+                           chartRangeMax = max(rnew_deaths_per1k, na.rm = TRUE)), .groups = "drop") %>% 
   left_join(county_sparklines, by = "county") %>% 
   left_join(town_info %>% select(town, total_pop), by = "town") %>% 
   left_join(town_with_nursing %>% 

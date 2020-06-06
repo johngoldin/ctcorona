@@ -243,15 +243,19 @@ if ((dph_counties %>% count(county, date) %>% filter(n > 1) %>% nrow()) > 0) use
 
 # at this point we should have full
 # do rolling average
+print(names(dph_counties))
 dph_counties <- dph_counties %>%
   arrange(county, date) %>%
   group_by(county) %>%
+  left_join(county_info %>% select(county, total_pop), by = "county") %>%
   mutate(rcases = roll_mean(cases, 7, align = "right", fill = NA_real_),
          rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
          new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
          rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
          current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
-         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
+         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_),
+         rnew_cases_per1k = rnew_cases / (total_pop / 1000),
+         rnew_deaths_per1k = rnew_deaths / (total_pop / 1000))
 dph_counties <- dph_counties %>% ungroup()
 
 
@@ -283,7 +287,9 @@ dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
          new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
          rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
          current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
-         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
+         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_),
+         rnew_cases_per1k = rnew_cases / (total_pop / 1000),
+         rnew_deaths_per1k = rnew_deaths / (total_pop / 1000))
 dph_towns <- dph_towns %>% ungroup()
 
 dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
@@ -305,8 +311,10 @@ dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
          new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
          rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
          current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
-         current_per_100k =  (age_state_acs$total_pop[1] / 100000) / current_cases,
-         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
+         current_per_100k =  (state_info$total_pop[1] / 100000) / current_cases,
+         rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_),
+         rnew_cases_per1k = rnew_cases / (state_info$total_pop[1] / 1000),
+         rnew_deaths_per1k = rnew_deaths / (state_info$total_pop[1] / 1000))
 if (!exists("dph_nursing_facilities")) if (file.exists(paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))) load(paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 if (!exists("dph_nursing_facilities")) {
   dph_nursing_facilities <- read.socrata("https://data.ct.gov/resource/rm6f-b9qj.json",
@@ -429,7 +437,7 @@ ct <- dph_counties %>%
   mutate(county = fct_reorder2(county, date, rcases)) %>%
   fuzzyjoin::interval_left_join(week_setup,
                                 by = c("date" = "start_period", "date" = "end_period")) %>%
-  left_join(age_county_acs %>% ungroup() %>% select(county = COUNTY, total_pop, age65plus), by = "county") %>%
+  # left_join(county_info %>% ungroup() %>% select(county, total_pop, age_65_plus), by = "county") %>%
   mutate(cases_per_100k =  current_cases /(total_pop / 100000))
 town_history <- dph_towns %>%
   left_join(week_setup, by = c("date" =  "end_period")) %>%
@@ -643,13 +651,16 @@ phospital <- phospital +
     caption = "Source: Connecticut Hospital Association, via CT DPH"
   )
 
-dph_pop <- census_population %>%
-  left_join(ct %>% filter(date == max(date))) %>%
-  mutate(cases_per_pop = cases / (estimate / 100000),
-         per_pop_label =  as.character(round(cases_per_pop, 1)))
-county_centroid <- st_centroid(dph_pop) # use to place town labels
+county_centroid <- st_centroid(county_geometries) %>%
+  left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
+              select(county, rnew_cases_per1k), by = "county")
 county_map <- ggplot() +
-  geom_sf(data = dph_pop, aes(fill = cases_per_pop)) +
+  geom_sf(data = county_geometries %>%
+            left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
+                        select(county, rnew_cases_per1k),
+                      by = "county"),
+          # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
+          aes(fill = rnew_cases_per1k, geometry = geometry)) +
   scale_fill_gradient(low = "white", high = "grey") +
   geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", per_pop_label, " per 100K")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
@@ -657,7 +668,7 @@ county_map <- ggplot() +
   # theme(legend.position = "none") +
   labs(title = "Cumulative Confirmed Cases by Connecticut County",
        subtitle = "cases per 100K of population for most recent report date",
-       fill = "cases per 100K",
+       fill = "cases per 1K",
        caption = "Source: US Census, tidycensus package")
 
 
