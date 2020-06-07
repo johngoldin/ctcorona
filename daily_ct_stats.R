@@ -243,7 +243,6 @@ if ((dph_counties %>% count(county, date) %>% filter(n > 1) %>% nrow()) > 0) use
 
 # at this point we should have full
 # do rolling average
-print(names(dph_counties))
 dph_counties <- dph_counties %>%
   arrange(county, date) %>%
   group_by(county) %>%
@@ -662,12 +661,12 @@ county_map <- ggplot() +
           # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
           aes(fill = rnew_cases_per1k, geometry = geometry)) +
   scale_fill_gradient(low = "white", high = "grey") +
-  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", per_pop_label, " per 100K")), color = "black", size = 3) +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per1k, 4), " per 1K")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
   # theme(legend.position = "none") +
   labs(title = "Cumulative Confirmed Cases by Connecticut County",
-       subtitle = "cases per 100K of population for most recent report date",
+       subtitle = "cases per 1K of population for most recent report date",
        fill = "cases per 1K",
        caption = "Source: US Census, tidycensus package")
 

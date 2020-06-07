@@ -35,6 +35,22 @@ town.
 
 The goal is to try to quickly scan the towns looking for patterns.
 
+```{r, echo  = FALSE}
+county_cases_max <- max(dph_counties$rnew_cases_per1k, na.rm = TRUE)
+county_deaths_max <- max(dph_counties$rnew_deaths_per1k, na.rm = TRUE)
+town_cases_max <- max(dph_towns$rnew_cases_per1k, na.rm = TRUE)
+town_cases_max <- 1.0 # Somers is 2 and Montville is 1.06
+town_deaths_max <- max(dph_towns$rnew_deaths_per1k, na.rm = TRUE)
+
+```
+
+
+For the county sparklines, maximum range for cases is `r round(county_cases_max,4)`
+maximum range for deaths is `r round(county_deaths_max, 4)`
+
+For towns, maximum range for cases is `r round(town_cases_max, 4)`
+maximum range for deaths is `r round(town_deaths_max, 4)`
+
 
 ```{r, echo = FALSE, results = "asis"}
 # THE ORIGINAL VERSION
@@ -42,20 +58,22 @@ The goal is to try to quickly scan the towns looking for patterns.
 # jQuery sparklines https://omnipotent.net/jquery.sparkline/#s-docs
 county_sparklines <- dph_counties %>% 
   group_by(county) %>% 
-  summarise(`county cases` = spk_chr(rnew_cases),
-            `county deaths` = spk_chr(rnew_deaths), .groups = "drop")
+  summarise(`county cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0,
+                                     chartRangeMax = county_cases_max),
+            `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0,
+                                     chartRangeMax = county_deaths_max), .groups = "drop")
 test <- dph_towns %>%
-  filter(total_pop > 14000,
+  filter(total_pop > 10000,
          !is.na(rnew_cases))# %>%
 test <- test %>% 
   # left_join(town_info %>% select(county, category, town)) %>% 
   group_by(county, category, town) %>% 
   # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
   summarise(`max cases` = (max(rnew_cases_per1k, na.rm = TRUE) %>% round(4)),
-    `town cases` = spk_chr(rnew_cases, chartRangeMin = 0, 
-                           chartRangeMax = max(rnew_cases_per1k, na.rm = TRUE)),
-    `town deaths` = spk_chr(rnew_deaths, chartRangeMin = 0, 
-                           chartRangeMax = max(rnew_deaths_per1k, na.rm = TRUE)), .groups = "drop") %>% 
+    `town cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0, 
+                           chartRangeMax = town_cases_max),
+    `town deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0, 
+                           chartRangeMax = town_deaths_max), .groups = "drop") %>% 
   left_join(county_sparklines, by = "county") %>% 
   left_join(town_info %>% select(town, total_pop), by = "town") %>% 
   left_join(town_with_nursing %>% 
