@@ -1,0 +1,114 @@
+---
+title: "Exploring Covid-19 Trends by Town"
+author: "John Goldin"
+date: "6/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(sparkline)
+library(kableExtra)
+library(formattable)
+```
+```{r setup_town_info, echo = FALSE}
+path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
+path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
+load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+load(paste0(path_to_ctcorona, "census_population.RData"))
+```
+
+This table summarizes trends in towns with a population greater than 14,000. It's sorted by county and by category of town as
+developed in the report [The Five Connecticuts](https://ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf).
+
+For each town it shows the population, the largest average number of daily new cases
+(based on rolling 14 day average), and the percentage of deaths
+attributed to nursing home residents. 
+
+Next there are a series of [sparklines](https://en.wikipedia.org/wiki/Sparkline)
+that show the trend in daily new cases and daily deaths (based on 
+14 day moving average) and the same for the county containing that
+town. 
+
+The goal is to try to quickly scan the towns looking for patterns.
+
+```{r, echo  = FALSE}
+county_cases_max <- max(dph_counties$rnew_cases_per1k, na.rm = TRUE)
+county_deaths_max <- max(dph_counties$rnew_deaths_per1k, na.rm = TRUE)
+town_cases_max <- max(dph_towns$rnew_cases_per1k, na.rm = TRUE)
+town_cases_max <- 1.0 # Somers is 2 and Montville is 1.06
+town_deaths_max <- max(dph_towns$rnew_deaths_per1k, na.rm = TRUE)
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+library(leaflet)
+xx <- county_geometries %>% filter(county == "New Haven")
+leaflet(county_geometries) %>%
+  addPolygons(
+    stroke = FALSE, fillOpacity = 0.5, smoothFactor = 0.5,
+    popup='<a href="https://www.w3schools.com/html/", target=\"_blank\">Visit our HTML tutorial</a>'
+  )
+
+```
+
+
+For the county sparklines, maximum range for cases is `r round(county_cases_max,4)`
+maximum range for deaths is `r round(county_deaths_max, 4)`
+
+For towns, maximum range for cases is `r round(town_cases_max, 4)`
+maximum range for deaths is `r round(town_deaths_max, 4)`
+
+
+```{r, echo = FALSE, results = "asis"}
+# THE ORIGINAL VERSION
+# based on https://stackoverflow.com/questions/54244718/combining-sparkline-in-kableextra-table
+# jQuery sparklines https://omnipotent.net/jquery.sparkline/#s-docs
+county_sparklines <- dph_counties %>% 
+  group_by(county) %>% 
+  summarise(`county cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0,
+                                     chartRangeMax = county_cases_max),
+            `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0,
+                                     chartRangeMax = county_deaths_max), .groups = "drop")
+test <- dph_towns %>%
+  filter(total_pop > 10000,
+         !is.na(rnew_cases))# %>%
+test <- test %>% 
+  # left_join(town_info %>% select(county, category, town)) %>% 
+  group_by(county, category, town) %>% 
+  # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
+  summarise(`max cases` = (max(rnew_cases_per1k, na.rm = TRUE) %>% round(4)),
+    `town cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0, 
+                           chartRangeMax = town_cases_max),
+    `town deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0, 
+                           chartRangeMax = town_deaths_max), .groups = "drop") %>% 
+  left_join(county_sparklines, by = "county") %>% 
+  left_join(town_info %>% select(town, total_pop), by = "town") %>% 
+  left_join(town_with_nursing %>% 
+              filter(date == max(date)) %>% 
+              select(town, nh_death_pct), by = "town") %>% 
+  select(town, category, county, total_pop, nh_death_pct, `max cases`, `town cases`,
+         `town deaths`, `county cases`, `county deaths`) %>% 
+  formattable::format_table(
+    # x = .,
+    # formatters = list(align=c("l")),
+    format = "html",
+    align = c("l", "l", "l", "l", "c", "c", "c", "c")
+  ) %>%
+  # kable_styling("striped", full_width = F) %>%
+  # kable_styling(full_width = F) %>%
+  # group_rows("group1", 1, 2) %>%
+  # group_rows("group1", 1, 2) %>%
+  # group_rows("group2", 3,3) %>%
+  htmltools::HTML() %>%
+  shiny::div() %>%
+  sparkline::spk_add_deps()
+test
+```
+
+
+
+
