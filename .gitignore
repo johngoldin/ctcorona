@@ -5,3 +5,7 @@
 
 Rplot.pdf
 ct_counties.pdf
+/data
+/misc_info
+/old_items
+*.RData
