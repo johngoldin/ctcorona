@@ -2,6 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+.DS_Store
+/*/.DS_Store
+*/.DS_Store
 
 Rplot.pdf
 ct_counties.pdf
