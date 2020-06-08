@@ -8,7 +8,7 @@
 
 Rplot.pdf
 ct_counties.pdf
-/data
+/data/*.RData
 /misc_info
 /old_items
 *.RData
