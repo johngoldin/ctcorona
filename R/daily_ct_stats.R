@@ -22,7 +22,7 @@ load(paste0(path_to_ctcorona, "census_population.RData"))
 
 # from https://www.ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf
 # The Changing Demographics of Connecticut — 1990 to 2000. by Center for Population Research  May. 31, 2004
-Five_Connecticuts <- read_delim("Five_Connecticuts.txt","\t", escape_double = FALSE, trim_ws = TRUE)
+Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"),"\t", escape_double = FALSE, trim_ws = TRUE)
 
 
 if (!exists("town_geometries") &
@@ -219,7 +219,7 @@ if (!exists("nyt_series")) {
   nyt_counties <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
   nyt_series <- nyt_counties %>%
     filter(state == "Connecticut")
-  # save(nyt_series, file = "paste0(path_to_ctcorona, nyt_series.RData"))
+  # save(nyt_series, file = paste0(path_to_ctcorona, "nyt_series.RData"))
 }
 
 # ct covid data resources: https://data.ct.gov/stories/s/wa3g-tfvc
@@ -299,6 +299,7 @@ dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
   as_tibble() %>%
   rename(cases = totalcases, deaths = totaldeaths,
          hospital = hospitalizedcases) %>%
+  arrange(date) %>%
   mutate(date = as_date(date),
          cases = as.numeric(cases), deaths = as.numeric(deaths),
          covid_19_pcr_tests_reported = as.numeric(covid_19_pcr_tests_reported),
@@ -312,6 +313,7 @@ dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
          rdeaths = roll_mean(deaths, 7, align = "right", fill = NA_real_),
          new_cases = cases - lag(cases), new_deaths = deaths - lag(deaths),
          rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+         new_tests =  covid_19_pcr_tests_reported - lag(covid_19_pcr_tests_reported),
          current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
          current_per_100k =  (state_info$total_pop[1] / 100000) / current_cases,
          rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_),
@@ -385,12 +387,14 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
 
-save(dph_total, dph_towns, dph_counties, dph_nursing_cases, town_with_nursing, file = "dph_datasets.RData")
+save(dph_total, dph_towns, dph_counties, dph_nursing_cases, town_with_nursing, file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 
 last_date <- max(dph_total$date)
 usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")
-usethis::ui_info("Confirmed cases:            {usethis::ui_value(dph_total$cases[dph_total$date == last_date])}  +{usethis::ui_value(dph_total$new_cases[dph_total$date == last_date])}")
-usethis::ui_info("Confirmed deaths:           {usethis::ui_value(dph_total$deaths[dph_total$date == last_date])}  +{usethis::ui_value(dph_total$new_deaths[dph_total$date == last_date])}")
+usethis::ui_info("cases          :            {usethis::ui_value(dph_total$cases[dph_total$date == last_date])}  +{usethis::ui_value(dph_total$new_cases[dph_total$date == last_date])}")
+usethis::ui_info("deaths         :            {usethis::ui_value(dph_total$deaths[dph_total$date == last_date])}  +{usethis::ui_value(dph_total$new_deaths[dph_total$date == last_date])}")
+usethis::ui_info("tests          :            {usethis::ui_value(dph_total$covid_19_pcr_tests_reported[dph_total$date == last_date])}  +{usethis::ui_value(dph_total$new_tests[dph_total$date == last_date])}")
+usethis::ui_info("percent positive:            {usethis::ui_value(round(dph_total$new_cases[dph_total$date == last_date] / dph_total$new_tests[dph_total$date == last_date], 3))} ")
 usethis::ui_info("Confirmed hospitalizations: {usethis::ui_value(dph_total$hospital[dph_total$date == last_date])}  {usethis::ui_value(dph_total$hospital[dph_total$date == (last_date - 1)])}")
 
 dph_age <- read.socrata("https://data.ct.gov/resource/ypz6-8qyf.json",
