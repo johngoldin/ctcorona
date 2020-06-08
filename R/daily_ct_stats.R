@@ -22,8 +22,9 @@ load(paste0(path_to_ctcorona, "census_population.RData"))
 
 # from https://www.ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf
 # The Changing Demographics of Connecticut — 1990 to 2000. by Center for Population Research  May. 31, 2004
-Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"),"\t", escape_double = FALSE, trim_ws = TRUE)
-
+Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"),"\t", escape_double = FALSE, trim_ws = TRUE) %>%
+  mutate(category = factor(category, levels = c("Urban Core", "Urban Periphery",
+                           "Wealthy", "Suburban", "Rural")))
 
 if (!exists("town_geometries") &
     file.exists(paste0(path_to_ctcorona, "census_population.RData"))) load(paste0(path_to_ctcorona, "census_population.RData"))
@@ -176,6 +177,10 @@ if (!exists("town_geometries")) {
     left_join(town_geometries_save %>% as_tibble() %>% select(NAME, county, ALAND), by = "NAME") %>%
     mutate(density = total_pop / (ALAND / 2589988.1103)) %>%
     rename(town = NAME)
+
+  town_info$category <- factor(town_info$category,
+                                     c("Urban Core", "Urban Periphery",
+                                       "Wealthy", "Suburban", "Rural"))
 
   town_geometries <- town_geometries_save %>%
     select(-NAME) %>%

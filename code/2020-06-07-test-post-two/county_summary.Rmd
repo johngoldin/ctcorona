@@ -1,42 +1,50 @@
 ---
-title: "Towns in Fairfield County"
 author: 
 date: "`r Sys.Date()`"
 output: html_document
 params: 
   output_dir: "../static/2020-06-07-test-post-two"
+  county: "New Haven"
+  return_url: "index.html"
+title: "Covid-19 Summary for `r params$county` County"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+# see this StackOverflow tip for info on how to set title via parameter:
+#    https://stackoverflow.com/questions/31861569/setting-document-title-in-rmarkdown-from-parameters
 ```
-```{r library, echo = TRUE, message = FALSE}
+```{r library, echo = FALSE, message = FALSE}
 library(tidyverse)
 library(sparkline)
 library(kableExtra)
 library(formattable)
 ```
-```{r setup_town_info, echo = TRUE}
+```{r setup_town_info, echo = FALSE}
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
 load(paste0(path_to_ctcorona, "census_population.RData"))
 ```
-This table summarizes trends in towns with a population greater than 14,000. It's sorted by county and by category of town as
-developed in the report [The Five Connecticuts](https://ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf).
+
+This table summarizes trends in each town in `r params$county` County. 
+It is sorted by the category of town as
+developed in the report [The Five Connecticuts](https://ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf):
+Urban Core, Urban Periphery, Wealthy, Suburban, and Rural.
 
 For each town it shows the population, the largest average number of daily new cases
-(based on rolling 14 day average), and the percentage of deaths
+(based on rolling 14 day average), and the percentage of deaths in that town
 attributed to nursing home residents. 
 
 Next there are a series of [sparklines](https://en.wikipedia.org/wiki/Sparkline)
 that show the trend in daily new cases and daily deaths (based on 
-14 day moving average) and the same for the county containing that
-town. 
+14 day moving average). Cases and deaths are shown as a ratio to population
+in the town.
 
-The goal is to try to quickly scan the towns looking for patterns.
+The purpose of this table is to make it easier to quickly scan
+for trends in local towns.
 
-```{r, echo  = FALSE}
+```{r sparkline_ranges, echo  = FALSE}
 county_cases_max <- max(dph_counties$rnew_cases_per1k, na.rm = TRUE)
 county_deaths_max <- max(dph_counties$rnew_deaths_per1k, na.rm = TRUE)
 town_cases_max <- max(dph_towns$rnew_cases_per1k, na.rm = TRUE)
@@ -62,10 +70,13 @@ county_sparklines <- dph_counties %>%
                                      chartRangeMax = county_cases_max),
             `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0,
                                      chartRangeMax = county_deaths_max), .groups = "drop")
-test <- dph_towns %>%
-  filter(total_pop > 10000,
-         !is.na(rnew_cases))# %>%
-test <- test %>% 
+
+county_summary <- dph_counties %>% 
+  filter(county == params$county)
+town_summary <- dph_towns %>%
+  filter(county == params$county, #total_pop > 10000,
+         !is.na(rnew_cases)) # %>%
+town_summary <- town_summary %>% 
   # left_join(town_info %>% select(county, category, town)) %>% 
   group_by(county, category, town) %>% 
   # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
