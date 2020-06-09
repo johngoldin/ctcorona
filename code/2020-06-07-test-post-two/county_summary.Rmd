@@ -73,6 +73,39 @@ county_sparklines <- dph_counties %>%
 
 county_summary <- dph_counties %>% 
   filter(county == params$county)
+county_summary <- county_summary %>% 
+  # left_join(town_info %>% select(county, category, town)) %>% 
+  group_by(county) %>% 
+  # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
+  summarise(`max cases` = (max(rnew_cases_per1k, na.rm = TRUE) %>% round(4)),
+    `county cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0, 
+                           chartRangeMax = county_cases_max),
+    `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0, 
+                           chartRangeMax = county_deaths_max), .groups = "drop") %>% 
+  left_join(county_sparklines, by = "county") %>% 
+  left_join(county_info %>% select(county, total_pop), by = "county") %>% 
+  # left_join(town_with_nursing %>% 
+  #             filter(date == max(date)) %>% 
+  #             select(town, nh_death_pct), by = "town") %>% 
+  mutate(nh_death_pct = NA_real_, category = "") %>% 
+  select(county, category, county, total_pop, nh_death_pct, `max cases`, `county cases`,
+         `county deaths`, `county cases`, `county deaths`) %>% 
+  formattable::format_table(
+    # x = .,
+    # formatters = list(align=c("l")),
+    format = "html",
+    align = c("l", "l", "l", "l", "c", "c", "c", "c")
+  ) %>%
+  # kable_styling("striped", full_width = F) %>%
+  # kable_styling(full_width = F) %>%
+  # group_rows("group1", 1, 2) %>%
+  # group_rows("group1", 1, 2) %>%
+  # group_rows("group2", 3,3) %>%
+  htmltools::HTML() %>%
+  shiny::div() %>%
+  sparkline::spk_add_deps()
+
+
 town_summary <- dph_towns %>%
   filter(county == params$county, #total_pop > 10000,
          !is.na(rnew_cases)) # %>%
@@ -106,7 +139,8 @@ town_summary <- town_summary %>%
   htmltools::HTML() %>%
   shiny::div() %>%
   sparkline::spk_add_deps()
-test
+county_summary
+town_summary
 ```
 
 
