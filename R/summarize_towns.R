@@ -14,12 +14,15 @@ summarize_towns <- function(some_towns = dph_towns,
       filter(date == as_of) %>%
       left_join(nursing_homes %>%
                    filter(date == max(date)) %>%
-                   select(town, nh_deaths, corresponding_deaths = deaths), by = "town") %>%
+                   select(town, nh_deaths, corresponding_deaths = deaths,
+                          corresponding_cases = cases), by = "town") %>%
       summarise(n = n(), across(c(total_pop , current_cases, rnew_cases,
-                                  rnew_deaths, cases, deaths,
-                                  nh_deaths, corresponding_deaths), sum, na.rm = TRUE)) %>%
+                                  rnew_deaths, cases, deaths, nh_deaths,
+                                  corresponding_deaths, corresponding_cases), sum, na.rm = TRUE)) %>%
       mutate(nh_pct_of_deaths = ifelse(corresponding_deaths <= 0,
                                        NA_real_, nh_deaths / corresponding_deaths),
+             nh_pct_of_cases = ifelse(corresponding_cases <= 0,
+                                      NA_real_, nh_deaths / corresponding_cases),
              across(c(current_cases, rnew_cases, rnew_deaths, cases, deaths),
                     ~ .x / (total_pop / 1000),
                     .names = "{col}_per1k")
