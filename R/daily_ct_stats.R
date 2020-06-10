@@ -347,17 +347,21 @@ dph_nursing_cases <- read.socrata("https://data.ct.gov/resource/wyn3-qphu.json",
   as_tibble() %>%
   mutate(date = as_date(date_last_updated), nh_cases = as.numeric(residents_with_covid),
                         licensed_beds = as.numeric(licensed_beds),
-                        lab_confirmed = as.numeric(covid_19_associated_lab_confirmed),
-                        nh_deaths = as.numeric(covid_19_associated_deaths_probable)) %>%
+                        nh_lab_confirmed_deaths = as.numeric(covid_19_associated_lab_confirmed),
+                        nh_probable_deaths = as.numeric(covid_19_associated_deaths_probable),
+                        nh_deaths = nh_lab_confirmed_deaths + nh_probable_deaths) %>%
   select(-date_last_updated, -covid_19_associated_lab_confirmed, -covid_19_associated_deaths_probable) %>%
   mutate(nh_cases = ifelse(is.na(nh_cases), 0, nh_cases),
-         nh_deaths = ifelse(is.na(nh_deaths), 0, nh_deaths))
+         nh_deaths = ifelse(is.na(nh_deaths), 0, nh_deaths),
+         nh_probable_deaths = ifelse(is.na(nh_probable_deaths), 0, nh_probable_deaths),
+         nh_lab_confirmed_deaths = ifelse(is.na(nh_lab_confirmed_deaths), 0, nh_lab_confirmed_deaths))
 # town_with_nursing is dph_towns but only with the same dates as used for
 # the nursing home reports. Idea is to be able to remove nursing homes from town data
 town_with_nursing <- dph_towns %>%
   filter(date %in% unique(dph_nursing_cases$date)) %>%
   left_join(dph_nursing_cases %>% group_by(town, date) %>%
-              summarise(nh_cases = sum(nh_cases), nh_deaths = sum(nh_deaths), beds = sum(licensed_beds)),
+              summarise(nh_cases = sum(nh_cases), nh_deaths = sum(nh_deaths), beds = sum(licensed_beds),
+                        nh_probable_deaths = sum(nh_probable_deaths), nh_lab_confirmed_deaths = sum(nh_lab_confirmed_deaths)),
             by = c("date", "town")) %>%
   left_join(town_info %>% select(town, age_65_plus, age_65_plus_pct), by = "town") %>%
   mutate(nh_cases = ifelse(is.na(nh_cases), 0, nh_cases),
