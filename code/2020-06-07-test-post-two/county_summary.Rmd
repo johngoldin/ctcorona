@@ -66,9 +66,9 @@ maximum range for deaths is `r round(town_deaths_max, 4)`
 # jQuery sparklines https://omnipotent.net/jquery.sparkline/#s-docs
 county_sparklines <- dph_counties %>% 
   group_by(county) %>% 
-  summarise(`county cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0,
+  summarise(`daily cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0,
                                      chartRangeMax = county_cases_max),
-            `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0,
+            `daily deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0,
                                      chartRangeMax = county_deaths_max), .groups = "drop")
 
 county_summary <- dph_counties %>% 
@@ -78,18 +78,19 @@ county_summary <- county_summary %>%
   group_by(county) %>% 
   # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
   summarise(`max cases` = (max(rnew_cases_per1k, na.rm = TRUE) %>% round(4)),
-    `county cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0, 
-                           chartRangeMax = county_cases_max),
-    `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0, 
-                           chartRangeMax = county_deaths_max), .groups = "drop") %>% 
+    # `county cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0, 
+    #                        chartRangeMax = county_cases_max),
+    # `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0, 
+    #                        chartRangeMax = county_deaths_max), 
+    .groups = "drop") %>% 
   left_join(county_sparklines, by = "county") %>% 
   left_join(county_info %>% select(county, total_pop), by = "county") %>% 
   # left_join(town_with_nursing %>% 
   #             filter(date == max(date)) %>% 
   #             select(town, nh_death_pct), by = "town") %>% 
   mutate(nh_death_pct = NA_real_, category = "") %>% 
-  select(county, category, county, total_pop, nh_death_pct, `max cases`, `county cases`,
-         `county deaths`, `county cases`, `county deaths`) %>% 
+  select(county, category, county, total_pop, nh_death_pct, `max cases`, `daily cases`,
+         `daily deaths`) %>% 
   formattable::format_table(
     # x = .,
     # formatters = list(align=c("l")),
@@ -124,7 +125,7 @@ town_summary <- town_summary %>%
               filter(date == max(date)) %>% 
               select(town, nh_death_pct), by = "town") %>% 
   select(town, category, county, total_pop, nh_death_pct, `max cases`, `town cases`,
-         `town deaths`, `county cases`, `county deaths`) %>% 
+         `town deaths`, `county cases` = `daily cases`, `county deaths` = `daily deaths`) %>% 
   formattable::format_table(
     # x = .,
     # formatters = list(align=c("l")),
