@@ -16,9 +16,10 @@ library(formattable)
 ```
 ```{r setup_town_info, echo = FALSE}
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
-path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/"
+path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
 load(paste0(path_to_ctcorona, "census_population.RData"))
+
 ```
 
 This table summarizes trends in towns with a population greater than 14,000. It's sorted by county and by category of town as

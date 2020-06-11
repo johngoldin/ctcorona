@@ -360,16 +360,19 @@ dph_nursing_cases <- read.socrata("https://data.ct.gov/resource/wyn3-qphu.json",
 town_with_nursing <- dph_towns %>%
   filter(date %in% unique(dph_nursing_cases$date)) %>%
   left_join(dph_nursing_cases %>% group_by(town, date) %>%
-              summarise(nh_cases = sum(nh_cases), nh_deaths = sum(nh_deaths), beds = sum(licensed_beds),
-                        nh_probable_deaths = sum(nh_probable_deaths), nh_lab_confirmed_deaths = sum(nh_lab_confirmed_deaths)),
+              summarise(nh_cases = sum(nh_cases), nh_probable_deaths = sum(nh_probable_deaths),
+                        nh_lab_confirmed_deaths = sum(nh_lab_confirmed_deaths)) %>%
+              mutate(nh_deaths = nh_lab_confirmed_deaths + nh_probable_deaths),
             by = c("date", "town")) %>%
-  left_join(dph_nursing_facilities %>%
-              mutate(licensed_beds_occupied = as.numeric(licensed_beds_occupied), reporting_year = as.numeric(reporting_year)) %>%
-              filter(reporting_year )
+  left_join(dph_nursing_facilities %>% group_by(town) %>%
+              mutate(total_licensed_beds = as.numeric(total_licensed_beds), reporting_year = as.numeric(reporting_year)) %>%
+              filter(reporting_year == max(reporting_year, na.rm = TRUE)) %>%
+              summarise(total_licensed_beds = sum(total_licensed_beds, na.rm = TRUE)),
+            by = "town") %>%
   left_join(town_info %>% select(town, age_65_plus, age_65_plus_pct), by = "town") %>%
-  mutate(nh_cases = ifelse(is.na(nh_cases), 0, nh_cases),
-         nh_deaths = ifelse(is.na(nh_deaths), 0, nh_deaths)) %>%
-  mutate(nh_death_pct = if_else(deaths > 0, nh_deaths / deaths, NA_real_) %>% round(3)) %>%
+  # mutate(nh_cases = ifelse(is.na(nh_cases), 0, nh_cases),
+  #        nh_deaths = ifelse(is.na(nh_deaths), 0, nh_deaths)) %>%
+  mutate(nh_death_pct = if_else(!is.na(nh_deaths) & (deaths > 0), nh_deaths / deaths, NA_real_) %>% round(3)) %>%
   arrange(desc(nh_death_pct))
 
 
