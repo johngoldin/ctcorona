@@ -1,0 +1,19 @@
+---
+title: "Notes"
+author: "John Goldin"
+date: "6/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+[Note as of June 1](https://portal.ct.gov/-/media/Coronavirus/CTDPHCOVID19summary6012020.pdf?la=en)
+
+> *In Connecticut during the early months of this pandemic, it became increasingly clear that it would be necessary to track probable COVID-19 cases and deaths, in addition to laboratory-confirmed (RT- PCR) cases and deaths. This was needed to better measure the burden and impact of this disease in our communities and is now part of the national surveillance case definition for COVID-19. Today for the first time, DPH is reporting cases and deaths as “confirmed” or “probable.” Previous reports
+> reported these as a combined number. The only change today is that they are being separated to conform with CDC reporting guidance. Probable cases of COVID-19 involve persons who have not had confirmatory laboratory testing (RT-PCR) performed for COVID-19, but whose symptoms indicate they are very likely to have a COVID-19 infection. In Connecticut, most of the probable COVID-19 cases involve persons whose death certificates list COVID-19 disease or SARS-CoV-2 as a cause of death or a significant condition contributing to death.
+
+[Note as of May 27](https://portal.ct.gov/-/media/Coronavirus/CTDPHCOVID19summary5272020.pdf?la=en)
+
+>The staff at the Department of Public Health have removed 356 cases and 808 tests in the past 24 hours, which were identified as duplicates in the system, affecting both test and overall case numbers. Since yesterday, there have been 341 new positive cases, and 5,215 new tests were reported.

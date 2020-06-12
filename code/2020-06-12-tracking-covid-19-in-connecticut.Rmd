@@ -1,0 +1,145 @@
+---
+title: Tracking Covid-19 in Connecticut
+author: John Goldin
+date: '2020-06-12'
+slug: []
+categories:
+  - COVID19
+tags:
+  - COVID19
+type: post
+subtitle: ''
+image: ''
+draft: yes
+output:
+  blogdown::html_page:
+    toc: yes
+    fig_width: 7
+    fig_height: 5
+---
+
+```{r setup, include=FALSE, echo = FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, out.width = "100%",
+                      knitr.table.format = "html")
+# knitr.table.format is for kable. Needed this to get blogdown table to format correctly.
+```
+```{r libraries, echo = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse, quietly = TRUE)
+library(knitr, quietly = TRUE)
+library(scales, quietly = TRUE)
+library(kableExtra, quietly = TRUE)
+library(sparkline)
+```
+```{r `load_basic_data`, echo = FALSE, message = FALSE}
+path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
+path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
+load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+load(paste0(path_to_ctcorona, "census_population.RData"))
+
+# from https://www.ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf
+# The Changing Demographics of Connecticut — 1990 to 2000. by Center for Population Research  May. 31, 2004
+Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"),"\t", escape_double = FALSE, trim_ws = TRUE) %>%
+  mutate(category = factor(category, levels = c("Urban Core", "Urban Periphery",
+                           "Wealthy", "Suburban", "Rural")))
+load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+
+```
+The [post I created back in March](https://johngoldin.com/post/2020-03-29-covid19-cases-in-connecticut/) 
+aimed to track the growth of Covid-19 as it hit Connecticut.
+Back then (at the end of March) I didn't realize that 
+the greater New York area (including Connecticut)
+would be the center of the first wave in the US. At that time what I was reading
+focused on the nature of exponential growth of an epidemic. We were urged to
+"flatten the curve" and there was an emphasis on the shape of the growth of
+cumulative cases and deaths caused by the virus. I have been upading the figures
+in that post each evening. During tht time the [Connecticut data portal](https://johngoldin.com/post/2020-03-29-covid19-cases-in-connecticut/)
+has expanded, and I've built [some R code](https://github.com/johngoldin/ctcorona/blob/master/R/daily_ct_stats.R) 
+that let's me easily update
+that post. I'll use the same data infrastructure for this post as well.
+
+### Tracking the Virus
+
+The focus on this post is what's happening recently. The first
+plot will show the average number of new cases reported each day along
+with a line that displays the rolling seven-day average. Typically there 
+are day-of-the-week effects in the reporting so it's best to focus
+on the seven-day average.
+
+The plot show the history of new cases and also shows the 
+actions in Governor Lamont's executive orders. 
+
+The number of new cases peaked in mid April and then began to
+decrease almost as rapidly.
+
+```{r 'new_cases_plot', echo = FALSE, eval = TRUE}
+## This imaged will be saved in the /post/*_files/ directory
+## Use echo = FALSE if you want to hide the code for making the plot
+exec_orders <- tibble(
+  date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26", "2020-04-11", "2020-04-20", "2020-05-20", "2020-06-01", "2020-06-17")),
+  label = c("prohibit large\ngatherings", "cancel\nclasses", "restrict\nbusiness", "5 or\nfewer",
+            "covid-19\ndeath\nchanged", "masks\nequired",
+            "phase 1\nreopen", "hair\nreopen", "phase 2\nreopen"),
+  fudge = c(1, 0.4, 0.7, 0.9, 0.8, 0.9, 0.8, 0.8, 1)
+) %>% 
+  left_join(dph_total %>% select(date, rnew_cases, rnew_deaths, cases, deaths))
+
+# try a version with understated bars
+p_new_cases <- ggplot(data = dph_total %>% 
+              # filter(county == "Fairfield") %>% 
+              mutate(wday  = factor(weekdays(date),
+                                  levels = c("Monday", "Tuesday",
+                                             "Wednesday", "Thursday", "Friday",
+                                             "Saturday","Sunday"))), 
+            aes(x = date, y = new_cases)) +
+  geom_col(fill = NA, colour = "gray") + 
+  # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.7, option = "viridis") + 
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", date_labels = "%b %d") +
+  geom_line(aes(y = rnew_cases), size = 1) +
+  theme_minimal() + theme(legend.position = "none") +
+  xlab(NULL) + ylab("New Cases Per Day") +
+  geom_text(data = exec_orders %>% filter(date <= max(dph_total$date, na.rm = TRUE)), 
+            aes(y = (rnew_cases + 500) * fudge , label = label),
+            hjust = 0.5, vjust = 0, size = 3, colour = "black", nudge_y = 0) +
+  ggtitle("Connecticut New Covid-19 Cases (with 7-day rolling average)")
+
+p_daily_deaths <- ggplot(data = dph_total %>% 
+              # filter(county == "Fairfield") %>% 
+              mutate(wday  = factor(weekdays(date),
+                                  levels = c("Monday", "Tuesday",
+                                             "Wednesday", "Thursday", "Friday",
+                                             "Saturday","Sunday"))), 
+            aes(x = date, y = new_deaths)) +
+  geom_col(fill = NA, colour = "gray") + 
+  # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.7, option = "viridis") + 
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", date_labels = "%b %d") +
+  geom_line(aes(y = rnew_deaths), size = 1) +
+  theme_minimal() + theme(legend.position = "none") +
+  xlab(NULL) + ylab("Deaths Per Day") +
+  geom_text(data = exec_orders %>% filter(date <= max(dph_total$date, na.rm = TRUE)), 
+            aes(y = (rnew_deaths + 75) * fudge , label = label),
+            hjust = 0.5, vjust = 0, size = 3, colour = "black", nudge_y = 0) +
+  ggtitle("Connecticut Covid-19 Daily Deaths (with 7-day rolling average)")
+print(p_new_cases)
+print(p_daily_deaths)
+```
+
+```{r hospitalizations, echo = FALSE}
+p_hospitalizations <- ggplot(data = dph_total %>% filter(!is.na(hospital)),
+                    aes(x = date, y = hospital)) +
+  geom_line() + xlab(NULL) + # geom_point() + 
+  scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", 
+               date_labels = "%b %d", limits = c(min(dph_total$date), NA)) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  ylab("in hospital") +
+  labs(
+    title = "COVID19 Patients Currently in Hospital",
+    subtitle = NULL,
+    caption = "Source: Connecticut Hospital Association, via CT DPH"
+  )
+print(p_hospitalizations)
+```
+
+

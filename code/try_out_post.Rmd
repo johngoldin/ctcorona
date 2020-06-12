@@ -9,11 +9,26 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r libraries}
 library(tidyverse)
 library(sparkline)
 library(kableExtra)
 ```
+```{r `load_basic_data`, echo = FALSE, message = FALSE}
+path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
+path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
+load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+load(paste0(path_to_ctcorona, "census_population.RData"))
+
+# from https://www.ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf
+# The Changing Demographics of Connecticut — 1990 to 2000. by Center for Population Research  May. 31, 2004
+Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"),"\t", escape_double = FALSE, trim_ws = TRUE) %>%
+  mutate(category = factor(category, levels = c("Urban Core", "Urban Periphery",
+                           "Wealthy", "Suburban", "Rural")))
+load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+
+```
+
 
 The hope is that this will grow into a replacement blog post for Connecticut Covid-19 stats, but baased
 on RMarkdown rather than simple markdown.
@@ -68,29 +83,39 @@ county_map <- ggplot() +
 
 
 ```{r, eval = FALSE}
-ct <- ct %>% mutate(wday = factor(weekdays(date),
+dph_towns <- ct %>% mutate(wday = factor(weekdays(date),
                                   levels = c("Monday", "Tuesday",
                                              "Wednesday", "Thursday", "Friday", "Saturday","Sunday")))
-p <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = date, y = new_cases)) +
+p <- ggplot(data = dph_total %>% 
+              # filter(county == "Fairfield") %>% 
+              mutate(wday  = factor(weekdays(date),
+                                  levels = c("Monday", "Tuesday",
+                                             "Wednesday", "Thursday", "Friday",
+                                             "Saturday","Sunday"))), 
+            aes(x = date, y = new_cases)) +
   geom_col(aes(fill = factor(wday))) + 
-  scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.9, option = "viridis")+ 
+  scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.7, option = "viridis") + 
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", date_labels = "%b %d") +
   geom_line(aes(y = rnew_cases), size = 1) +
-  xlab(NULL) + ylab("New Confirmed Cases Per Day")
+  theme_minimal() + theme(legend.position = "none") +
+  xlab(NULL) + ylab("New Cases Per Day")
 
-p_deaths <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = date, y = new_deaths)) +
-  # geom_col(aes(fill = factor(wday))) +
-  # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.9, option = "viridis") +
-  geom_line(colour = "lightgreen", size = 0.2) +
-  labs(fill = "Day of Report") +
-  geom_line(aes(y = rnew_deaths), size = 1, colour = "darkgreen") +
-  xlab(NULL) + ylab("Covid19 Deaths Per Day") +
-  labs(title = "Connecticut Covid-19 Deaths Per Day", 
-       subtitle = "Trend line is Smoothed Over the Last Seven Days",
-       caption = "Source: US Census, tidycensus package") +
-  scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
-               date_breaks = "1 month", date_labels = "%B") +
-  # scale_y_log10() +
-  theme_minimal() 
+# p_deaths <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = date, y = new_deaths)) +
+#   ylim(c(0, NA)) +
+#   # geom_col(aes(fill = factor(wday))) +
+#   # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.9, option = "viridis") +
+#   geom_line(colour = "lightgreen", size = 0.2) +
+#   labs(fill = "Day of Report") +
+#   geom_line(aes(y = rnew_deaths), size = 1, colour = "darkgreen") +
+#   xlab(NULL) + ylab("Covid19 Deaths Per Day") +
+#   labs(title = "Connecticut Covid-19 Deaths Per Day", 
+#        subtitle = "Trend line is Smoothed Over the Last Seven Days",
+#        caption = "Source: US Census, tidycensus package") +
+#   scale_x_date(limits = c(ymd("2020-03-14"), NA), minor_breaks = NULL,
+#                date_breaks = "1 month", date_labels = "%B") +
+#   # scale_y_log10() +
+#   theme_minimal() 
 
 p_deaths_cases1 <- ggplot(data = ct %>% filter(county == "Fairfield"), aes(x = date, y = new_deaths)) +
   # geom_col(aes(fill = factor(wday))) + 
