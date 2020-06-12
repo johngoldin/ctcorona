@@ -460,14 +460,22 @@ ct <- dph_counties %>%
                                 by = c("date" = "start_period", "date" = "end_period")) %>%
   # left_join(county_info %>% ungroup() %>% select(county, total_pop, age_65_plus), by = "county") %>%
   mutate(cases_per_100k =  current_cases /(total_pop / 100000))
+# town_history pulls out the data in weekly chunks
 town_history <- dph_towns %>%
   left_join(week_setup, by = c("date" =  "end_period")) %>%
   filter(!is.na(week)) %>%
   left_join(town_geometries, by = "town")
+the_scale <- c(0, 0.02, 0.05, 0.08, 1, 1.5)
 p <- ggplot(data = town_history) +
-  geom_sf(data = town_history, aes(fill = rnew_cases, geometry = geometry)) +
-  facet_wrap(~ week)
-
+  geom_sf(data = town_history, aes(fill = rnew_cases_per1k, geometry = geometry)) +
+  facet_wrap(~ week) +
+  # scale_fill_gradient(low="lightblue", high="red",
+  #                   breaks= the_scale,
+  #                   limits=c(0, 1.5), guide = "legend")
+  scale_fill_gradient(limits = c(0, 1.5), breaks = the_scale)
+  scale_fill_continuous(#low="lightblue", high="red",
+                      # breaks= the_scale,
+                      guide = "legend")
 
 save_county_levels <- levels(ct$county)
 
