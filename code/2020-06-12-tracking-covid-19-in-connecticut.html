@@ -1,7 +1,7 @@
 
 <div id="TOC">
 <ul>
-<li><a href="#tracking-the-virus">Tracking the Virus</a></li>
+<li><a href="#tracking-the-virus-in-connecticut">Tracking the Virus in Connecticut</a></li>
 </ul>
 </div>
 
@@ -17,17 +17,41 @@ in that post each evening. During tht time the <a href="https://johngoldin.com/p
 has expanded, and I’ve built <a href="https://github.com/johngoldin/ctcorona/blob/master/R/daily_ct_stats.R">some R code</a>
 that let’s me easily update
 that post. I’ll use the same data infrastructure for this post as well.</p>
-<div id="tracking-the-virus" class="section level3">
-<h3>Tracking the Virus</h3>
-<p>The focus on this post is what’s happening recently. The first
+<div id="tracking-the-virus-in-connecticut" class="section level3">
+<h3>Tracking the Virus in Connecticut</h3>
+<p>This post focuses on what is happening recently. The aim is to
+use the recent trend to get some idea of the near future. The first
 plot will show the average number of new cases reported each day along
 with a line that displays the rolling seven-day average. Typically there
 are day-of-the-week effects in the reporting so it’s best to focus
 on the seven-day average.</p>
 <p>The plot show the history of new cases and also shows the
-actions in Governor Lamont’s executive orders.</p>
+actions in some of Governor Lamont’s executive orders.</p>
 <p>The number of new cases peaked in mid April and then began to
-decrease almost as rapidly.</p>
-<p><img src="2020-06-12-tracking-covid-19-in-connecticut_files/figure-html/new_cases_plot-1.png" width="100%" /><img src="2020-06-12-tracking-covid-19-in-connecticut_files/figure-html/new_cases_plot-2.png" width="100%" /></p>
-<p><img src="2020-06-12-tracking-covid-19-in-connecticut_files/figure-html/hospitalizations-1.png" width="100%" /></p>
+decrease almost as rapidly. See <a href="https://rt.live/">this site</a> for
+an estimate by state of the effective value for
+R<sub>t</sub>, the average number of people
+who become infected by an infectious person. The site
+is described in <a href="https://www.vox.com/recode/2020/4/21/21227855/coronavirus-spreading-by-state-instagram-effective-reproduction-rate">this article</a> at Vox.com.</p>
+<p>Note that as of June (and a month
+previous), Connecticut, New York, and New Jersey have among the lowest
+values for R<sub>t</sub> in the country. This is good news for us
+in Connecticut.</p>
+<p><img src="2020-06-12-tracking-covid-19-in-connecticut_files/figure-html/p_new_cases-1.png" width="100%" />
+<img src="2020-06-12-tracking-covid-19-in-connecticut_files/figure-html/p_rt_live-1.png" width="100%" />
+<img src="2020-06-12-tracking-covid-19-in-connecticut_files/figure-html/p_daily_deaths-1.png" width="100%" />
+<img src="2020-06-12-tracking-covid-19-in-connecticut_files/figure-html/p_hospitalizations-1.png" width="100%" /></p>
+<p>These charts shows the counts of cases and deaths as they are reported by
+the Connecticut Department of Public Health. Reports sometimes end up in
+batches. There is a day of the week effect, with fewer cases on weekends.
+Some of the unusually large peaks and valleys in these charts are due
+to reporting process. The DPH has also begun producing reports based
+on the date a sample was taken for a test and for the date of
+death. That’s a more accurate way to look at the change over time, but it
+means the data for the most recent days are hard to interpret because
+some data may be “in process” and not yet reported. In these charts I
+have used “date of report” rather than “date of sample taken” or “date of death”
+because that gives me all of the recent data that is available
+and because that is what most other data projects (such as the Covid-19 Project
+or the New York Times) have been using.</p>
 </div>

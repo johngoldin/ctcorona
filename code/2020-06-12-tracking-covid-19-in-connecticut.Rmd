@@ -15,7 +15,9 @@ output:
   blogdown::html_page:
     toc: yes
     fig_width: 7
-    fig_height: 5
+    out.width: "70%" 
+    fig.align: "center"
+    fig.asp: 0.618
 ---
 
 ```{r setup, include=FALSE, echo = FALSE}
@@ -32,6 +34,7 @@ library(sparkline)
 ```
 ```{r `load_basic_data`, echo = FALSE, message = FALSE}
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
+path_to_static_for_this_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/post/2020-06-12-tracking-covid-19-in-connecticut"
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
 load(paste0(path_to_ctcorona, "census_population.RData"))
@@ -57,19 +60,29 @@ has expanded, and I've built [some R code](https://github.com/johngoldin/ctcoron
 that let's me easily update
 that post. I'll use the same data infrastructure for this post as well.
 
-### Tracking the Virus
+### Tracking the Virus in Connecticut
 
-The focus on this post is what's happening recently. The first
+This post focuses on what is happening recently. The aim is to
+use the recent trend to get some idea of the near future. The first
 plot will show the average number of new cases reported each day along
 with a line that displays the rolling seven-day average. Typically there 
 are day-of-the-week effects in the reporting so it's best to focus
 on the seven-day average.
 
 The plot show the history of new cases and also shows the 
-actions in Governor Lamont's executive orders. 
+actions in some of Governor Lamont's executive orders. 
 
 The number of new cases peaked in mid April and then began to
-decrease almost as rapidly.
+decrease almost as rapidly. See [this site](https://rt.live/) for
+an estimate by state of the effective value for 
+R<sub>t</sub>, the average number of people 
+who become infected by an infectious person. The site
+is described in [this article](https://www.vox.com/recode/2020/4/21/21227855/coronavirus-spreading-by-state-instagram-effective-reproduction-rate) at Vox.com.
+
+Note that as of June (and a month
+previous), Connecticut, New York, and New Jersey have among the lowest
+values for R<sub>t</sub> in the country. This is good news for us
+in Connecticut.
 
 ```{r 'new_cases_plot', echo = FALSE, eval = TRUE}
 ## This imaged will be saved in the /post/*_files/ directory
@@ -91,7 +104,7 @@ p_new_cases <- ggplot(data = dph_total %>%
                                              "Wednesday", "Thursday", "Friday",
                                              "Saturday","Sunday"))), 
             aes(x = date, y = new_cases)) +
-  geom_col(fill = NA, colour = "gray") + 
+  geom_col(fill = "gray95", colour = "gray90") + 
   # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.7, option = "viridis") + 
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", date_labels = "%b %d") +
@@ -110,7 +123,7 @@ p_daily_deaths <- ggplot(data = dph_total %>%
                                              "Wednesday", "Thursday", "Friday",
                                              "Saturday","Sunday"))), 
             aes(x = date, y = new_deaths)) +
-  geom_col(fill = NA, colour = "gray") + 
+  geom_col(fill = "gray95", colour = "gray90") + 
   # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.7, option = "viridis") + 
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", date_labels = "%b %d") +
@@ -121,16 +134,29 @@ p_daily_deaths <- ggplot(data = dph_total %>%
             aes(y = (rnew_deaths + 75) * fudge , label = label),
             hjust = 0.5, vjust = 0, size = 3, colour = "black", nudge_y = 0) +
   ggtitle("Connecticut Covid-19 Daily Deaths (with 7-day rolling average)")
-print(p_new_cases)
-print(p_daily_deaths)
+# load effective R from https://rt.live/
+rt_live <- read_csv("https://d14wlfuexuxgcm.cloudfront.net/covid/rt.csv")
+p_rt_live <- ggplot(data = rt_live %>% filter(region == "CT"), aes(x = date, y = mean)) +
+  geom_ribbon(aes(ymin = lower_90, ymax = upper_90), fill = "grey95") +
+  geom_ribbon(aes(ymin = lower_50, ymax = upper_50), fill = "grey80") +
+  geom_line() + theme_minimal() + 
+  theme(legend.position = "none") +
+  scale_y_continuous(limits = c(0, 1.5), breaks = c(0, 1), 
+                     minor_breaks = seq(0.2, 1.4, 0.2)) +
+  geom_hline(yintercept = 1, colour = "gray") +
+  scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", 
+               date_labels = "%b %d", 
+               limits = c(min(dph_total$date), max(dph_total$date))) +
+  xlab(NULL) + ylab("effective R") +
+  ggtitle("Effective R (as computed by https://rt.live/)")
 ```
-
-```{r hospitalizations, echo = FALSE}
+```{r hospitalizations, echo = FALSE, out.width = "70%", fig.align = "center"}
 p_hospitalizations <- ggplot(data = dph_total %>% filter(!is.na(hospital)),
                     aes(x = date, y = hospital)) +
   geom_line() + xlab(NULL) + # geom_point() + 
   scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", 
-               date_labels = "%b %d", limits = c(min(dph_total$date), NA)) +
+               date_labels = "%b %d", 
+               limits = c(min(dph_total$date), NA)) +
   theme_minimal() +
   theme(legend.position = "none") +
   ylab("in hospital") +
@@ -139,7 +165,35 @@ p_hospitalizations <- ggplot(data = dph_total %>% filter(!is.na(hospital)),
     subtitle = NULL,
     caption = "Source: Connecticut Hospital Association, via CT DPH"
   )
+```
+```{r p_new_cases, echo = FALSE}
+print(p_new_cases)
+
+```
+```{r p_rt_live, echo = FALSE, fig.asp = 0.2}
+print(p_rt_live)
+```
+```{r p_daily_deaths, echo = FALSE}
+print(p_daily_deaths)
+
+```
+```{r p_hospitalizations, echo = FALSE}
 print(p_hospitalizations)
 ```
+
+These charts shows the counts of cases and deaths as they are reported by
+the Connecticut Department of Public Health. Reports sometimes end up in
+batches. There is a day of the week effect, with fewer cases on weekends.
+Some of the unusually large peaks and valleys in these charts are due
+to reporting process. The DPH has also begun producing reports based
+on the date a sample was taken for a test and for the date of
+death. That's a more accurate way to look at the change over time, but it
+means the data for the most recent days are hard to interpret because
+some data may be "in process" and not yet reported. In these charts I 
+have used "date of report" rather than "date of sample taken" or "date of death"
+because that gives me all of the recent data that is available
+and because that is what most other data projects (such as the Covid-19 Project
+or the New York Times) have been using.
+
 
 
