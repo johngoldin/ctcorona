@@ -1,0 +1,35 @@
+
+<div id="TOC">
+<ul>
+<li><a href="#including-plots">Including Plots</a></li>
+</ul>
+</div>
+
+<pre class="r"><code>library(tidyverse)
+library(sparkline)
+library(kableExtra)
+
+library(sf, quietly = TRUE)
+options(tigris_use_cache = TRUE)
+library(tigris, quietly = TRUE)
+library(tidycensus, quietly = TRUE)
+library(viridis, quietly = TRUE)
+library(ggrepel)
+options(tigris_class = &quot;sf&quot;)
+library(lubridate, quietly = TRUE)
+library(janitor)
+library(fuzzyjoin) # for interval_left_join
+library(broom)
+library(RSocrata)
+library(RcppRoll)</code></pre>
+<p>The hope is that this will grow into a replacement blog post for Connecticut Covid-19 stats, but baased
+on RMarkdown rather than simple markdown.</p>
+<p>Assumes all the info in daily_ct_stats.R is available.
+Using week_setup to get as-of dates,
+age_town_acs to get populaton and town geometries
+and dph_towns to get Covid-19 cases and deaths</p>
+<div id="including-plots" class="section level2">
+<h2>Including Plots</h2>
+<p>You can also embed plots, for example:</p>
+<p><img src="try_out_post_files/figure-html/kdkd-1.png" width="100%" /></p>
+</div>

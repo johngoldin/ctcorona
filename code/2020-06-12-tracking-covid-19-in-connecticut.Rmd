@@ -12,7 +12,8 @@ subtitle: ''
 image: ''
 draft: yes
 output:
-  blogdown::html_page:
+#  blogdown::html_page:
+  bookdown::html_document2:
     toc: yes
     fig_width: 7
     out.width: "70%" 
@@ -31,6 +32,20 @@ library(knitr, quietly = TRUE)
 library(scales, quietly = TRUE)
 library(kableExtra, quietly = TRUE)
 library(sparkline)
+library(geofacet) # https://hafen.github.io/geofacet/
+library(sf, quietly = TRUE)
+options(tigris_use_cache = TRUE)
+library(tigris, quietly = TRUE)
+library(tidycensus, quietly = TRUE)
+library(viridis, quietly = TRUE)
+library(ggrepel)
+options(tigris_class = "sf")
+library(lubridate, quietly = TRUE)
+library(janitor)
+library(fuzzyjoin) # for interval_left_join
+library(broom)
+library(RSocrata)
+library(RcppRoll)
 ```
 ```{r `load_basic_data`, echo = FALSE, message = FALSE}
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
@@ -45,52 +60,34 @@ Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"
   mutate(category = factor(category, levels = c("Urban Core", "Urban Periphery",
                            "Wealthy", "Suburban", "Rural")))
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+# load effective R from https://rt.live/
+rt_live <- read_csv("https://d14wlfuexuxgcm.cloudfront.net/covid/rt.csv") %>% 
+  mutate(state = case_when(
+    region == "CT" ~ "Connecticut",
+    region == "AZ" ~ "Arizona"
+  ))
 
 ```
 The [post I created back in March](https://johngoldin.com/post/2020-03-29-covid19-cases-in-connecticut/) 
 aimed to track the growth of Covid-19 as it hit Connecticut.
-Back then (at the end of March) I didn't realize that 
+Back then (at the end of March) I did not realize that 
 the greater New York area (including Connecticut)
 would be the center of the first wave in the US. At that time what I was reading
 focused on the nature of exponential growth of an epidemic. We were urged to
 "flatten the curve" and there was an emphasis on the shape of the growth of
 cumulative cases and deaths caused by the virus. I have been upading the figures
-in that post each evening. During tht time the [Connecticut data portal](https://johngoldin.com/post/2020-03-29-covid19-cases-in-connecticut/)
-has expanded, and I've built [some R code](https://github.com/johngoldin/ctcorona/blob/master/R/daily_ct_stats.R) 
+in that post each evening. During that time the [Connecticut data portal](https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/)
+has expanded considerably, and I've built [some R code](https://github.com/johngoldin/ctcorona/blob/master/R/daily_ct_stats.R) 
 that let's me easily update
 that post. I'll use the same data infrastructure for this post as well.
 
-### Tracking the Virus in Connecticut
-
-This post focuses on what is happening recently. The aim is to
-use the recent trend to get some idea of the near future. The first
-plot will show the average number of new cases reported each day along
-with a line that displays the rolling seven-day average. Typically there 
-are day-of-the-week effects in the reporting so it's best to focus
-on the seven-day average.
-
-The plot show the history of new cases and also shows the 
-actions in some of Governor Lamont's executive orders. 
-
-The number of new cases peaked in mid April and then began to
-decrease almost as rapidly. See [this site](https://rt.live/) for
-an estimate by state of the effective value for 
-R<sub>t</sub>, the average number of people 
-who become infected by an infectious person. The site
-is described in [this article](https://www.vox.com/recode/2020/4/21/21227855/coronavirus-spreading-by-state-instagram-effective-reproduction-rate) at Vox.com.
-
-Note that as of June (and a month
-previous), Connecticut, New York, and New Jersey have among the lowest
-values for R<sub>t</sub> in the country. This is good news for us
-in Connecticut.
-
-```{r 'new_cases_plot', echo = FALSE, eval = TRUE}
+```{r 'new-cases-plot', echo = FALSE, eval = TRUE}
 ## This imaged will be saved in the /post/*_files/ directory
 ## Use echo = FALSE if you want to hide the code for making the plot
 exec_orders <- tibble(
   date = as.Date(c("2020-03-10", "2020-03-17", "2020-03-23", "2020-03-26", "2020-04-11", "2020-04-20", "2020-05-20", "2020-06-01", "2020-06-17")),
   label = c("prohibit large\ngatherings", "cancel\nclasses", "restrict\nbusiness", "5 or\nfewer",
-            "covid-19\ndeath\nchanged", "masks\nequired",
+            "covid-19\ndeath\nchanged", "masks\nrequired",
             "phase 1\nreopen", "hair\nreopen", "phase 2\nreopen"),
   fudge = c(1, 0.4, 0.7, 0.9, 0.8, 0.9, 0.8, 0.8, 1)
 ) %>% 
@@ -134,21 +131,29 @@ p_daily_deaths <- ggplot(data = dph_total %>%
             aes(y = (rnew_deaths + 75) * fudge , label = label),
             hjust = 0.5, vjust = 0, size = 3, colour = "black", nudge_y = 0) +
   ggtitle("Connecticut Covid-19 Daily Deaths (with 7-day rolling average)")
-# load effective R from https://rt.live/
-rt_live <- read_csv("https://d14wlfuexuxgcm.cloudfront.net/covid/rt.csv")
-p_rt_live <- ggplot(data = rt_live %>% filter(region == "CT"), aes(x = date, y = mean)) +
-  geom_ribbon(aes(ymin = lower_90, ymax = upper_90), fill = "grey95") +
-  geom_ribbon(aes(ymin = lower_50, ymax = upper_50), fill = "grey80") +
+
+r_data_ct <- rt_live %>% filter(region == "CT")
+r_data_az <- rt_live %>% filter(region == "AZ")
+p_rt_live <- ggplot(data = r_data_ct, aes(x = date, y = mean)) +
+  geom_ribbon(aes(ymin = lower_90, ymax = upper_90), fill = "grey92") +
+  geom_ribbon(data = r_data_az, aes(ymin = lower_90, ymax = upper_90), fill = "grey92") +
+  geom_ribbon(aes(ymin = lower_50, ymax = upper_50), fill = "grey83") +
+  geom_ribbon(data = r_data_az, aes(ymin = lower_50, ymax = upper_50), fill = "grey83") +
   geom_line() + theme_minimal() + 
-  theme(legend.position = "none") +
-  scale_y_continuous(limits = c(0, 1.5), breaks = c(0, 1), 
-                     minor_breaks = seq(0.2, 1.4, 0.2)) +
   geom_hline(yintercept = 1, colour = "gray") +
+  geom_line(data = r_data_az) + theme_minimal() + 
+  geom_text(data = rt_live %>% filter(region %in% c("CT", "AZ"), date == min(date)),
+            aes(label = state), hjust = 1, size = 3) +
+  theme(legend.position = "none") +
+  theme(axis.title.y = element_text(angle=0, vjust = 0.5)) +
+  scale_y_continuous(limits = c(0.5, 1.5), breaks = c(0.5, 1, 1.5)) +
+                     #minor_breaks = seq(0.2, 1.4, 0.2)) +
   scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", 
                date_labels = "%b %d", 
                limits = c(min(dph_total$date), max(dph_total$date))) +
-  xlab(NULL) + ylab("effective R") +
-  ggtitle("Effective R (as computed by https://rt.live/)")
+  xlab(NULL) + ylab(expression("R"[t])) +
+  # see: http://strata.uga.edu/8370/rtips/subscriptsSuperscripts.html
+  labs(title = expression(paste("Trend in ", R[t], " (as computed by https://rt.live/)")))
 ```
 ```{r hospitalizations, echo = FALSE, out.width = "70%", fig.align = "center"}
 p_hospitalizations <- ggplot(data = dph_total %>% filter(!is.na(hospital)),
@@ -166,22 +171,175 @@ p_hospitalizations <- ggplot(data = dph_total %>% filter(!is.na(hospital)),
     caption = "Source: Connecticut Hospital Association, via CT DPH"
   )
 ```
-```{r p_new_cases, echo = FALSE}
+```{r geofacets, echo = FALSE}
+p_rt_map <- ggplot(data = rt_live %>% select(-state) %>% 
+         rename(state = region), aes(x = date, y = mean)) + 
+  xlab(NULL) + ylab(NULL) + 
+  theme_bw() + 
+  geom_ribbon(aes(ymin = lower_90, ymax = upper_90), fill = "grey92") +
+  geom_ribbon(aes(ymin = lower_50, ymax = upper_50), fill = "grey88") +
+  geom_hline(yintercept = 1, colour = "grey50") +
+  geom_line(colour = "darkblue") +
+   scale_y_continuous(limits = c(0.5, 1.5), breaks = c(0.5, 1, 1.5)) +
+                     #minor_breaks = seq(0.2, 1.4, 0.2)) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", 
+               date_labels = "%b %d") + 
+  theme(axis.title.y = element_text(angle=0, vjust = 0.5, size = 6)) +
+  theme(axis.text.x = element_text(size=5)) +
+  # labs(title = paste0("Trends in ", expression("R"[t]), "(as computed by https://rt.live/)")) +
+  labs(title = expression(paste("Trend in ", R[t], " by State (as computed by https://rt.live/)"))) +
+  facet_geo(~ state)
+
+```
+### Tracking the Virus in Connecticut
+
+This post focuses on what is happening recently. The aim is to
+use the recent trend to get some idea of the near future. The first
+plot will show the average number of new cases reported each day along
+with a line that displays the rolling seven-day average. Typically there 
+are day-of-the-week effects in the reporting so it's best to focus
+on the seven-day average.
+
+The plot show the history of new cases and also shows the 
+actions in some of Governor Lamont's executive orders. 
+
+```{r p-new-cases, echo = FALSE, fig.cap = "New Cases"}
 print(p_new_cases)
 
 ```
-```{r p_rt_live, echo = FALSE, fig.asp = 0.2}
+```{r p-rt-live, echo = FALSE, fig.asp = 0.3, fig.cap = "Estimated R<sub>t</sub>"}
 print(p_rt_live)
 ```
-```{r p_daily_deaths, echo = FALSE}
+```{r p-daily-deaths, echo = FALSE, fig.cap = "Daily Deaths"}
 print(p_daily_deaths)
 
 ```
-```{r p_hospitalizations, echo = FALSE}
+```{r p-hospitalizations, echo = FALSE, fig.cap = "Hospitalizations for Covid-19"}
 print(p_hospitalizations)
 ```
 
-These charts shows the counts of cases and deaths as they are reported by
+The number of new cases peaked in mid April and then began to
+decrease rapidly, although not as rapidly as it increased. 
+See [this site](https://rt.live/) for
+an estimate by state of the effective value for 
+R<sub>t</sub>, the average number of people 
+who become infected by an infectious person. The site
+is described in [this article](https://www.vox.com/recode/2020/4/21/21227855/coronavirus-spreading-by-state-instagram-effective-reproduction-rate) at Vox.com.
+
+Note that as of June (and a month
+previous), Connecticut, New York, and New Jersey have among the lowest
+values for R<sub>t</sub> in the country. This is good news for us
+in Connecticut. I have included R<sub>t</sub> for Arizona as a contrast with
+a state that has lately shown [signs of a growing outbreak](https://www.fox10phoenix.com/news/arizona-medical-experts-alarmed-over-surge-in-covid-19-cases).
+The goal in Connecticut and in the entire New York City area is to
+keep R<sub>t</sub> well under 1. As of `r max(rt_live$date)` R<sub>t</sub> is
+`r round(rt_live$mean[(rt_live$date == max(rt_live$date)) & (rt_live$region == "CT")], 2)`. On the other hand, in Arizona R<sub>t</sub> is about `r round(rt_live$mean[(rt_live$date == max(rt_live$date)) & (rt_live$region == "AZ")], 2)`.
+
+The next display shows the trend of R<sub>t</sub> in each state
+arranged according to geographic position in the US. Remember
+that R<sub>t</sub> is a measure of the rate of increase. When R<sub>t</sub> (indicated by the blue line) is greater than 1
+(indicated by a dark gray line) the number of daily new cases is
+increasing, If R<sub>t</sub> is less than 1, it is decreasing.
+
+```{r p-rt-map, echo = FALSE, fig.cap = "Estimate of R<sub>t</sub> by State"}
+print(p_rt_map)
+```
+
+### Variations by County in Connecticut
+
+```{r county-trends, echo = FALSE}
+county_centroid <- st_centroid(county_geometries) %>%
+  left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
+              select(county, rnew_cases_per1k, cases, deaths, rnew_deaths_per1k), by = "county")
+county_max <- dph_counties %>% group_by(county) %>% summarise(max = max(rnew_cases_per1k, na.rm = TRUE)) %>% arrange(desc(max))
+for_plot1 <- dph_counties %>% 
+  select(date, county, `new cases` = rnew_cases_per1k, deaths = rnew_deaths_per1k) %>% 
+  mutate(county = factor(county, levels = county_max$county)) %>% 
+  pivot_longer(cols = c(`new cases`, deaths)) %>% 
+  mutate(the_measure = factor(name, levels = c("new cases", "deaths")))
+p_county_per100k <- ggplot(data = for_plot1, aes(x = date, y = value * 100)) +
+  geom_line(aes(colour = county)) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", 
+               date_labels = "%b %d") + 
+  theme_minimal() + 
+  xlab(NULL) + ylab("Per 100K Population") +
+  facet_wrap(~ the_measure)
+  # facet_wrap(~ name, scales = "free_y")
+for_plot2 <- dph_counties %>% 
+  select(date, county, cases = rcases, deaths = rdeaths) %>% 
+  mutate(county = factor(county, levels = county_max$county)) %>% 
+  pivot_longer(cols = c(cases, deaths)) %>% 
+  mutate(the_measure = factor(name, levels = c("new cases", "deaths")))
+p_county_cum <- ggplot(data = for_plot2, aes(x = date, y = value)) +
+  geom_line(aes(colour = county)) +
+  scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", 
+               date_labels = "%b %d") + 
+  theme_minimal() + 
+  xlab(NULL) + ylab("Cumulative Count (7-day rolling average)") +
+  # facet_wrap(~ the_measure)
+  facet_wrap(~ name, scales = "free_y")
+
+p_county_map_new_cases <- ggplot() +
+  geom_sf(data = county_geometries %>%
+            left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
+                        select(county, rnew_cases_per1k),
+                      by = "county"),
+          # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
+          aes(fill = rnew_cases_per1k, geometry = geometry)) +
+  scale_fill_gradient(low = "white", high = "grey") +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per1k, 3), " per 1K")), color = "black", size = 3) +
+  coord_sf(datum = NA, label_axes = "----") +
+  xlab("") + ylab("") + theme_minimal()  +
+  # theme(legend.position = "none") +
+  labs(title = "New Cases by Connecticut County",
+       subtitle = "per 1K of population as of recent report date",
+       fill = "cases per 1K",
+       caption = "Source: US Census, tidycensus package")
+
+p_county_map_cum_cases <- ggplot() +
+  geom_sf(data = county_geometries %>%
+            left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
+                        select(county, cases),
+                      by = "county"),
+          # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
+          aes(fill = cases / (total_pop / 1000), geometry = geometry)) +
+  scale_fill_gradient(low = "white", high = "grey") +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", comma(cases), " cases")), color = "black", size = 3) +
+  coord_sf(datum = NA, label_axes = "----") +
+  xlab("") + ylab("") + theme_minimal()  +
+  # theme(legend.position = "none") +
+  labs(title = "Cumulative Cases by Connecticut County",
+       subtitle = "cases per 1K of population for most recent report date",
+       fill = "cases per 1K",
+       caption = "Source: US Census, tidycensus package")
+```
+Next I'll look at variations within Connecticut. Below are two maps
+showing the eight counties in Connecticut. The first map in Figure \@ref(fig:county-maps) shows new cases 
+per 1K of population. (Actually it show the rolling average the last seven days
+in order to smooth out varitions in day to day reporting.) The second map shows
+the cumulative total of cases. So the first map is an indication of the recent prevalence of the
+virus and the second map relates more to the total impact of the disease over the
+full course of the epidemic to date.
+
+Connecticut is part of the epidemic's surge in the New York area and the magnitude
+of the epidemic has been greater in the counties closer to New York City. Back in March cases
+first appeared in Fairfield County and then spread to Litchfield, New Haven, and Hartford.
+More recently Hartford has been the area that we have to watch and even the most eastern
+counties in the state.
+
+```{r county-maps, echo = FALSE, fig.cap = "County Maps of New and of Cumulative Cases", out.width = '50%', fig.show = 'hold'}
+print(p_county_map_new_cases)
+#```
+#```{r county_maps_cum_cases, echo = FALSE, fig.cap = "County Map Cumulative Cases"}
+print(p_county_map_cum_cases)
+```
+
+
+
+### Methodology and Sources
+
+#### Counts from Connecticut Department of Public Health
+The charts shows the counts of cases and deaths as they are reported by
 the Connecticut Department of Public Health. Reports sometimes end up in
 batches. There is a day of the week effect, with fewer cases on weekends.
 Some of the unusually large peaks and valleys in these charts are due

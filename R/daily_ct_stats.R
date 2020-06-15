@@ -691,15 +691,27 @@ county_map <- ggplot() +
           # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
           aes(fill = rnew_cases_per1k, geometry = geometry)) +
   scale_fill_gradient(low = "white", high = "grey") +
-  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per1k, 4), " per 1K")), color = "black", size = 3) +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per1k, 3), " per 1K")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
   # theme(legend.position = "none") +
-  labs(title = "Cumulative Confirmed Cases by Connecticut County",
-       subtitle = "cases per 1K of population for most recent report date",
+  labs(title = "New Cases by Connecticut County",
+       subtitle = "per 1K of population as of recent report date",
        fill = "cases per 1K",
        caption = "Source: US Census, tidycensus package")
-
+# > dph_counties %>% group_by(county) %>% filter(date == max(date)) %>% select(county, cases, rnew_cases, rnew_cases_per1k, total_pop)
+# # A tibble: 8 x 5
+# # Groups:   county [8]
+# county     cases rnew_cases rnew_cases_per1k total_pop
+# <chr>      <dbl>      <dbl>            <dbl>     <dbl>
+#   1 Fairfield  16277      36.7            0.0389    944348
+# 2 Hartford   11189      63.1            0.0706    894730
+# 3 Litchfield  1439       3.71           0.0203    183031
+# 4 Middlesex   1223       7              0.0428    163368
+# 5 New Haven  12021      29.1            0.0339    859339
+# 6 New London  1198      12.3            0.0457    268881
+# 7 Tolland      885       3              0.0198    151269
+# 8 Windham      463       6.71           0.0576    116538
 
 doubling_cases <- ct %>%
   filter(!is.na(week), cases > 0) %>%

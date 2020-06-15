@@ -2,17 +2,38 @@
 title: "version_2"
 author: "John Goldin"
 date: "5/16/2020"
-output: html_document
+output:
+  blogdown::html_page:
+    toc: yes
+ #   fig_width: 6
+ #   out.width: "70%" 
+ #   fig.align: "center"
+#    fig.asp: 0.618---
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, out.width = "100%",
+                      knitr.table.format = "html")
 ```
 
 ```{r libraries}
 library(tidyverse)
 library(sparkline)
 library(kableExtra)
+
+library(sf, quietly = TRUE)
+options(tigris_use_cache = TRUE)
+library(tigris, quietly = TRUE)
+library(tidycensus, quietly = TRUE)
+library(viridis, quietly = TRUE)
+library(ggrepel)
+options(tigris_class = "sf")
+library(lubridate, quietly = TRUE)
+library(janitor)
+library(fuzzyjoin) # for interval_left_join
+library(broom)
+library(RSocrata)
+library(RcppRoll)
 ```
 ```{r `load_basic_data`, echo = FALSE, message = FALSE}
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
@@ -42,7 +63,7 @@ and dph_towns to get Covid-19 cases and deaths
 
 
 
-```{r setup_town_info}
+```{r setup_town_infok, eval = FALSE, echo = FALSE}
 town_info_plus <- town_info %>% 
   left_join(dph_towns, by = "town") %>% 
   filter(date %in% week_setup$end_period)
@@ -52,7 +73,7 @@ town_info_plus <- town_info %>%
 
 You can also embed plots, for example:
 
-```{r t, echo=FALSE}
+```{r t, eval = FALSE, echo = FALSE}
 # note: need aes(geometry = geometry) because operation that turns sf object into tibble loses someting that specifies geometry column for ggplot
 p <- ggplot() + 
   geom_sf(data = town_info, aes(geometry = geometry),
@@ -66,7 +87,7 @@ p <- ggplot() +
        caption = "Source: US Census, tidycensus package")  
 ```
 
-```{r}
+```{r, eval = FALSE, echo = FALSE}
 county_centroid <- st_centroid(dph_pop) # use to place town labels
 county_map <- ggplot() +
   geom_sf(data = dph_pop, aes(fill = cases_per_pop)) +
@@ -82,7 +103,7 @@ county_map <- ggplot() +
 ```
 
 
-```{r, eval = FALSE}
+```{r, eval = FALSE, echo = FALSE}
 dph_towns <- ct %>% mutate(wday = factor(weekdays(date),
                                   levels = c("Monday", "Tuesday",
                                              "Wednesday", "Thursday", "Friday", "Saturday","Sunday")))
@@ -210,7 +231,7 @@ p_counties_current <- ct %>%
 
 
 
-```{r sparkline_experiment}
+```{r sparkline_experiment, eval = FALSE, echo = FALSE}
 test <- town_info_plus %>% 
   filter(town %in% c("Guilford", "New Haven", "Madison"),
          !is.na(rnew_cases))
@@ -218,10 +239,47 @@ sparkline(test$rnew_cases[3])
 # sparkline(test$rnew_cases[2])
 # sparkline(test$rnew_cases[3])
 ```
-
-
-```{r}
-
+```{r p_rt_live1, echo = FALSE}
+rt_live <- read_csv("https://d14wlfuexuxgcm.cloudfront.net/covid/rt.csv") %>% 
+  mutate(state = case_when(
+    region == "CT" ~ "Connecticut",
+    region == "AZ" ~ "Arizona"
+  ),
+  alt_mean = mean, halfway = (upper_50 + lower_50) / 2)
+r_data_ct <- rt_live %>% filter(region == "CT")
+r_data_az <- rt_live %>% filter(region == "AZ")
+```
+```{r p_rt_live2, echo = FALSE, eval = FALSE}
+p_rt_live <- ggplot(data = r_data_ct, aes(x = date, y = mean)) +
+  geom_ribbon(aes(ymin = lower_90, ymax = upper_90), fill = "grey92") +
+  geom_ribbon(data = r_data_az, aes(ymin = lower_90, ymax = upper_90), fill = "grey92") +
+  geom_ribbon(aes(ymin = lower_50, ymax = upper_50), fill = "grey83") +
+  geom_ribbon(data = r_data_az, aes(ymin = lower_50, ymax = upper_50), fill = "grey83") +
+  geom_line(data = r_data_ct, aes(y = median), colour = "yellow") + 
+  geom_line(data = r_data_ct, aes(y = alt_mean)) + theme_minimal() + 
+  geom_hline(yintercept = 1, colour = "gray") +
+  geom_line(data = r_data_az) + theme_minimal() + 
+  geom_text(data = rt_live %>% filter(region %in% c("CT", "AZ"), date == min(date)),
+            aes(label = state), hjust = 1, size = 3) +
+  theme(legend.position = "none") +
+  geom_line(data = r_data_ct %>% mutate(z = (upper_50 + lower_50) / 2), aes(y = (upper_50 + lower_50) / 2), colour = "red") +
+  theme(axis.title.y = element_text(angle=0, vjust = 0.5)) +
+  scale_y_continuous(limits = c(0.5, 1.5), breaks = c(0.5, 1, 1.5)) +
+                     #minor_breaks = seq(0.2, 1.4, 0.2)) +
+  scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", 
+               date_labels = "%b %d", 
+               limits = c(min(dph_total$date), max(dph_total$date))) +
+  xlab(NULL) + ylab(expression("R"[t])) +
+  # see: http://strata.uga.edu/8370/rtips/subscriptsSuperscripts.html
+  labs(title = expression(paste("Trend in ", R[t], " (as computed by https://rt.live/)")))
+print(p_rt_live)
+```
+```{r kdkd, echo = FALSE}
+ggplot(data = r_data_ct, aes(x = date, y = mean)) +
+ geom_ribbon(aes(ymin = lower_50, ymax = upper_50), fill = "grey83") +
+   geom_line() +
+   geom_line(aes(y = halfway), colour = "yellow")
+   
 ```
 
 
