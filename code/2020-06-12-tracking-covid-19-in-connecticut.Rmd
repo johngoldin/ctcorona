@@ -15,6 +15,8 @@ output:
 #  blogdown::html_page:
   bookdown::html_document2:
     toc: yes
+    number_sections: false
+    # figure parameters based on recommendation in Hadley's book
     fig_width: 7
     out.width: "70%" 
     fig.align: "center"
@@ -51,8 +53,10 @@ library(RcppRoll)
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 path_to_static_for_this_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/post/2020-06-12-tracking-covid-19-in-connecticut"
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
+path_to_ctcorona_r <- "~/Documents/R_local_repos/ctcorona/R/"
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
 load(paste0(path_to_ctcorona, "census_population.RData"))
+source(paste0(path_to_ctcorona_r, "combine_dph_towns.R"))
 
 # from https://www.ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf
 # The Changing Demographics of Connecticut — 1990 to 2000. by Center for Population Research  May. 31, 2004
@@ -103,7 +107,7 @@ p_new_cases <- ggplot(data = dph_total %>%
             aes(x = date, y = new_cases)) +
   geom_col(fill = "gray95", colour = "gray90") + 
   # scale_fill_viridis(discrete = TRUE, begin = 0.5, end = 0.7, option = "viridis") + 
-  scale_y_continuous(limits = c(0, NA)) +
+  scale_y_continuous(labels = comma, limits = c(0, NA)) +
   scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", date_labels = "%b %d") +
   geom_line(aes(y = rnew_cases), size = 1) +
   theme_minimal() + theme(legend.position = "none") +
@@ -162,7 +166,7 @@ p_hospitalizations <- ggplot(data = dph_total %>% filter(!is.na(hospital)),
   scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", 
                date_labels = "%b %d", 
                limits = c(min(dph_total$date), NA)) +
-  theme_minimal() +
+  theme_minimal() + scale_y_continuous(labels = comma) +
   theme(legend.position = "none") +
   ylab("in hospital") +
   labs(
@@ -191,7 +195,7 @@ p_rt_map <- ggplot(data = rt_live %>% select(-state) %>%
   facet_geo(~ state)
 
 ```
-### Tracking the Virus in Connecticut
+## Tracking the Virus in Connecticut
 
 This post focuses on what is happening recently. The aim is to
 use the recent trend to get some idea of the near future. The first
@@ -200,30 +204,38 @@ with a line that displays the rolling seven-day average. Typically there
 are day-of-the-week effects in the reporting so it's best to focus
 on the seven-day average.
 
-The plot show the history of new cases and also shows the 
-actions in some of Governor Lamont's executive orders. 
-
+The plot shows the history of new cases and also shows the 
+actions required by some of Governor Lamont's executive orders. 
+<br/><br/><br/>
 ```{r p-new-cases, echo = FALSE, fig.cap = "New Cases"}
 print(p_new_cases)
 
 ```
+<br/><br/><br/>
 ```{r p-rt-live, echo = FALSE, fig.asp = 0.3, fig.cap = "Estimated R<sub>t</sub>"}
 print(p_rt_live)
 ```
+<br/><br/><br/>
 ```{r p-daily-deaths, echo = FALSE, fig.cap = "Daily Deaths"}
 print(p_daily_deaths)
 
 ```
+<br/><br/><br/>
 ```{r p-hospitalizations, echo = FALSE, fig.cap = "Hospitalizations for Covid-19"}
 print(p_hospitalizations)
 ```
-
+<br/><br/>
 The number of new cases peaked in mid April and then began to
 decrease rapidly, although not as rapidly as it increased. 
+A key issue is how fast epidemic is expanding or contracting.
+One indicator of that is to estimate the
+parameter R<sub>t</sub>, the average number of people 
+who become infected by an infectious person. 
+When R<sub>t</sub> is greater than 1 the number of daily new cases is
+increasing, If R<sub>t</sub> is less than 1, it is decreasing.
 See [this site](https://rt.live/) for
 an estimate by state of the effective value for 
-R<sub>t</sub>, the average number of people 
-who become infected by an infectious person. The site
+R<sub>t</sub>. The site
 is described in [this article](https://www.vox.com/recode/2020/4/21/21227855/coronavirus-spreading-by-state-instagram-effective-reproduction-rate) at Vox.com.
 
 Note that as of June (and a month
@@ -240,12 +252,47 @@ arranged according to geographic position in the US. Remember
 that R<sub>t</sub> is a measure of the rate of increase. When R<sub>t</sub> (indicated by the blue line) is greater than 1
 (indicated by a dark gray line) the number of daily new cases is
 increasing, If R<sub>t</sub> is less than 1, it is decreasing.
-
+<br/><br/><br/>
 ```{r p-rt-map, echo = FALSE, fig.cap = "Estimate of R<sub>t</sub> by State"}
 print(p_rt_map)
 ```
+<br/><br/><br/>
 
-### Variations by County in Connecticut
+## Deaths by Age
+
+```{r deaths-by-age, echo = FALSE}
+ggplot(data = dph_age %>% filter(date == max(date)), 
+       aes(x = agegroups, y = deaths)) + 
+  geom_col() + 
+  labs(title = "Covid-19 Deaths in Connecticut by Age") +
+  xlab("Age Groups") + ylab(NULL) +
+  scale_y_continuous(labels = comma) +
+  theme_minimal() + theme(panel.grid.major.x = element_blank())
+```
+```{r deaths-per-100k, echo = FALSE}
+ggplot(data = dph_age %>% filter(date == max(date)), 
+       aes(x = agegroups, y = as.numeric(per_100k))) + 
+  geom_col() + 
+  labs(title = "Covid-19 Cases by Age in Connecticut per 100K Population") +
+  xlab("Age Groups") + ylab("Cases per 100K of Population") +
+  scale_y_continuous(labels = comma) +
+  theme_minimal() + theme(panel.grid.major.x = element_blank())
+```
+
+## Nursing Homes
+
+```{r nursing-homes, echo = FALSE}
+nursing_home_totals <- dph_nursing_cases %>% filter(date == max(date)) %>% 
+  summarise(cases = sum(nh_cases, na.rm = TRUE), deaths = sum(nh_deaths, na.rm = TRUE))
+```
+Nursing homes have been hard hit by the epidemic. It's hard to control  coronavirus outbreak
+in a group living situation, which includes prisons and cruises ship. On top of that,
+Covid-19 is especially serious for the elderly. The combination in nursing homes
+has been deadly. There have been `r comma(nursing_home_totals$deaths)` deaths in Connecticut 
+Nursing Homes which makes `r paste0(round((nursing_home_totals$deaths/dph_total$deaths[dph_total$date == max(dph_total$date)]) * 100, 1), "%")` of the total of `r comma(dph_total$deaths[dph_total$date == max(dph_total$date)])` deaths from Covid-19.
+
+
+## Variations by County in Connecticut
 
 ```{r county-trends, echo = FALSE}
 county_centroid <- st_centroid(county_geometries) %>%
@@ -285,33 +332,35 @@ p_county_map_new_cases <- ggplot() +
                         select(county, rnew_cases_per1k),
                       by = "county"),
           # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
-          aes(fill = rnew_cases_per1k, geometry = geometry)) +
+          aes(fill = rnew_cases_per1k * 100, geometry = geometry)) +
   scale_fill_gradient(low = "white", high = "grey") +
-  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per1k, 3), " per 1K")), color = "black", size = 3) +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per1k*100, 1), " per 100K")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
   # theme(legend.position = "none") +
   labs(title = "New Cases by Connecticut County",
-       subtitle = "per 1K of population as of recent report date",
-       fill = "cases per 1K",
-       caption = "Source: US Census, tidycensus package")
+       subtitle = "new cases per 100K of population as of most recent report date",
+       # fill = "cases per 1K",
+       caption = "Sources: CT DPH, US Census, tidycensus package")
 
 p_county_map_cum_cases <- ggplot() +
   geom_sf(data = county_geometries %>%
             left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
-                        select(county, cases),
-                      by = "county"),
+                        select(county, cases, deaths),
+                      by = "county") %>% 
+            mutate(`cases per 100k` = cases / (total_pop / 100000)),
           # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
-          aes(fill = cases / (total_pop / 1000), geometry = geometry)) +
+          aes(fill = `cases per 100k`, geometry = geometry)) +
   scale_fill_gradient(low = "white", high = "grey") +
-  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", comma(cases), " cases")), color = "black", size = 3) +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", comma(cases, accuracy = 1.0), " cases\n", comma(deaths, accuracy = 1.0), " deaths")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
   # theme(legend.position = "none") +
-  labs(title = "Cumulative Cases by Connecticut County",
-       subtitle = "cases per 1K of population for most recent report date",
-       fill = "cases per 1K",
-       caption = "Source: US Census, tidycensus package")
+  labs(title = "Cumulative Cases and Deaths by Connecticut County",
+       subtitle = "shading shows total cases per 100K of population",
+       # fill = "cases per 1K",
+       caption = "Source: CT DPH, US Census, tidycensus package")
+
 ```
 Next I'll look at variations within Connecticut. Below are two maps
 showing the eight counties in Connecticut. The first map in Figure \@ref(fig:county-maps) shows new cases 
@@ -326,17 +375,28 @@ of the epidemic has been greater in the counties closer to New York City. Back i
 first appeared in Fairfield County and then spread to Litchfield, New Haven, and Hartford.
 More recently Hartford has been the area that we have to watch and even the most eastern
 counties in the state.
-
+<br/><br/><br/>
 ```{r county-maps, echo = FALSE, fig.cap = "County Maps of New and of Cumulative Cases", out.width = '50%', fig.show = 'hold'}
 print(p_county_map_new_cases)
 #```
 #```{r county_maps_cum_cases, echo = FALSE, fig.cap = "County Map Cumulative Cases"}
 print(p_county_map_cum_cases)
 ```
+```{r town-categories, echo = FALSE}
+by_category <- dph_towns %>% 
+  combine_dph_towns(category)
+p_by_category <- ggplot(data = by_category,
+                        aes(x = date, y = rnew_cases_per1k * 100)) +
+  geom_line() +
+  facet_wrap(~ category)
+
+```
 
 
+<br/><br/><br/>
 
-### Methodology and Sources
+
+## Methodology and Sources
 
 #### Counts from Connecticut Department of Public Health
 The charts shows the counts of cases and deaths as they are reported by

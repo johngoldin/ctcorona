@@ -1,9 +1,11 @@
 # combine_dph_towns
 # return something like the dph_towns row but for a sum of a bunch of towns
 
-summarize_towns <- function(some_towns = dph_towns) {
-  some_towns %>% select(-town, -county) %>%
-    group_by(date) %>%
+# for example, xx <- combine_dph_towns(dph_towns, category, county)
+
+combine_dph_towns <- function(some_towns = dph_towns, ...) {
+  collect <- some_towns  %>%
+    group_by(..., date) %>%
     summarise(across(c(cases, deaths, peopletested, confirmedcases, probablecases,
                        confirmeddeaths, probabledeaths, numberoftests, numberofpositives,
                        numberofnegatives, numberofindeterminates,
@@ -11,8 +13,8 @@ summarize_towns <- function(some_towns = dph_towns) {
                        rnew_cases, rnew_deaths, current_cases), sum, na.rm = TRUE),
               towns = n(), .groups = "drop") %>%
     mutate(across(c(current_cases, rnew_cases, rnew_deaths, cases, deaths),
-                             ~ .x / (total_pop / 1000),
-                             .names = "{col}_per1k"))
+                  ~ .x / (total_pop / 1000),
+                  .names = "{col}_per1k"))
 }
 
 

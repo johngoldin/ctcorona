@@ -298,6 +298,14 @@ dph_towns <- read.socrata("https://data.ct.gov/resource/28fr-iqnx.json",
          rnew_cases_per1k = rnew_cases / (total_pop / 1000),
          rnew_deaths_per1k = rnew_deaths / (total_pop / 1000))
 dph_towns <- dph_towns %>% ungroup()
+dph_towns$category <- factor(dph_towns$category,
+                             c("Urban Core", "Urban Periphery",
+                               "Wealthy", "Suburban", "Rural"))
+# dph_towns$county <- factor(dph_towns$county,
+#                             levels = c("Litchfield", "Hartford", "Tolland", "Windham", "Fairfield", "New Haven", "Middlesex", "New London"),
+#                             labels = c("Litchfield County", "Hartford County", "Tolland County", "Windham County", "Fairfield County", "New Haven County", "Middlesex County", "New London County"))
+
+
 
 dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
@@ -402,7 +410,7 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
 
-save(dph_total, dph_towns, dph_counties, dph_nursing_cases, town_with_nursing, file = paste0(path_to_ctcorona, "dph_datasets.RData"))
+save(dph_total, dph_towns, dph_counties, dph_nursing_cases, dph_age, town_with_nursing, file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 
 last_date <- max(dph_total$date)
 usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")

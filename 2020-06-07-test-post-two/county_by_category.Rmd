@@ -1,0 +1,90 @@
+---
+author: 
+date: "`r Sys.Date()`"
+output:
+#  blogdown::html_page:
+  bookdown::html_document2:
+    toc: no
+    number_sections: false
+    # figure parameters based on recommendation in Hadley's book
+    fig_height: 9
+    out.width: "90%" 
+    fig.align: "center"
+    fig.asp: 1.0
+params: 
+  output_dir: "../static/2020-06-07-test-post-two"
+  return_url: "index.html"
+#title: "Covid-19 Summary for `r params$county` County"
+pagetitle: "County by Category of Towns"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+# see this StackOverflow tip for info on how to set title via parameter:
+#    https://stackoverflow.com/questions/31861569/setting-document-title-in-rmarkdown-from-parameters
+```
+
+```{r libraries, echo = FALSE, message = FALSE, warning = FALSE}
+library(tidyverse, quietly = TRUE)
+library(knitr, quietly = TRUE)
+library(scales, quietly = TRUE)
+# library(kableExtra, quietly = TRUE)
+# library(sparkline)
+# library(geofacet) # https://hafen.github.io/geofacet/
+library(sf, quietly = TRUE)
+options(tigris_use_cache = TRUE)
+# library(tigris, quietly = TRUE)
+# library(tidycensus, quietly = TRUE)
+library(viridis, quietly = TRUE)
+library(ggrepel)
+options(tigris_class = "sf")
+library(lubridate, quietly = TRUE)
+library(janitor)
+# library(fuzzyjoin) # for interval_left_join
+# library(broom)
+# library(RSocrata)
+# library(RcppRoll)
+```
+```{r `load_basic_data`, echo = FALSE, message = FALSE}
+path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
+path_to_static_for_this_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/post/2020-06-12-tracking-covid-19-in-connecticut"
+path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
+path_to_ctcorona_r <- "~/Documents/R_local_repos/ctcorona/R/"
+load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+load(paste0(path_to_ctcorona, "census_population.RData"))
+source(paste0(path_to_ctcorona_r, "combine_dph_towns.R"))
+
+# # from https://www.ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf
+# # The Changing Demographics of Connecticut — 1990 to 2000. by Center for Population Research  May. 31, 2004
+# Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"),"\t", escape_double = FALSE, trim_ws = TRUE) %>%
+#   mutate(category = factor(category, levels = c("Urban Core", "Urban Periphery",
+#                            "Wealthy", "Suburban", "Rural")))
+
+```
+
+```{r county-by-category, echo = FALSE}
+
+# create 
+for_chart <- dph_towns %>% 
+  mutate(category = fct_recode(category, Suburban = "Wealthy")) %>% 
+  combine_dph_towns(county, category) %>% 
+  mutate(rnew_cases_per100k = rnew_cases_per1k * 100,
+    county = factor(county,
+      levels = c("Litchfield", "Fairfield", "Hartford", "New Haven", "Middlesex", "Tolland", "New London", "Windham")),
+    for_label = paste0(towns, ifelse(towns > 1, " towns", "town"), ", pop=", comma(total_pop, accuracy = 1)))
+ggplot(data = for_chart,
+                        aes(x = date, y = rnew_cases_per100k)) +
+  geom_line() +
+  # facet_grid(county ~ category, nrow = 8, drop = FALSE) +
+  facet_grid(county ~ category, drop = FALSE) +
+  geom_text(data = for_chart %>% filter(date == min(date)),
+            x = -Inf, y = Inf,
+            aes(label = for_label), hjust = 0, vjust = 1, size = 3.5) +
+  ylab("New Cases per 100K") + xlab(NULL) +
+  labs(title = "New Cases by County and by Type of Town",
+       subtitle = "(7-day rolling average of new cases)",
+       caption = '"Wealthy" towns are included with "Suburban".',
+       tag = NULL)
+
+```
+
