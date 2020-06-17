@@ -14,3 +14,8 @@ render(report_filename,
 
 #myreport.Rmd file
 
+render(report_filename,
+       output_dir = output_dir,
+       output_file = paste0(county %>% tolower() %>% str_replace(" ", "_"), "_summary.html"),
+       params = list(output_dir = output, county = county))
+

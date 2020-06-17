@@ -84,6 +84,35 @@ in that post each evening. During that time the [Connecticut data portal](https:
 has expanded considerably, and I've built [some R code](https://github.com/johngoldin/ctcorona/blob/master/R/daily_ct_stats.R) 
 that let's me easily update
 that post. I'll use the same data infrastructure for this post as well.
+```{r box-score, echo = FALSE}
+recent_date <- max(dph_total$date, na.rm = TRUE)
+week_ago <- recent_date - 7
+if (!(week_ago %in% dph_total$date)) week_ago <- NA
+yesterday <- recent_date - 1
+# if (!(yesterday %in% dph_total$date)) yesterday <- NA
+# if (is.na(yesterday) || (length(dph_total$cases[dph_total$date == yesterday]))) {
+#   yesterday_cases <- ""
+# } else {yesterday_cases <- dph_total$cases[dph_total$date == recent_date] - dph_total$cases[dph_total$date == yesterday]}
+today_cases <- dph_total %>% filter(date == recent_date) %>% select(cases) %>% pluck(1, .default = NA)
+yesterday_cases <- today_cases - dph_total %>% filter(date == yesterday) %>% select(cases) %>% pluck(1, .default = NA)
+week_ago_cases <-  today_cases - dph_total %>% filter(date == week_ago) %>% select(cases) %>% pluck(1, .default = NA)
+today_deaths <- dph_total %>% filter(date == recent_date) %>% select(deaths) %>% pluck(1, .default = NA)
+yesterday_deaths <- today_deaths - dph_total %>% filter(date == yesterday) %>% select(deaths) %>% pluck(1, .default = NA)
+week_ago_deaths <-  today_deaths - dph_total %>% filter(date == week_ago) %>% select(deaths) %>% pluck(1, .default = NA)
+today_hospital <- dph_total %>% filter(date == recent_date) %>% select(hospital) %>% pluck(1, .default = NA)
+yesterday_hospital <- today_hospital - dph_total %>% filter(date == yesterday) %>% select(hospital) %>% pluck(1, .default = NA)
+week_ago_hospital <-  today_hospital - dph_total %>% filter(date == week_ago) %>% select(hospital) %>% pluck(1, .default = NA)
+today_tests <- dph_total %>% filter(date == recent_date) %>% select(covid_19_pcr_tests_reported) %>% pluck(1, .default = NA)
+yesterday_tests <- today_tests - dph_total %>% filter(date == yesterday) %>% select(covid_19_pcr_tests_reported) %>% pluck(1, .default = NA)
+week_ago_tests <-  today_tests - dph_total %>% filter(date == week_ago) %>% select(covid_19_pcr_tests_reported) %>% pluck(1, .default = NA)
+test_rate <- ((dph_total %>% filter(date == recent_date) %>% select(confirmedcases) %>% pluck(1, .default = NA)) -
+  (dph_total %>% filter(date == yesterday) %>% select(confirmedcases) %>% pluck(1, .default = NA))) / 
+  (dph_total %>% filter(date == yesterday) %>% select(confirmedcases) %>% pluck(1, .default = NA))
+recent_nursing_date <- max(dph_nursing_cases$date, na.rm = TRUE)
+nursing_week_ago <- recent_nursing_date - 7
+if (!(nursing_week_ago %in% dph_nursing_cases$date)) nursing_week_ago <- NA
+
+```
 
 ```{r 'new-cases-plot', echo = FALSE, eval = TRUE}
 ## This imaged will be saved in the /post/*_files/ directory
