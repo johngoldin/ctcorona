@@ -70,49 +70,113 @@ rt_live <- read_csv("https://d14wlfuexuxgcm.cloudfront.net/covid/rt.csv") %>%
     region == "CT" ~ "Connecticut",
     region == "AZ" ~ "Arizona"
   ))
-
 ```
-The [post I created back in March](https://johngoldin.com/post/2020-03-29-covid19-cases-in-connecticut/) 
-aimed to track the growth of Covid-19 as it hit Connecticut.
-Back then (at the end of March) I did not realize that 
-the greater New York area (including Connecticut)
-would be the center of the first wave in the US. At that time what I was reading
-focused on the nature of exponential growth of an epidemic. We were urged to
-"flatten the curve" and there was an emphasis on the shape of the growth of
-cumulative cases and deaths caused by the virus. I have been upading the figures
-in that post each evening. During that time the [Connecticut data portal](https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/)
-has expanded considerably, and I've built [some R code](https://github.com/johngoldin/ctcorona/blob/master/R/daily_ct_stats.R) 
-that let's me easily update
-that post. I'll use the same data infrastructure for this post as well.
+
+## Latest Connecticut Data from  the Department of Public Health
 ```{r box-score, echo = FALSE}
 recent_date <- max(dph_total$date, na.rm = TRUE)
 week_ago <- recent_date - 7
 if (!(week_ago %in% dph_total$date)) week_ago <- NA
 yesterday <- recent_date - 1
 # if (!(yesterday %in% dph_total$date)) yesterday <- NA
-# if (is.na(yesterday) || (length(dph_total$cases[dph_total$date == yesterday]))) {
-#   yesterday_cases <- ""
-# } else {yesterday_cases <- dph_total$cases[dph_total$date == recent_date] - dph_total$cases[dph_total$date == yesterday]}
-today_cases <- dph_total %>% filter(date == recent_date) %>% select(cases) %>% pluck(1, .default = NA)
-yesterday_cases <- today_cases - dph_total %>% filter(date == yesterday) %>% select(cases) %>% pluck(1, .default = NA)
-week_ago_cases <-  today_cases - dph_total %>% filter(date == week_ago) %>% select(cases) %>% pluck(1, .default = NA)
-today_deaths <- dph_total %>% filter(date == recent_date) %>% select(deaths) %>% pluck(1, .default = NA)
-yesterday_deaths <- today_deaths - dph_total %>% filter(date == yesterday) %>% select(deaths) %>% pluck(1, .default = NA)
-week_ago_deaths <-  today_deaths - dph_total %>% filter(date == week_ago) %>% select(deaths) %>% pluck(1, .default = NA)
-today_hospital <- dph_total %>% filter(date == recent_date) %>% select(hospital) %>% pluck(1, .default = NA)
-yesterday_hospital <- today_hospital - dph_total %>% filter(date == yesterday) %>% select(hospital) %>% pluck(1, .default = NA)
-week_ago_hospital <-  today_hospital - dph_total %>% filter(date == week_ago) %>% select(hospital) %>% pluck(1, .default = NA)
+# if (is.na(yesterday) || (length(dph_total$deaths[dph_total$date == yesterday]))) {
+#   yesterday_deaths <- ""
+# } else {yesterday_deaths <- dph_total$deaths[dph_total$date == recent_date] - dph_total$deaths[dph_total$date == yesterday]}
+today_cases <- dph_total %>% filter(date == recent_date) %>% 
+  select(cases) %>% pluck(1, .default = NA)
+yesterday_cases <- today_cases - dph_total %>% filter(date == yesterday) %>% 
+  select(cases) %>% pluck(1, .default = NA)
+week_ago_cases <-  today_cases - dph_total %>% filter(date == week_ago) %>% 
+  select(cases) %>% pluck(1, .default = NA)
+today_deaths <- dph_total %>% filter(date == recent_date) %>% 
+  select(deaths) %>% pluck(1, .default = NA)
+yesterday_deaths <- today_deaths - dph_total %>% filter(date == yesterday) %>% 
+  select(deaths) %>% pluck(1, .default = NA)
+week_ago_deaths <-  today_deaths - dph_total %>% filter(date == week_ago) %>% 
+  select(deaths) %>% pluck(1, .default = NA)
+today_hospital <- dph_total %>% filter(date == recent_date) %>% 
+  select(hospital) %>% pluck(1, .default = NA)
+yesterday_hospital <- today_hospital - dph_total %>% filter(date == yesterday) %>% 
+  select(hospital) %>% pluck(1, .default = NA)
+week_ago_hospital <-  today_hospital - dph_total %>% filter(date == week_ago) %>% 
+  select(hospital) %>% pluck(1, .default = NA)
 today_tests <- dph_total %>% filter(date == recent_date) %>% select(covid_19_pcr_tests_reported) %>% pluck(1, .default = NA)
 yesterday_tests <- today_tests - dph_total %>% filter(date == yesterday) %>% select(covid_19_pcr_tests_reported) %>% pluck(1, .default = NA)
 week_ago_tests <-  today_tests - dph_total %>% filter(date == week_ago) %>% select(covid_19_pcr_tests_reported) %>% pluck(1, .default = NA)
-test_rate <- ((dph_total %>% filter(date == recent_date) %>% select(confirmedcases) %>% pluck(1, .default = NA)) -
-  (dph_total %>% filter(date == yesterday) %>% select(confirmedcases) %>% pluck(1, .default = NA))) / 
-  (dph_total %>% filter(date == yesterday) %>% select(confirmedcases) %>% pluck(1, .default = NA))
+test_rate <- ((dph_total %>% filter(date == recent_date) %>% 
+                 select(confirmedcases) %>% pluck(1, .default = NA)) -
+                (dph_total %>% filter(date == yesterday) %>% 
+                   select(confirmedcases) %>% pluck(1, .default = NA))) / 
+  ((dph_total %>% filter(date == recent_date) %>% 
+      select(covid_19_pcr_tests_reported) %>% pluck(1, .default = NA)) -
+     (dph_total %>% filter(date == yesterday) %>% 
+        select(covid_19_pcr_tests_reported) %>% pluck(1, .default = NA)))
 recent_nursing_date <- max(dph_nursing_cases$date, na.rm = TRUE)
-nursing_week_ago <- recent_nursing_date - 7
-if (!(nursing_week_ago %in% dph_nursing_cases$date)) nursing_week_ago <- NA
+nursing_previous_date <- dph_nursing_cases %>% select(date) %>% arrange(desc(date)) %>% unique()
+nursing_previous_date <- nursing_previous_date$date[2]
+nursing_hm_cases <- dph_nursing_cases %>% filter(date == recent_nursing_date) %>% 
+  select(nh_cases) %>% pluck(1, .default = NA) %>% sum(na.rm = TRUE)
+nh_previous_cases <-  nursing_hm_cases - dph_nursing_cases %>% filter(date == nursing_previous_date) %>% 
+  select(nh_cases) %>% pluck(1, .default = NA) %>% sum(na.rm = TRUE)
+nursing_hm_deaths <- dph_nursing_cases %>% filter(date == recent_nursing_date) %>% 
+  select(nh_deaths) %>% pluck(1, .default = NA) %>% sum(na.rm = TRUE)
+nh_previous_deaths <-  nursing_hm_deaths - dph_nursing_cases %>% filter(date == nursing_previous_date) %>% 
+  select(nh_deaths) %>% pluck(1, .default = NA) %>% sum(na.rm = TRUE)
+# use: sprintf("%+3d %%", x)
+box_fmt <- function(x) {
+  case_when(
+    (is.na(x) | is.null(x) | (length(x) == 0)) ~ " ",
+    x < 0 ~ comma(x),
+    x > 0 ~ comma(x, prefix = "+"),
+    TRUE ~  "0"
+  )
+}
 
+###########################################################################
+# Box score comes here:
+box_score <- tribble(
+  ~` `, ~`today`, ~`yesterday`, ~`week_ago`,
+  "Cases", today_cases, yesterday_cases, week_ago_cases,
+  "Deaths", today_deaths, yesterday_deaths, week_ago_deaths,
+  "Hospitalizations", today_hospital, yesterday_hospital, week_ago_hospital,
+  "Tests",    today_tests, yesterday_tests, week_ago_tests,
+  "--- ", NA , NA, NA,
+  "Nursing home cases", nursing_hm_cases, NA, nh_previous_cases,
+  "Nursing home deaths", nursing_hm_deaths, NA, nh_previous_deaths
+) %>% 
+    mutate(yesterday = map_chr(yesterday, box_fmt),
+           week_ago = map_chr(week_ago, box_fmt), today = ifelse(is.na(today), "", comma(today)))
+
+  # mutate(across(c(yesterday, week_ago), box_fmt), today = ifelse(is.na(today), "", comma(today)))
+
+kable(box_score, 
+      col.names = c(" ", "Total Today", "Change from\nYesterday", "Change from\nWeek Ago"),
+      format.args = list(big.mark = ","),
+      align = "lrrr") %>% 
+  kableExtra::column_spec(2:4, width_max = "1.5in") %>% 
+  kableExtra::column_spec(1, bold = TRUE, width_min = "1.5in")
 ```
+ **Rate of positive tests:    **  `r round(test_rate * 100, 1.1)`%
+ 
+ PDF report from the Connecticut Deprtment of Public Health:[`r dph_reports$name[1]`](`r dph_reports$url[1]`)
+ 
+ Source: Multiple tables from [Connecticut Open Data](https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/)  
+ -------
+ 
+A [post I created back in March](https://johngoldin.com/post/2020-03-29-covid19-cases-in-connecticut/) 
+aimed to track the growth of Covid-19 as it hit Connecticut.
+Back then at the end of March I did not realize that 
+the greater New York area (including Connecticut)
+would be the center of the first wave in the US. At that time what I was reading
+focused on the nature of exponential growth of an epidemic. We were urged to
+"flatten the curve" and that shaped the way I presented the
+data in that post. I have been updating the figures
+in that post each evening. During that time the [Connecticut data portal](https://data.ct.gov/stories/s/COVID-19-data/wa3g-tfvc/)
+has expanded considerably, and I've built [some R code](https://github.com/johngoldin/ctcorona/blob/master/R/daily_ct_stats.R) 
+that let's me easily update
+that post. I'll use the same data infrastructure for this post as well.
+This post is much more oriented toward tracking the current status of 
+the epidemic in Connecticut.
 
 ```{r 'new-cases-plot', echo = FALSE, eval = TRUE}
 ## This imaged will be saved in the /post/*_files/ directory

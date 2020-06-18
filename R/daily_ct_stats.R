@@ -228,6 +228,11 @@ if (!exists("nyt_series")) {
 }
 
 # ct covid data resources: https://data.ct.gov/stories/s/wa3g-tfvc
+
+dph_reports <- read.socrata("https://data.ct.gov/resource/bqve-e8um.json",
+                            app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>% arrange(desc(date)) %>%
+  mutate(date = as_date(date))
 dph_counties <- read.socrata("https://data.ct.gov/resource/bfnu-rgqt.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
@@ -410,7 +415,7 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
 
-save(dph_total, dph_towns, dph_counties, dph_nursing_cases, dph_age, town_with_nursing, file = paste0(path_to_ctcorona, "dph_datasets.RData"))
+save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases, dph_age, town_with_nursing, file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 
 last_date <- max(dph_total$date)
 usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")
