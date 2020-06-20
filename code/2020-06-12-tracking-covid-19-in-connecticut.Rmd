@@ -1,7 +1,7 @@
 ---
 title: Tracking Covid-19 in Connecticut
 author: John Goldin
-date: '2020-06-12'
+date: '2020-06-19'
 slug: []
 categories:
   - COVID19
@@ -51,7 +51,7 @@ library(RcppRoll)
 ```
 ```{r `load_basic_data`, echo = FALSE, message = FALSE}
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
-path_to_static_for_this_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/post/2020-06-12-tracking-covid-19-in-connecticut"
+path_to_static_for_this_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/post/2020-06-19-tracking-covid-19-in-connecticut"
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
 path_to_ctcorona_r <- "~/Documents/R_local_repos/ctcorona/R/"
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
@@ -63,13 +63,17 @@ source(paste0(path_to_ctcorona_r, "combine_dph_towns.R"))
 Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"),"\t", escape_double = FALSE, trim_ws = TRUE) %>%
   mutate(category = factor(category, levels = c("Urban Core", "Urban Periphery",
                            "Wealthy", "Suburban", "Rural")))
+# note that prisons have dominant effect on Somers and Montville
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
 # load effective R from https://rt.live/
 rt_live <- read_csv("https://d14wlfuexuxgcm.cloudfront.net/covid/rt.csv") %>% 
   mutate(state = case_when(
     region == "CT" ~ "Connecticut",
     region == "AZ" ~ "Arizona"
-  ))
+  )) %>% 
+  group_by(region) %>% arrange(date) %>% 
+  mutate(above_one = ifelse(last(mean) > 1, "< 1", ">= 1") %>% factor(levels = c(">= 1", "< 1"))) %>% 
+  ungroup()
 ```
 
 ## Latest Connecticut Data from  the Department of Public Health
@@ -231,18 +235,20 @@ p_daily_deaths <- ggplot(data = dph_total %>%
 
 r_data_ct <- rt_live %>% filter(region == "CT")
 r_data_az <- rt_live %>% filter(region == "AZ")
+# colors from colorbrewer:  https://colorbrewer2.org/#type=diverging&scheme=PRGn&n=3
 p_rt_live <- ggplot(data = r_data_ct, aes(x = date, y = mean)) +
   geom_ribbon(aes(ymin = lower_90, ymax = upper_90), fill = "grey92") +
   geom_ribbon(data = r_data_az, aes(ymin = lower_90, ymax = upper_90), fill = "grey92") +
   geom_ribbon(aes(ymin = lower_50, ymax = upper_50), fill = "grey83") +
   geom_ribbon(data = r_data_az, aes(ymin = lower_50, ymax = upper_50), fill = "grey83") +
-  geom_line() + theme_minimal() + 
+  geom_line(aes(colour = above_one)) + theme_minimal() + 
   geom_hline(yintercept = 1, colour = "gray") +
-  geom_line(data = r_data_az) + theme_minimal() + 
+  geom_line(data = r_data_az, aes(colour = above_one)) + theme_minimal() + 
   geom_text(data = rt_live %>% filter(region %in% c("CT", "AZ"), date == min(date)),
-            aes(label = state), hjust = 1, size = 3) +
+            aes(label = state), hjust = 1, size = 3, nudge_x = -2) +
   theme(legend.position = "none") +
   theme(axis.title.y = element_text(angle=0, vjust = 0.5)) +
+  scale_color_manual(values = c(">= 1" = "#7fbf7b", "< 1" = "#af8dc3")) +
   scale_y_continuous(limits = c(0.5, 1.5), breaks = c(0.5, 1, 1.5)) +
                      #minor_breaks = seq(0.2, 1.4, 0.2)) +
   scale_x_date(date_breaks = "2 weeks", date_minor_breaks = "1 week", 
@@ -276,8 +282,9 @@ p_rt_map <- ggplot(data = rt_live %>% select(-state) %>%
   geom_ribbon(aes(ymin = lower_90, ymax = upper_90), fill = "grey92") +
   geom_ribbon(aes(ymin = lower_50, ymax = upper_50), fill = "grey88") +
   geom_hline(yintercept = 1, colour = "grey50") +
-  geom_line(colour = "darkblue") +
-   scale_y_continuous(limits = c(0.5, 1.5), breaks = c(0.5, 1, 1.5)) +
+  geom_line(aes(colour = above_one)) + theme(legend.position = "none") +
+  scale_color_manual(values = c(">= 1" = "#7fbf7b", "< 1" = "#af8dc3")) +
+  scale_y_continuous(limits = c(0.5, 1.5), breaks = c(0.5, 1, 1.5)) +
                      #minor_breaks = seq(0.2, 1.4, 0.2)) +
   scale_x_date(date_breaks = "1 month", date_minor_breaks = "1 week", 
                date_labels = "%b %d") + 
@@ -353,7 +360,7 @@ print(p_rt_map)
 
 ## Deaths by Age
 
-```{r deaths-by-age, echo = FALSE}
+```{r deaths-by-age, echo = FALSE, out.width = '50%', fig.show = 'hold', fig.cap = "Relationship of Age to Covid-19 Deaths andCases"}
 ggplot(data = dph_age %>% filter(date == max(date)), 
        aes(x = agegroups, y = deaths)) + 
   geom_col() + 
@@ -361,8 +368,8 @@ ggplot(data = dph_age %>% filter(date == max(date)),
   xlab("Age Groups") + ylab(NULL) +
   scale_y_continuous(labels = comma) +
   theme_minimal() + theme(panel.grid.major.x = element_blank())
-```
-```{r deaths-per-100k, echo = FALSE}
+# ```
+# ```{r deaths-per-100k, echo = FALSE}
 ggplot(data = dph_age %>% filter(date == max(date)), 
        aes(x = agegroups, y = as.numeric(per_100k))) + 
   geom_col() + 
@@ -423,16 +430,17 @@ p_county_map_new_cases <- ggplot() +
   geom_sf(data = county_geometries %>%
             left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
                         select(county, rnew_cases_per1k),
-                      by = "county"),
+                      by = "county") %>% 
+            mutate(`new per 100k` = rnew_cases_per1k * 100),
           # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
-          aes(fill = rnew_cases_per1k * 100, geometry = geometry)) +
+          aes(fill = `new per 100k`, geometry = geometry)) +
   scale_fill_gradient(low = "white", high = "grey") +
   geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per1k*100, 1), " per 100K")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
   # theme(legend.position = "none") +
   labs(title = "New Cases by Connecticut County",
-       subtitle = "new cases per 100K of population as of most recent report date",
+       subtitle = "shading shows new cases per 100K of population as of most recent report",
        # fill = "cases per 1K",
        caption = "Sources: CT DPH, US Census, tidycensus package")
 
@@ -470,10 +478,8 @@ More recently Hartford has been the area that we have to watch and even the most
 counties in the state.
 <br/><br/><br/>
 ```{r county-maps, echo = FALSE, fig.cap = "County Maps of New and of Cumulative Cases", out.width = '50%', fig.show = 'hold'}
-print(p_county_map_new_cases)
-#```
-#```{r county_maps_cum_cases, echo = FALSE, fig.cap = "County Map Cumulative Cases"}
 print(p_county_map_cum_cases)
+print(p_county_map_new_cases)
 ```
 ```{r town-categories, echo = FALSE}
 by_category <- dph_towns %>% 
@@ -485,8 +491,49 @@ p_by_category <- ggplot(data = by_category,
 
 ```
 
+### By County and Type of Town
 
-<br/><br/><br/>
+There are 169 towns in Connecticut, which makes it hard to eamine variations by town. To help
+examine variations within counties, I'll use a typology of towns called 
+[The Five Connecticuts](https://ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf)
+that divides towns into five categories based on census variables: Urban Core, Urban Periphery,
+Suburban, Rural, and a fifth category for Wealthy Suburbs used for some towns in Fairfield County. 
+Adjusting for population, the number of cases has been greater in the counties closer
+to New York City. 
+In the figure below I'll fold the wealthy towns into the Suburban category. I have excluded
+Montville and Somers because the prisons in those towns complicates interpretation of the
+town statistics.
+
+Counties are laid out from top to bottom and the counties closer to New York are toward the top. 
+The columns show the four categories. Urban towns have been hit harder than suburban and rural
+towns. While density may have some effect on case rates, the report [Towards Health Equity in Connecticut: The Role of Social Inequality and the Impact of COVID-19](https://ctdatahaven.org/reports/towards-health-equity-connecticut)
+by DataHaven documents the unequal impact of the epidemic in Connecticut related to social inequality.
+
+```{r county-by-category, echo = FALSE, fig.asp = 1.2}
+
+# create 
+for_chart <- dph_towns %>% filter(!(town %in% c("Montville", "Somers"))) %>% 
+  mutate(category = fct_recode(category, Suburban = "Wealthy")) %>% 
+  combine_dph_towns(county, category) %>% 
+  mutate(rnew_cases_per100k = rnew_cases_per1k * 100,
+    county = factor(county,
+      levels = c("Litchfield", "Fairfield", "Hartford", "New Haven", "Middlesex", "Tolland", "New London", "Windham")),
+    for_label = paste0(towns, ifelse(towns > 1, " towns", "town"), ", pop=", comma(total_pop, accuracy = 1)))
+ggplot(data = for_chart,
+                        aes(x = date, y = rnew_cases_per100k)) +
+  geom_line() +
+  # facet_grid(county ~ category, nrow = 8, drop = FALSE) +
+  facet_grid(county ~ category, drop = FALSE) +
+  geom_text(data = for_chart %>% filter(date == min(date)),
+            x = -Inf, y = Inf,
+            aes(label = for_label), hjust = 0, vjust = 1, size = 3) +
+  ylab("New Cases per 100K") + xlab(NULL) +
+  labs(title = "New Cases by County and by Type of Town Per Population",
+       subtitle = "(7-day rolling average of new cases)",
+       caption = '"Wealthy" towns are included with "Suburban".\nSomers and Montville are omitted because prison data may dominate town data.',
+       tag = NULL)
+
+```
 
 
 ## Methodology and Sources

@@ -17,3 +17,8 @@ knitr::opts_chunk$set(echo = TRUE)
 [Note as of May 27](https://portal.ct.gov/-/media/Coronavirus/CTDPHCOVID19summary5272020.pdf?la=en)
 
 >The staff at the Department of Public Health have removed 356 cases and 808 tests in the past 24 hours, which were identified as duplicates in the system, affecting both test and overall case numbers. Since yesterday, there have been 341 new positive cases, and 5,215 new tests were reported.
+
+
+[Note as of June 18](https://portal.ct.gov/-/media/Coronavirus/CTDPHCOVID19summary6182020.pdf)
+
+>Please note that 81 new cases were reported in the past 24-hours; 70 previously reported cases were removed from the total counts due to correction of data errors.

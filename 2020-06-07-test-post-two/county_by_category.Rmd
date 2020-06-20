@@ -7,10 +7,14 @@ output:
     toc: no
     number_sections: false
     # figure parameters based on recommendation in Hadley's book
-    fig_height: 9
-    out.width: "90%" 
+    # fig_height: 9
+    # out.width: "90%" 
+    # fig.align: "center"
+    # fig.asp: 1.0
+    fig_width: 7
+    out.width: "70%" 
     fig.align: "center"
-    fig.asp: 1.0
+    fig.asp: 0.618
 params: 
   output_dir: "../static/2020-06-07-test-post-two"
   return_url: "index.html"
@@ -62,10 +66,9 @@ source(paste0(path_to_ctcorona_r, "combine_dph_towns.R"))
 
 ```
 
-```{r county-by-category, echo = FALSE}
-
+```{r county-by-category, echo = FALSE, fig.asp =1.2}
 # create 
-for_chart <- dph_towns %>% 
+for_chart <- dph_towns %>% filter(!(town %in% c("Montville", "Somers"))) %>% 
   mutate(category = fct_recode(category, Suburban = "Wealthy")) %>% 
   combine_dph_towns(county, category) %>% 
   mutate(rnew_cases_per100k = rnew_cases_per1k * 100,
@@ -83,7 +86,7 @@ ggplot(data = for_chart,
   ylab("New Cases per 100K") + xlab(NULL) +
   labs(title = "New Cases by County and by Type of Town",
        subtitle = "(7-day rolling average of new cases)",
-       caption = '"Wealthy" towns are included with "Suburban".',
+       caption = '"Wealthy" towns are included with "Suburban".\nSomers and Montville are omitted because prison data may dominate town data.',
        tag = NULL)
 
 ```
