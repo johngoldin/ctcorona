@@ -216,6 +216,20 @@ if (1 == 2) {
     geom_sf(data = county_geometries, colour = "gray", fill = NA)
   p_density <-add_names(p_density, df = town_geometries %>% filter(total_pop > 70000) %>%
              select(names = town, lat = INTPTLAT, lon = INTPTLON) )
+
+  make_town_map <- function(d = town_geometries, var,
+                            cg = county_geometries,
+                            pop_cutoff = 70000,
+                            town_labels = "darkgray",
+                            county_lines = "gray") {
+    ggplot(data = d) + geom_sf(aes(fill = {{ var }})) +
+      geom_sf(data = cg, color = county_lines, fill = NA) +
+      geom_text(data = d %>% filter(total_pop > pop_cutoff),
+                    aes(label = town, x = INTPTLON, y = INTPTLAT),
+                size = 3, colour = town_labels) +
+      xlab(NULL) + ylab(NULL) + coord_sf(datum = NA) + theme_minimal()
+  }
+  # make_town_map(town_geometries, college_plus_pct) %>% print()
 }
 
 if (!exists("nyt_series")) load(paste0(path_to_ctcorona, "nyt_series.RData"))
