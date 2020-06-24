@@ -36,13 +36,14 @@ developed in the report [The Five Connecticuts](https://ctdatahaven.org/sites/ct
 Urban Core, Urban Periphery, Wealthy, Suburban, and Rural.
 
 For each town it shows the population, the percentage of deaths in that town
-attributed to nursing home residents, and the largest average number of daily new cases
+attributed to nursing home residents, and the largest average number of daily new cases per 100K of population
 (based on rolling 14 day average). 
 
 Next there are a series of [sparklines](https://en.wikipedia.org/wiki/Sparkline)
 that show the trend in daily new cases and daily deaths (based on 
 14 day moving average). Cases and deaths are shown as a ratio to population
-in the town.
+in the town. 
+(The per-cases number basically tells you the value associated with the maximum height of the sparkline.)
 
 The purpose of this table is to make it easier to quickly scan
 for trends in local towns.

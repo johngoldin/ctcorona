@@ -327,7 +327,25 @@ dph_towns$category <- factor(dph_towns$category,
 #                             levels = c("Litchfield", "Hartford", "Tolland", "Windham", "Fairfield", "New Haven", "Middlesex", "New London"),
 #                             labels = c("Litchfield County", "Hartford County", "Tolland County", "Windham County", "Fairfield County", "New Haven County", "Middlesex County", "New London County"))
 
+towns_recent_week <- dph_towns %>%
+  filter((date == (max(dph_towns$date) - 7)) | (date == max(dph_towns$date))) %>%
+    group_by(town, category, county, total_pop) %>% arrange(date) %>%
+  summarise(across(c(cases, deaths, numberofpositives, numberoftests), ~ last(.x) - first(.x)), .groups = "drop") %>%
+  mutate(hit_rate = numberofpositives / numberoftests)
 
+counties_recent_week <- dph_counties %>%
+  filter((date == (max(dph_counties$date) - 7)) | (date == max(dph_counties$date))) %>%
+  group_by(county, total_pop) %>% arrange(date) %>%
+  summarise(across(c(cases, deaths), ~ last(.x) - first(.x)), .groups = "drop")
+
+# code to look for anomalous data
+# decreases <- dph_total %>% arrange(date) %>%
+#   filter((lag(cases) > cases) | (cases > lead(cases)) |
+#            (lag(deaths) > deaths) | (deaths > lead(deaths))) %>% select(date, cases, deaths)
+#
+# decreases_towns <- dph_towns %>% arrange(town, date) %>% group_by(town) %>%
+#   filter((lag(cases) > cases) | (cases > lead(cases)) |
+#            (lag(deaths) > deaths) | (deaths > lead(deaths))) %>% select(town, date, cases, deaths)
 
 dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
@@ -375,7 +393,8 @@ if (!exists("dph_nursing_facilities")) {
 dph_nursing_cases <- read.socrata("https://data.ct.gov/resource/wyn3-qphu.json",
                                   app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
   as_tibble() %>%
-  mutate(date = as_date(date_last_updated), nh_cases = as.numeric(residents_with_covid),
+  mutate(date = as_date(date_last_updated),
+                        nh_cases = as.numeric(residents_with_covid),
                         licensed_beds = as.numeric(licensed_beds),
                         nh_lab_confirmed_deaths = as.numeric(covid_19_associated_lab_confirmed),
                         nh_probable_deaths = as.numeric(covid_19_associated_deaths_probable),
@@ -440,7 +459,10 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
 
-save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases, dph_age, town_with_nursing, dph_assisted_living, file = paste0(path_to_ctcorona, "dph_datasets.RData"))
+save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases,
+     dph_age, town_with_nursing, dph_assisted_living,
+     towns_recent_week, counties_recent_week,
+     file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 
 last_date <- max(dph_total$date)
 usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")

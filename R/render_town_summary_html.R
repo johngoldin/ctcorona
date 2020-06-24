@@ -5,7 +5,7 @@ code_dir <- "code/2020-06-07-test-post-two"
 county = "New Haven"
 report_filename <- paste0("county", "_summary.Rmd")
 report_filename <- file.path(code_dir, report_filename)
-output_dir <- "static/2020-06-07-test-post-two"
+output_dir <- path_to_static_june
 output <- file.path("..", output_dir)
 render(report_filename,
        output_dir = output_dir,
