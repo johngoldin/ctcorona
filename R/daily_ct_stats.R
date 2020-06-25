@@ -327,14 +327,14 @@ dph_towns$category <- factor(dph_towns$category,
 #                             levels = c("Litchfield", "Hartford", "Tolland", "Windham", "Fairfield", "New Haven", "Middlesex", "New London"),
 #                             labels = c("Litchfield County", "Hartford County", "Tolland County", "Windham County", "Fairfield County", "New Haven County", "Middlesex County", "New London County"))
 
-towns_recent_week <- dph_towns %>%
-  filter((date == (max(dph_towns$date) - 7)) | (date == max(dph_towns$date))) %>%
+towns_recent_weeks <- dph_towns %>%
+  filter((date == (max(dph_towns$date) - 14)) | (date == max(dph_towns$date))) %>%
     group_by(town, category, county, total_pop) %>% arrange(date) %>%
   summarise(across(c(cases, deaths, numberofpositives, numberoftests), ~ last(.x) - first(.x)), .groups = "drop") %>%
   mutate(hit_rate = numberofpositives / numberoftests)
 
-counties_recent_week <- dph_counties %>%
-  filter((date == (max(dph_counties$date) - 7)) | (date == max(dph_counties$date))) %>%
+counties_recent_weeks <- dph_counties %>%
+  filter((date == (max(dph_counties$date) - 14)) | (date == max(dph_counties$date))) %>%
   group_by(county, total_pop) %>% arrange(date) %>%
   summarise(across(c(cases, deaths), ~ last(.x) - first(.x)), .groups = "drop")
 
@@ -402,7 +402,7 @@ if (!exists("dph_nursing_facilities")) {
            X_18:unknown_age, male, female, unknown_gender,
            white:other_or_unknown, reporting_year, geocoded_column.type,
            geocoded_column.coordinates,
-           ct_full_credential_code, ct_credential_number,
+           ct_credential_number,
            rhns_room_rate_private_1_bed, rhns_room_rate_semi_private_2_beds)
   # save(dph_nursing_facilities, file = paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 }
@@ -496,7 +496,7 @@ if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oo
 
 save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases,
      dph_age, town_with_nursing, dph_assisted_living,
-     towns_recent_week, counties_recent_week, doc_covid,
+     towns_recent_weeks, counties_recent_weeks, doc_covid,
      file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 
 last_date <- max(dph_total$date)
