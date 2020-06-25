@@ -35,11 +35,13 @@ It is sorted by the category of town as
 developed in the report [The Five Connecticuts](https://ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf):
 Urban Core, Urban Periphery, Wealthy, Suburban, and Rural.
 
-For each town it shows the population, the percentage of deaths in that town
-attributed to nursing home residents, and the largest average number of daily new cases per 100K of population
-(based on rolling 14 day average). 
+For each town it shows the category, the population, 
+the total number of cases, the number of recent cases per
+100K of population, total deaths, and percentage of total deaths
+in that town
+attributed to nursing home residents.
 
-Next there are a series of [sparklines](https://en.wikipedia.org/wiki/Sparkline)
+Next there are two [sparklines](https://en.wikipedia.org/wiki/Sparkline)
 that show the trend in daily new cases and daily deaths (based on 
 14 day moving average). Cases and deaths are shown as a ratio to population
 in the town. 
@@ -75,66 +77,70 @@ county_sparklines <- dph_counties %>%
             `daily deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0,
                                      chartRangeMax = county_deaths_max), .groups = "drop")
 
-county_summary <- dph_counties %>% 
-  filter(county == params$county)
-county_summary <- county_summary %>% 
-  # left_join(town_info %>% select(county, category, town)) %>% 
-  group_by(county) %>% 
-  # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
-  summarise(`max cases` = (max(rnew_cases_per1k, na.rm = TRUE) %>% round(4)),
-    # `county cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0, 
-    #                        chartRangeMax = county_cases_max),
-    # `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0, 
-    #                        chartRangeMax = county_deaths_max), 
-    .groups = "drop") %>% 
-  left_join(county_sparklines, by = "county") %>% 
-  left_join(county_info %>% select(county, total_pop), by = "county") %>% 
-  # left_join(town_with_nursing %>% 
-  #             filter(date == max(date)) %>% 
-  #             select(town, nh_death_pct), by = "town") %>% 
-  mutate(nh_death_pct = NA_real_, category = "") %>% 
-  select(county, category, county, total_pop, nh_death_pct, `max cases`, `daily cases`,
-         `daily deaths`) %>% 
-  mutate(total_pop = comma(total_pop, digits = 0), 
-         nh_death_pct = percent(nh_death_pct, digits = 0)) %>% 
-  formattable::format_table(
-    # x = .,
-    # formatters = list(align=c("l")),
-    format = "html",
-    align = c("l", "l", "l", "l", "c", "c", "c", "c")
-  ) %>%
-  # kable_styling("striped", full_width = F) %>%
-  # kable_styling(full_width = F) %>%
-  # group_rows("group1", 1, 2) %>%
-  # group_rows("group1", 1, 2) %>%
-  # group_rows("group2", 3,3) %>%
-  htmltools::HTML() %>%
-  shiny::div() %>%
-  sparkline::spk_add_deps()
+# county_summary <- dph_counties %>% 
+#   filter(county == params$county)
+# county_summary <- county_summary %>% 
+#   # left_join(town_info %>% select(county, category, town)) %>% 
+#   group_by(county) %>% 
+#   # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
+#   summarise(`max cases` = (max(rnew_cases_per1k, na.rm = TRUE) %>% round(4)),
+#     # `county cases` = spk_chr(rnew_cases_per1k, chartRangeMin = 0, 
+#     #                        chartRangeMax = county_cases_max),
+#     # `county deaths` = spk_chr(rnew_deaths_per1k, chartRangeMin = 0, 
+#     #                        chartRangeMax = county_deaths_max), 
+#     .groups = "drop") %>% 
+#   # left_join(county_sparklines, by = "county") %>% 
+#   # left_join(county_info %>% select(county, total_pop), by = "county") %>% 
+#   # left_join(town_with_nursing %>% 
+#   #             filter(date == max(date)) %>% 
+#   #             select(town, nh_death_pct), by = "town") %>% 
+#   mutate(nh_death_pct = NA_real_, category = "") %>% 
+#   select(county, category, county, total_pop, nh_death_pct, `max cases`, `daily cases`,
+#          `daily deaths`) %>% 
+#   mutate(total_pop = comma(total_pop, digits = 0), 
+#          nh_death_pct = percent(nh_death_pct, digits = 0)) %>% 
+#   formattable::format_table(
+#     # x = .,
+#     # formatters = list(align=c("l")),
+#     format = "html",
+#     align = c("l", "l", "l", "l", "c", "c", "c", "c")
+#   ) %>%
+#   # kable_styling("striped", full_width = F) %>%
+#   # kable_styling(full_width = F) %>%
+#   # group_rows("group1", 1, 2) %>%
+#   # group_rows("group1", 1, 2) %>%
+#   # group_rows("group2", 3,3) %>%
+#   htmltools::HTML() %>%
+#   shiny::div() %>%
+#   sparkline::spk_add_deps()
 
 
 town_summary <- dph_towns %>%
   filter(county == params$county, #total_pop > 10000,
-         !is.na(rnew_cases)) # %>%
-town_summary <- town_summary %>% 
+         !is.na(rnew_cases))  %>%
   # left_join(town_info %>% select(county, category, town)) %>% 
   group_by(county, category, town) %>% 
   # summarise(`max cases` = round(max(rnew_cases, na.rm = TRUE)),
-  summarise(`max cases` = (max(rnew_cases_per1k * 100, na.rm = TRUE) %>% round(1)),
+  summarise(`total cases` = max(cases, na.rm = TRUE),
+            `total deaths` = max(deaths, na.rm = TRUE),
+            total_pop = scales::comma(max(total_pop, na.rm = TRUE)),
+            
     `town cases` = spk_chr(rnew_cases_per1k*100, chartRangeMin = 0, 
                            chartRangeMax = town_cases_max),
     `town deaths` = spk_chr(rnew_deaths_per1k*100, chartRangeMin = 0, 
                            chartRangeMax = town_deaths_max), .groups = "drop") %>% 
-  left_join(county_sparklines, by = "county") %>% 
-  left_join(town_info %>% select(town, total_pop), by = "town") %>% 
+  left_join(towns_recent_week %>% mutate(recent_rate = cases / (total_pop / 100000)) %>% 
+              select(town, recent_rate)) %>% 
   left_join(town_with_nursing %>% 
               filter(date == max(date)) %>% 
               select(town, nh_death_pct), by = "town") %>% 
-  select(town, category, total_pop, `max cases`, nh_death_pct, `town cases`,
+  select(town, category, total_pop, `total cases`, `total deaths`,
+         nh_death_pct, `town cases`, recent_rate,
          `town deaths`) %>% 
-  mutate(total_pop = comma(total_pop, digits = 0),
-                  nh_death_pct = percent(nh_death_pct, digits = 0)) %>% 
+  mutate(nh_death_pct = formattable::percent(nh_death_pct, digits = 0)) %>% 
   # use col.names to get column names in format_table
+  select(town, category, total_pop, `total cases`, recent_rate, 
+         `total deaths`, nh_death_pct, `town cases`, `town deaths`) %>% 
   formattable::format_table(
     # x = .,
     # formatters = list(align=c("l")),
@@ -149,7 +155,7 @@ town_summary <- town_summary %>%
   htmltools::HTML() %>%
   shiny::div() %>%
   sparkline::spk_add_deps()
-county_summary
+# county_summary
 town_summary
 ```
 

@@ -338,6 +338,24 @@ counties_recent_week <- dph_counties %>%
   group_by(county, total_pop) %>% arrange(date) %>%
   summarise(across(c(cases, deaths), ~ last(.x) - first(.x)), .groups = "drop")
 
+# prison info:
+
+# Locations in Connecticut
+# Bridgeport Correctional Center (inmate population 712)
+# Brooklyn Correctional Institution (inmate population 454) Brooklyn
+# Cheshire Correctional Institution (inmate population 1322)
+# Corrigan-Radgowski Correctional Center (inmate population 760) Montville
+# Garner Correctional Institution (inmate population 584) Newtown
+# Hartford Correctional Center (inmate population 933)
+# MacDougall-Walker Correctional Institution (inmate population 1522) Suffield
+# Manson Youth Institution (inmate population 322) Cheshire
+# New Haven Correctional Center (inmate population 718)
+# Northern Correctional Institution (inmate population 135) Somers
+# Osborn Correctional Institution (inmate population 1322)  Somers
+# Robinson Correctional Institution (inmate population 1449) Enfield
+# Willard-Cybulski Correctional Institution (inmate population 1142) Enfield
+# York Correctional Institution (inmate population 898) Niantic (women)
+
 # code to look for anomalous data
 # decreases <- dph_total %>% arrange(date) %>%
 #   filter((lag(cases) > cases) | (cases > lead(cases)) |
@@ -434,6 +452,23 @@ town_with_nursing <- dph_towns %>%
            deaths_probable = as.numeric(covid_19_associated_deaths_1),
            deaths = deaths_confirmed + deaths_probable)
 
+  doc_covid <- read.socrata("https://data.ct.gov/resource/6t8i-du3u.json",
+                            app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+    as_tibble() %>%
+    mutate(date = as.Date(dateupdated), value = as.numeric(value),
+           variable = case_when(
+             str_detect(variable, "Inmates Pos") ~ "inmates_positive",
+             str_detect(variable, "Northern CI") ~ "northern_med",
+             str_detect(variable, "Inmates Medically Cleared") ~ "inmates_cleared",
+             str_detect(variable, "Inmate Deaths") ~ "inmate_deaths",
+             str_detect(variable, "Staff Pos") ~ "staff_positive",
+             str_detect(variable, "Staff Returned") ~ "staff_returned",
+             TRUE ~ variable
+           )) %>%
+    select(-dateupdated) %>%
+    pivot_wider(id_col = date, values_from = value, names_from = variable) %>%
+    arrange(date)
+
 # NYT series may go back earlier than the state dataset
 if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
   bind_rows(
@@ -461,7 +496,7 @@ if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oo
 
 save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases,
      dph_age, town_with_nursing, dph_assisted_living,
-     towns_recent_week, counties_recent_week,
+     towns_recent_week, counties_recent_week, doc_covid,
      file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 
 last_date <- max(dph_total$date)
