@@ -148,7 +148,7 @@ town_summary <- dph_towns %>%
   # use col.names to get column names in format_table
   select(town, category, `total population` = total_pop, `total cases`, 
          `recent cases per 100K` = recent_rate, 
-         `total deaths`, `% deaths from care homes` = nh_death_pct, 
+         `total deaths`, `% deaths from nursing homes` = nh_death_pct, 
          `town cases`, `town deaths`) %>% 
   formattable::format_table(
     col.names <- c("x", "category", "total\npopulation", "total\ncases",
