@@ -275,19 +275,22 @@ p_rt_live <- ggplot(data = r_data_ct, aes(x = date, y = mean)) +
 print(p_rt_live)
 ```
 ```{r kdkd, echo = FALSE}
-p <- ggplot(data = town_geometries %>% filter(county.y == "New Haven"), aes(geometry = geometry)) +
+p <- ggplot(data = town_geometries %>% filter(county == "New Haven"), aes(geometry = geometry)) +
   geom_sf() +
-   geom_sf(# need aes(geometry = geometry) because joined sf to a tibble and so lost sf
-          aes(fill = total_pop, geometry = geometry)) +
+   geom_sf(aes(fill = total_pop, geometry = geometry)) +
   # scale_fill_gradient(low = "white", high = "grey") +
   # geom_sf_text(aes(label =town, color = "black", size = 3) +
-  geom_sf_text(aes(label = town), size = 3, colour = "yellow") +
+  geom_sf_text(aes(label = town), size = 3, colour = "red") +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
+  scale_fill_viridis(direction = -1) +
   # theme(legend.position = "none") +
   labs(title = "Current Cases (total of last 14 days) by Connecticut County",
        caption = "Sources: CT DPH, US Census, tidycensus package")
    
+# from StackOverflow: https://stackoverflow.com/questions/8069837/is-there-a-built-in-way-to-do-a-logarithmic-color-scale-in-ggplot2
+# p + scale_fill_gradient(name = "count", trans = "log",
+#                         breaks = my_breaks, labels = my_breaks)
 ```
 
 

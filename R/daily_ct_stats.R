@@ -186,7 +186,7 @@ if (!exists("town_geometries")) {
                                        "Wealthy", "Suburban", "Rural"))
 
   town_geometries <- town_geometries_save %>%
-    select(-NAME) %>%
+    select(-NAME, -county, -ALAND) %>%
     left_join(town_info, by = "GEOID")
   town_categories <- town_info %>% group_by(county, category) %>%
 

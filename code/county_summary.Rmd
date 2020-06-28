@@ -3,9 +3,9 @@ author:
 date: "`r Sys.Date()`"
 output: html_document
 params: 
+  county: "New Haven"
   # output_dir: "../2020-06-07-test-post-two"
   output_dir: "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/2020-06-22-tracking-covid-19-in-connecticut"
-  county: "New Haven"
   return_url: "index.html"
 title: "Covid-19 Summary for `r params$county` County"
 ---
@@ -20,6 +20,8 @@ library(tidyverse)
 library(sparkline)
 library(kableExtra)
 library(formattable)
+library(sf)
+library(viridis)
 ```
 ```{r setup_town_info, echo = FALSE}
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
@@ -168,6 +170,47 @@ town_summary <- dph_towns %>%
 # county_summary
 town_summary
 ```
+```{r county_towns, echo = FALSE}
+county_data <- town_geometries %>% 
+              filter(county == params$county) %>% 
+              left_join(dph_towns %>% 
+                          filter(date == max(date, na.rm = TRUE)) %>% 
+                          select(town, cases), by = "town") %>% 
+              mutate(`cases per 100K` = cases / (total_pop / 100000))
+```
+```{r county_towns2, echo = FALSE, warning = FALSE}
+p_cases_per100k <- ggplot(data = county_data, 
+              aes(geometry = geometry)) +
+  geom_sf() +
+   geom_sf(aes(fill = `cases per 100K`, geometry = geometry)) +
+  # scale_fill_gradient(low = "white", high = "grey") +
+  # geom_sf_text(aes(label =town, color = "black", size = 3) +
+  geom_sf_text(aes(label = town), size = 3, colour = "red") +
+  coord_sf(datum = NA, label_axes = "----") +
+  xlab("") + ylab("") + theme_minimal()  +
+  scale_fill_viridis(direction = -1) +
+  # theme(legend.position = "none") +
+  labs(title = paste0(params$county, " County: Total Covid-19 Cases per 100K of Population by Town"),
+       caption = "Sources: CT DPH, US Census, tidycensus package")
+
+p_poverty <- ggplot(data = town_geometries %>% 
+                      filter(county == params$county), 
+              aes(geometry = geometry)) +
+  geom_sf() +
+   geom_sf(aes(fill = poverty_pct, geometry = geometry)) +
+  # scale_fill_gradient(low = "white", high = "grey") +
+  # geom_sf_text(aes(label =town, color = "black", size = 3) +
+  geom_sf_text(aes(label = town), size = 3, colour = "red") +
+  coord_sf(datum = NA, label_axes = "----") +
+  xlab("") + ylab("") + theme_minimal()  +
+  scale_fill_viridis(direction = -1, name = "poverty pct", limits = c(0, max(town_geometries$poverty_pct, na.rm = TRUE))) +
+  # theme(legend.position = "none") +
+  labs(title = paste0(params$county, " County: Percent Poverty by Town"),
+       caption = "Sources: US Census, tidycensus package")
+print(p_cases_per100k)
+print(p_poverty)
+```
+
 
 
 
