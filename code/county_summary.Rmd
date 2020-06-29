@@ -171,6 +171,11 @@ town_summary <- dph_towns %>%
 town_summary
 ```
 ```{r county_towns, echo = FALSE}
+
+for_range <- dph_towns %>% ungroup() %>% 
+  filter(date == max(date, na.rm = TRUE)) %>% 
+   mutate(`cases per 100K` = (cases / (total_pop / 100000)))
+max_range = max(for_range$`cases per 100K`, na.rm = TRUE)
 county_data <- town_geometries %>% 
               filter(county == params$county) %>% 
               left_join(dph_towns %>% 
@@ -178,6 +183,10 @@ county_data <- town_geometries %>%
                           select(town, cases), by = "town") %>% 
               mutate(`cases per 100K` = cases / (total_pop / 100000))
 ```
+
+The first map shows cases by town in `r params$county` County. The second map shows the percentage
+of individuals below the poverty line.
+
 ```{r county_towns2, echo = FALSE, warning = FALSE}
 p_cases_per100k <- ggplot(data = county_data, 
               aes(geometry = geometry)) +
@@ -185,10 +194,10 @@ p_cases_per100k <- ggplot(data = county_data,
    geom_sf(aes(fill = `cases per 100K`, geometry = geometry)) +
   # scale_fill_gradient(low = "white", high = "grey") +
   # geom_sf_text(aes(label =town, color = "black", size = 3) +
-  geom_sf_text(aes(label = town), size = 3, colour = "red") +
+  geom_sf_text(aes(label = town), size = 3, colour = "gray95") +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
-  scale_fill_viridis(direction = -1) +
+  scale_fill_viridis(direction = -1, limits = c(0, max_range), option = "viridis") +
   # theme(legend.position = "none") +
   labs(title = paste0(params$county, " County: Total Covid-19 Cases per 100K of Population by Town"),
        caption = "Sources: CT DPH, US Census, tidycensus package")
@@ -200,10 +209,12 @@ p_poverty <- ggplot(data = town_geometries %>%
    geom_sf(aes(fill = poverty_pct, geometry = geometry)) +
   # scale_fill_gradient(low = "white", high = "grey") +
   # geom_sf_text(aes(label =town, color = "black", size = 3) +
-  geom_sf_text(aes(label = town), size = 3, colour = "red") +
+  geom_sf_text(aes(label = town), size = 3, colour = "gray95") +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
-  scale_fill_viridis(direction = -1, name = "poverty pct", limits = c(0, max(town_geometries$poverty_pct, na.rm = TRUE))) +
+  scale_fill_viridis(direction = -1, name = "poverty pct", 
+                     limits = c(0, max(town_geometries$poverty_pct, na.rm = TRUE)), 
+                     labels = scales::label_percent(accuracy = 1)) +
   # theme(legend.position = "none") +
   labs(title = paste0(params$county, " County: Percent Poverty by Town"),
        caption = "Sources: US Census, tidycensus package")
