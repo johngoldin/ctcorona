@@ -188,7 +188,7 @@ if (!exists("town_geometries")) {
   town_geometries <- town_geometries_save %>%
     select(-NAME, -county, -ALAND) %>%
     left_join(town_info, by = "GEOID")
-  town_categories <- town_info %>% group_by(county, category) %>%
+  # town_categories <- town_info %>% group_by(county, category) %>%
 
   save(county_geometries, town_geometries, town_info, county_info, state_info, file = paste0(path_to_ctcorona, "census_population.RData"))
   # load(paste0(path_to_ctcorona, "census_population.RData"))
