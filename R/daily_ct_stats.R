@@ -205,7 +205,7 @@ if (!exists("town_geometries")) {
   # town_categories <- town_info %>% group_by(county, category) %>%
 
   save(county_geometries, town_geometries, town_info, county_info,
-       state_info, file = paste0(path_to_ctcorona, state_pop, "census_population.RData"))
+       state_info, state_pop, file = paste0(path_to_ctcorona, "census_population.RData"))
   # load(paste0(path_to_ctcorona, "census_population.RData"))
 }
 add_names <- function(p, df, color = "darkgray", size = 3) {
@@ -506,6 +506,15 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
          current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
          rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 
+  # compare New York Times with covid19 tracking project:
+  # nyt_states <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv",
+  #                       col_types = cols(date = col_date(format = "%Y-%m-%d")))
+  # xx <- nyt_states %>% arrange(state, date) %>%
+  #   filter(date == ymd("2020-06-30"))
+  # cv <- covid19_project %>% filter(date == ymd("2020-06-30")) %>% select(state, positive, positive_cases_viral, NAME)
+  # combined <- xx %>% left_join(cv %>% select(state_abbrev = state, state = NAME, positive))
+  # combined %>% filter(abs(positive - cases) > 250) %>% select(state, positive, cases)
+  p <- ggplot(data = combined, aes(x = positive, y = cases)) + geom_label(aes(label = state_abbrev))
   covid19_project <- get_states_daily() %>%
     left_join(state_pop %>% group_by(NAME, state) %>%
                 summarise(state_pop = last(summary_est), .groups = "drop"),
