@@ -14,6 +14,8 @@ library(fuzzyjoin) # for interval_left_join
 library(broom)
 library(RSocrata)
 library(RcppRoll)
+library(covid19us)
+
 
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
 path_to_post_june <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-06-22-tracking-covid-19-in-connecticut/"
@@ -32,6 +34,18 @@ Five_Connecticuts <- read_delim(paste0(path_to_ctcorona, "Five_Connecticuts.txt"
 if (!exists("town_geometries") &
     file.exists(paste0(path_to_ctcorona, "census_population.RData"))) load(paste0(path_to_ctcorona, "census_population.RData"))
 if (!exists("town_geometries")) {
+  state_abbreviations <- read_csv("data/state_abbreviations.txt",
+                                  col_names = FALSE)
+  names(state_abbreviations) <- c("state_name", "state")
+  state_pop <-  get_acs(geography = "state",
+                        # state = "CT",
+                        geometry = "FALSE", # no map at this time
+                        survey = "acs1",
+                        variables = paste0("B01001_0", c(20:25, 44:49)),
+                        summary_var = "B01001_001") %>%
+    filter(estimate > 0) %>%
+    group_by(NAME, GEOID) %>%
+    left_join(state_abbreviations, by = c("NAME" = "state_name"))
 #   acs_vars <- load_variables(2017, "acs5", cache = TRUE) %>%
 #   mutate(table_id = str_sub(name, 1, 6),
 #          # Race generally is in parentheses after the concept name.
@@ -190,7 +204,8 @@ if (!exists("town_geometries")) {
     left_join(town_info, by = "GEOID")
   # town_categories <- town_info %>% group_by(county, category) %>%
 
-  save(county_geometries, town_geometries, town_info, county_info, state_info, file = paste0(path_to_ctcorona, "census_population.RData"))
+  save(county_geometries, town_geometries, town_info, county_info,
+       state_info, file = paste0(path_to_ctcorona, state_pop, "census_population.RData"))
   # load(paste0(path_to_ctcorona, "census_population.RData"))
 }
 add_names <- function(p, df, color = "darkgray", size = 3) {
@@ -491,15 +506,28 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
          current_cases = roll_sum(new_cases, 14, align = "right", fill = NA_real_),
          rnew_deaths = roll_mean(new_deaths, 7, align = "right", fill = NA_real_))
 
+  covid19_project <- get_states_daily() %>%
+    left_join(state_pop %>% group_by(NAME, state) %>%
+                summarise(state_pop = last(summary_est), .groups = "drop"),
+              by = "state") %>%
+    arrange(state, date) %>%
+    group_by(state) %>%
+    mutate(cases_per100k = positive / (state_pop / 100000),
+           new_cases = positive - lag(positive),
+           rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+           renw_cases_per100k = rnew_cases  / (state_pop / 100000))
+
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
 
 save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases,
      dph_age, town_with_nursing, dph_assisted_living,
      towns_recent_weeks, counties_recent_weeks, doc_covid,
+     covid19_project,
      file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 
 last_date <- max(dph_total$date)
+
 usethis::ui_info("Last date seen: {usethis::ui_value(last_date)}. Earliest is {ui_value(min(dph_counties$date, na.rm = TRUE))}.")
 usethis::ui_info("cases          :            {usethis::ui_value(dph_total$cases[dph_total$date == last_date])}  +{usethis::ui_value(dph_total$new_cases[dph_total$date == last_date])}")
 usethis::ui_info("deaths         :            {usethis::ui_value(dph_total$deaths[dph_total$date == last_date])}  +{usethis::ui_value(dph_total$new_deaths[dph_total$date == last_date])}")
