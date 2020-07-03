@@ -514,7 +514,7 @@ if (min(dph_total$date) != ymd("2020-03-08")) dph_total <- dph_total %>%
   # cv <- covid19_project %>% filter(date == ymd("2020-06-30")) %>% select(state, positive, positive_cases_viral, NAME)
   # combined <- xx %>% left_join(cv %>% select(state_abbrev = state, state = NAME, positive))
   # combined %>% filter(abs(positive - cases) > 250) %>% select(state, positive, cases)
-  p <- ggplot(data = combined, aes(x = positive, y = cases)) + geom_label(aes(label = state_abbrev))
+  # p <- ggplot(data = combined, aes(x = positive, y = cases)) + geom_label(aes(label = state_abbrev))
   covid19_project <- get_states_daily() %>%
     left_join(state_pop %>% group_by(NAME, state) %>%
                 summarise(state_pop = last(summary_est), .groups = "drop"),
