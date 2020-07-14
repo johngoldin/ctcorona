@@ -422,6 +422,11 @@ if (!exists("dph_nursing_facilities")) {
   # save(dph_nursing_facilities, file = paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 }
 
+dph_community <- read.socrata("https://data.ct.gov/resource/ivm4-azet.json",
+                              app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>%
+  mutate(date = as_date(dateupdated))
+
 # dph_nursing_cases has one row per nursing home per date of nursing home report
 dph_nursing_cases <- read.socrata("https://data.ct.gov/resource/wyn3-qphu.json",
                                   app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
