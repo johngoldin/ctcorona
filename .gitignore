@@ -12,3 +12,4 @@ ct_counties.pdf
 /misc_info
 /old_items
 *.RData
+temp*.*

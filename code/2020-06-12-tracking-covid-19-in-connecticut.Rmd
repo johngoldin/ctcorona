@@ -397,10 +397,10 @@ Nursing Homes which makes `r paste0(round((nursing_home_totals$deaths/dph_total$
 ```{r county-trends, echo = FALSE}
 county_centroid <- st_centroid(county_geometries) %>%
   left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
-              select(county, rnew_cases_per1k, cases, deaths, rnew_deaths_per1k), by = "county")
-county_max <- dph_counties %>% group_by(county) %>% summarise(max = max(rnew_cases_per1k, na.rm = TRUE)) %>% arrange(desc(max))
+              select(county, rnew_cases_per100k, cases, deaths, rnew_deaths_per100k), by = "county")
+county_max <- dph_counties %>% group_by(county) %>% summarise(max = max(rnew_cases_per100k, na.rm = TRUE)) %>% arrange(desc(max))
 for_plot1 <- dph_counties %>% 
-  select(date, county, `new cases` = rnew_cases_per1k, deaths = rnew_deaths_per1k) %>% 
+  select(date, county, `new cases` = rnew_cases_per100k, deaths = rnew_deaths_per100k) %>% 
   mutate(county = factor(county, levels = county_max$county)) %>% 
   pivot_longer(cols = c(`new cases`, deaths)) %>% 
   mutate(the_measure = factor(name, levels = c("new cases", "deaths")))
@@ -429,13 +429,13 @@ p_county_cum <- ggplot(data = for_plot2, aes(x = date, y = value)) +
 p_county_map_new_cases <- ggplot() +
   geom_sf(data = county_geometries %>%
             left_join(dph_counties %>% filter(date == max(date, na.rm = TRUE)) %>%
-                        select(county, rnew_cases_per1k),
+                        select(county, rnew_cases_per100k),
                       by = "county") %>% 
-            mutate(`new per 100k` = rnew_cases_per1k * 100),
+            mutate(`new per 100k` = rnew_cases_per100k),
           # need aes(geometry = geometry) because joined sf to a tibble and so lost sf
           aes(fill = `new per 100k`, geometry = geometry)) +
   scale_fill_gradient(low = "white", high = "grey") +
-  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per1k*100, 1), " per 100K")), color = "black", size = 3) +
+  geom_sf_text(data = county_centroid, aes(label = paste0(county, "\n", round(rnew_cases_per100k, 1), " per 100K")), color = "black", size = 3) +
   coord_sf(datum = NA, label_axes = "----") +
   xlab("") + ylab("") + theme_minimal()  +
   # theme(legend.position = "none") +
@@ -485,7 +485,7 @@ print(p_county_map_new_cases)
 by_category <- dph_towns %>% 
   combine_dph_towns(category)
 p_by_category <- ggplot(data = by_category,
-                        aes(x = date, y = rnew_cases_per1k * 100)) +
+                        aes(x = date, y = rnew_cases_per100k)) +
   geom_line() +
   facet_wrap(~ category)
 
@@ -515,7 +515,7 @@ by DataHaven documents the unequal impact of the epidemic in Connecticut related
 for_chart <- dph_towns %>% filter(!(town %in% c("Montville", "Somers"))) %>% 
   mutate(category = fct_recode(category, Suburban = "Wealthy")) %>% 
   combine_dph_towns(county, category) %>% 
-  mutate(rnew_cases_per100k = rnew_cases_per1k * 100,
+  mutate(rnew_cases_per100k = rnew_cases_per100k,
     county = factor(county,
       levels = c("Litchfield", "Fairfield", "Hartford", "New Haven", "Middlesex", "Tolland", "New London", "Windham")),
     for_label = paste0(towns, ifelse(towns > 1, " towns", "town"), ", pop=", comma(total_pop, accuracy = 1)))

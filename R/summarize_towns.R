@@ -24,8 +24,8 @@ summarize_towns <- function(some_towns = dph_towns,
              nh_pct_of_cases = ifelse(corresponding_cases <= 0,
                                       NA_real_, nh_deaths / corresponding_cases),
              across(c(current_cases, rnew_cases, rnew_deaths, cases, deaths),
-                    ~ .x / (total_pop / 1000),
-                    .names = "{col}_per1k")
+                    ~ .x / (total_pop / 100000),
+                    .names = "{col}_per100k")
              # current_per1k = current_cases / (total_pop /1000),
             )
 
