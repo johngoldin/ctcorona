@@ -41,7 +41,7 @@ walk(the_counties, render_county)
 
 # future_walk(the_counties, original_render_county)
 
-total_rendering_time <- Sys.time()
+print(start_rendering_time - Sys.time())
 
 
 

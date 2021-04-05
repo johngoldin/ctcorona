@@ -173,7 +173,8 @@ dph_towns$category <- factor(dph_towns$category,
 towns_recent_weeks <- dph_towns %>%
   filter((date == (max(dph_towns$date) - 14)) | (date == max(dph_towns$date))) %>%
     group_by(town, category, county, total_pop) %>% arrange(date) %>%
-  summarise(across(c(cases, deaths, tests_positive, tests), ~ last(.x) - first(.x)), .groups = "drop") %>%
+  summarise(across(c(cases, deaths, tests_positive, tests),
+                   ~ last(.x) - first(.x)), .groups = "drop") %>%
   mutate(hit_rate = tests_positive / tests)
 
 counties_recent_weeks <- dph_counties %>%
@@ -213,7 +214,7 @@ dph_total <- read.socrata("https://data.ct.gov/resource/rf3k-f8fg.json",
   as_tibble() %>%
   rename(cases = totalcases, deaths = totaldeaths,
          hospital = hospitalizedcases,
-         tests = covid_19_pcr_tests_reported) %>%
+         tests = covid_19_tests_reported) %>%
   mutate(date = as_date(date),
          cases = as.numeric(cases), deaths = as.numeric(deaths),
          tests = as.numeric(tests),
@@ -276,38 +277,55 @@ if (!exists("dph_nursing_facilities")) {
   # save(dph_nursing_facilities, nursing_link, file = paste0(path_to_ctcorona, "dph_nursing_facilities.RData"))
 }
 
+# dph_community seems to have changed API url
 # Jill thinks Connecticut policy based on this:
 # https://globalepidemics.org/wp-content/uploads/2020/06/key_metrics_and_indicators_v4.pdf?fbclid=IwAR34FFyEO8AedxRYKSRsKTYpH4mT1sZ4P-92_zrWX6E3siAWdv_mlSZp2Ls
-dph_community <- read.socrata("https://data.ct.gov/resource/ivm4-azet.json",
-                              app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
-  as_tibble() %>%
-  rename(date = dateupdated) %>%
-  # left_join(town_info %>% select(town, total_pop), by = "town") %>%
-  mutate(date = as_date(date),
-         across(c(population, rate, tests), as.numeric),
-         raw_cases = cases,
-         raw_rate = rate,
-         week = epiweek(date - 7),
-         # week ending the previous Saturday
-         week_ending = floor_date(date, unit = "week", week_start = 6),
-         alt_cases = case_when(
-           cases == "<5" ~ rate * (population / 100000),
-           TRUE ~ as.numeric(cases)),
-         cases =  round(rate * (population / 100000), 0),
-         rate = (cases / population) * 100000,
-         daily_rate = rate / 7,
-         creation_date = max(date, na.rm = TRUE)
-  ) %>%
-  relocate(date, week_ending, town, daily_rate, cases, rate, raw_cases, raw_rate, alt_cases, population) %>%
-  left_join(town_geometries %>%
-              as_tibble() %>%
-              select(town, county, HS_only, district_number, district_type,
-                     district_name, total_pop), by = "town")
+# dph_community_old <- read.socrata("https://data.ct.gov/resource/ivm4-azet.json",
+#                               app_token = Sys.getenv("CTDATA_APP1_TOKEN"))
+#   as_tibble() %>%
+#   rename(date = dateupdated) %>%
+#   # left_join(town_info %>% select(town, total_pop), by = "town") %>%
+#   mutate(date = as_date(date),
+#          across(c(population, rate, tests), as.numeric),
+#          raw_cases = cases,
+#          raw_rate = rate,
+#          week = epiweek(date - 7),
+#          # week ending the previous Saturday
+#          week_ending = floor_date(date, unit = "week", week_start = 6),
+#          alt_cases = case_when(
+#            cases == "<5" ~ rate * (population / 100000),
+#            TRUE ~ as.numeric(cases)),
+#          cases =  round(rate * (population / 100000), 0),
+#          rate = (cases / population) * 100000,
+#          daily_rate = rate / 7,
+#          creation_date = max(date, na.rm = TRUE)
+#   ) %>%
+#   relocate(date, week_ending, town, daily_rate, cases, rate, raw_cases, raw_rate, alt_cases, population) %>%
+#   left_join(town_geometries %>%
+#               as_tibble() %>%
+#               select(town, county, HS_only, district_number, district_type,
+#                      district_name, total_pop), by = "town")
 # dph_community  may change as new tests come in, so save a version each week
-save(dph_community, file = paste0(path_to_ctcorona, "dph_community_",
-                                  str_replace_all(max(dph_community$creation_date, na.rm = TRUE), "-", ""), ".RData"))
+# save(dph_community, file = paste0(path_to_ctcorona, "dph_community_",
+#                                   str_replace_all(max(dph_community$creation_date, na.rm = TRUE), "-", ""), ".RData"))
 
-
+  dph_community <- read.socrata("https://data.ct.gov/resource/s22x-83rd.json",
+                                app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+    as_tibble() %>%
+    # left_join(town_info %>% select(town, total_pop), by = "town") %>%
+    mutate(date = as_date(date),
+           across(c(dailyratecases, newtests, pctpos), as.numeric),
+           week = epiweek(date - 7),
+           # week ending the previous Saturday
+           week_ending = floor_date(date, unit = "week", week_start = 6),
+           creation_date = max(date, na.rm = TRUE)
+    ) %>%
+    rename(rnew_cases_per100k = dailyratecases, town = city) %>%
+    relocate(date, week_ending, town, rnew_cases_per100k) %>%
+    left_join(town_geometries %>%
+                as_tibble() %>%
+                select(town, county, HS_only, district_number, district_type,
+                       district_name, total_pop), by = "town")
 
 
 # dph_nursing_cases has one row per nursing home per date of nursing home report
@@ -411,7 +429,7 @@ nursing_combined <- dph_nursing_cases %>%
   p_cases = ggplot(data = nursing_combined %>% group_by(date, source) %>%
            summarise(nh_cases = sum(nh_cases, na.rm = TRUE),
                      nh_deaths = sum(nh_deaths, na.rm = TRUE),
-                     all_deaths = sum(all_deaths, na.rm = TRUE)),
+                     all_deaths = sum(all_deaths, na.rm = TRUE), .groups = "drop"),
          aes(x = date, y = nh_cases, colour = source))+
     geom_point() + geom_line()
 byname <- nursing_combined %>% arrange(town, provider_name, date, source) %>%
@@ -425,13 +443,15 @@ town_with_nursing <- dph_towns %>%
   filter(date %in% unique(dph_nursing_cases$date)) %>%
   left_join(dph_nursing_cases %>% group_by(town, date) %>%
               summarise(nh_cases = sum(nh_cases), nh_probable_deaths = sum(nh_probable_deaths),
-                        nh_lab_confirmed_deaths = sum(nh_lab_confirmed_deaths)) %>%
+                        nh_lab_confirmed_deaths = sum(nh_lab_confirmed_deaths),
+                        .groups = "drop") %>%
               mutate(nh_deaths = nh_lab_confirmed_deaths + nh_probable_deaths),
             by = c("date", "town")) %>%
   left_join(dph_nursing_facilities %>% group_by(town) %>%
               mutate(total_licensed_beds = as.numeric(total_licensed_beds), reporting_year = as.numeric(reporting_year)) %>%
               filter(reporting_year == max(reporting_year, na.rm = TRUE)) %>%
-              summarise(total_licensed_beds = sum(total_licensed_beds, na.rm = TRUE)),
+              summarise(total_licensed_beds = sum(total_licensed_beds, na.rm = TRUE),
+                        .groups = "drop"),
             by = "town") %>%
   left_join(town_info %>% select(town, age_65_plus, age_65_plus_pct), by = "town") %>%
   # mutate(nh_cases = ifelse(is.na(nh_cases), 0, nh_cases),
@@ -460,11 +480,33 @@ town_with_nursing <- dph_towns %>%
              str_detect(variable, "Inmate Deaths") ~ "inmate_deaths",
              str_detect(variable, "Staff Pos") ~ "staff_positive",
              str_detect(variable, "Staff Returned") ~ "staff_returned",
+             str_detect(variable, "Medical Iso\\. Unit") ~ "inmates isolated",
              TRUE ~ variable
            )) %>%
     select(-dateupdated) %>%
     pivot_wider(id_col = date, values_from = value, names_from = variable) %>%
     arrange(date)
+
+  cdc_covid <- read.socrata("https://data.cdc.gov/resource/9mfq-cb36.json",
+                            app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+    as_tibble() %>%
+    mutate(date = as.Date(submission_date),
+           positive = as.numeric(tot_cases),
+           state_original = state,
+           state = ifelse(state == "NYC", "NY", state)) %>%
+    group_by(state, date) %>%
+    summarise(positive = sum(positive, na.rm = TRUE), .groups = "drop") %>%
+    left_join(state_pop %>% group_by(NAME, state) %>%
+                summarise(state_pop = last(summary_est), .groups = "drop"),
+              by = "state") %>%
+    arrange(state, date) %>%
+    filter(!(state %in% c("AS", "VI", "FSM", "GU", "MP", "PW", "RMI", "PR"))) %>%
+    group_by(state) %>%
+    mutate(cases_per100k = positive / (state_pop / 100000),
+           new_cases = positive - lag(positive),
+           rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
+           renw_cases_per100k = rnew_cases  / (state_pop / 100000))
+
 
 
   # arrange(date) %>%
@@ -496,6 +538,62 @@ town_with_nursing <- dph_towns %>%
            rnew_cases = roll_mean(new_cases, 7, align = "right", fill = NA_real_),
            renw_cases_per100k = rnew_cases  / (state_pop / 100000))
 
+ct_vac_county <- read.socrata("https://data.ct.gov/resource/5g42-tpzq.json",
+                              app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>%
+  rename(county = county_of_residence) %>%
+  mutate(date = as_date(date),
+         population = as.numeric(population)) %>%
+  mutate_at(vars(contains("vacci")), as.numeric) %>%
+  filter(!(county %in% c("Residence out of state", "Address pending validation")))
+
+ct_vac_town <- read.socrata("https://data.ct.gov/resource/pdqi-ds7f.json",
+                            app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>%
+  mutate(date = as_date(date_updated)) %>%
+  mutate_at(vars(contains("population")), as.numeric) %>%
+  mutate_at(vars(contains("first_dose")), as.numeric) %>%
+  rename(svi = at_least_one_census_tract,
+         first_dose = first_dose_coverage,
+         population = estimated_population,
+         pop65_74 = estimated_population_aged_65_to_74,
+         pop75over = estimated_population_aged_75_and_above,
+         first_dose65_74 = first_doses_administered_age_65_to_74,
+         first_dose65_74_pct = first_dose_coverage_age_65_to_74,
+         first_dose75over = first_doses_administered_age_75_and_over,
+         first_dose75over_pct = first_dose_coverage_age_75_and_over) %>%
+  mutate(first_dose65over_pct = if_else((pop65_74 + pop75over) > 0,
+                                        (first_dose65_74 + first_dose75over) / (pop65_74 + pop75over),
+                                        NA_real_))
+
+ct_vac_age <- read.socrata("https://data.ct.gov/resource/vjim-iz5e.json",
+                              app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>%
+  mutate(date = as_date(date),
+         population = as.numeric(population)) %>%
+  mutate_at(vars(contains("vacci")), as.numeric)
+
+ct_vac_state <- read.socrata("https://data.ct.gov/resource/tttv-egb7.json",
+                           app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>%
+  mutate(date = as_date(date_updated),
+         population = as.numeric(population)) %>%
+  select(-date_updated) %>%
+  mutate_at(vars(contains("vacci")), as.numeric)
+
+ct_vac_race <- read.socrata("https://data.ct.gov/resource/xkga-ifz3.json",
+                              app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
+  as_tibble() %>%
+  mutate(date_reported = as_date(date_reported),
+         population = as.numeric(population)) %>%
+  mutate_at(vars(contains("vacci")), as.numeric) %>%
+  rename(date = date_reported)
+
+# # compare cdc and covid_tracking
+# p_compare <- ggplot(data = cdc_covid %>% filter(state == "CT"), aes(x = date, y = rnew_cases)) +
+#   geom_point(colour = "blue") +
+#   geom_point(data = covid19_project %>% filter(state == "CT"), colour = "red")
+
 usethis::ui_info("Most recent statewide data is {ui_value(max(dph_total$date, na.rm = TRUE))}. Earliest is {ui_value(min(dph_total$date, na.rm = TRUE))}.")
 if ((dph_total %>% count(date) %>% filter(n > 1) %>% nrow()) > 0) usethis::ui_oops("dph_total contains multiple rows on the same date.")
 
@@ -514,7 +612,14 @@ dph_age <- read.socrata("https://data.ct.gov/resource/ypz6-8qyf.json",
   rename(cases = totalcases, deaths = totaldeaths, per_100k = totalcaserate) %>%
   mutate(date = as_date(dateupdated), cases = as.numeric(cases),
          deaths = as.numeric(deaths)) %>%
-  select(-dateupdated)
+  select(-dateupdated) %>%
+  group_by(agegroups) %>%
+  mutate(tests = 0, tests_positive = 0, hospital = 0) %>%
+  setup_ct_tables()
+
+# dph_counties <- dph_counties %>%
+#   group_by(county) %>%
+#   setup_ct_tables()
 
 dph_gender <- read.socrata("https://data.ct.gov/resource/qa53-fghg.json",
                        app_token = Sys.getenv("CTDATA_APP1_TOKEN")) %>%
@@ -544,7 +649,8 @@ exec_orders <- tibble(
 save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases,
      dph_age, town_with_nursing, dph_assisted_living,
      towns_recent_weeks, counties_recent_weeks, doc_covid,
-     covid19_project,
+     covid19_project, cdc_covid,
+     ct_vac_state, ct_vac_county, ct_vac_town, ct_vac_age, ct_vac_race,
      file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 finish_loading_socrata_data <- Sys.time()
 
@@ -816,56 +922,56 @@ county_map <- ggplot() +
 # 7 Tolland      885       3              0.0198    151269
 # 8 Windham      463       6.71           0.0576    116538
 
-doubling_cases <- ct %>%
-  filter(!is.na(week), cases > 0) %>%
-  group_by(county, week) %>%
-  nest() %>%
-  mutate(
-    data_days = map(data, nrow),
-    fit_cases = map(data, ~ lm(log(cases) ~ date, data = .x)),
-    tidied_cases = map(fit_cases, tidy),
-    glance_cases = map(fit_cases, glance)
-  ) %>%
-  unnest(tidied_cases) %>%
-  filter(data_days >= 5) %>%
-  select(county, week, data, fit_cases, term, estimate) %>%
-  pivot_wider(values_from = estimate, names_from = term) %>%
-  mutate(doubling = log(2) / log(1 + date))
+# doubling_cases <- ct %>%
+#   filter(!is.na(week), cases > 0) %>%
+#   group_by(county, week) %>%
+#   nest() %>%
+#   mutate(
+#     data_days = map(data, nrow),
+#     fit_cases = map(data, ~ lm(log(cases) ~ date, data = .x)),
+#     tidied_cases = map(fit_cases, tidy),
+#     glance_cases = map(fit_cases, glance)
+#   ) %>%
+#   unnest(tidied_cases) %>%
+#   filter(data_days >= 5) %>%
+#   select(county, week, data, fit_cases, term, estimate) %>%
+#   pivot_wider(values_from = estimate, names_from = term) %>%
+#   mutate(doubling = log(2) / log(1 + date))
+#
+# doubling_deaths <- ct %>%
+#   filter(!is.na(week), deaths > 0) %>%
+#   group_by(county, week) %>%
+#   nest() %>%
+#   mutate(
+#     data_days = map(data, nrow),
+#     fit_deaths = map(data, ~lm(log(deaths) ~ date, data = .x )),
+#     tidied_deaths = map(fit_deaths, tidy),
+#     glance_deaths = map(fit_deaths, glance)
+#   ) %>%
+#   unnest(tidied_deaths) %>%
+#   filter(data_days >= 5) %>%
+#   select(county, week, data, fit_deaths, term, estimate, data_days) %>%
+#   pivot_wider(values_from = estimate, names_from = term) %>%
+#   mutate(doubling = log(2) / log(1 + date))
+# doubling <-
+#   bind_rows(
+#     doubling_cases %>%
+#       select(county, week = week, daily_rate = date, doubling) %>%
+#       mutate(measure = "cases"),
+#     doubling_deaths %>%
+#       select(county, week = week, daily_rate = date, doubling) %>%
+#       mutate(measure = "deaths")
+#   )
 
-doubling_deaths <- ct %>%
-  filter(!is.na(week), deaths > 0) %>%
-  group_by(county, week) %>%
-  nest() %>%
-  mutate(
-    data_days = map(data, nrow),
-    fit_deaths = map(data, ~lm(log(deaths) ~ date, data = .x )),
-    tidied_deaths = map(fit_deaths, tidy),
-    glance_deaths = map(fit_deaths, glance)
-  ) %>%
-  unnest(tidied_deaths) %>%
-  filter(data_days >= 5) %>%
-  select(county, week, data, fit_deaths, term, estimate, data_days) %>%
-  pivot_wider(values_from = estimate, names_from = term) %>%
-  mutate(doubling = log(2) / log(1 + date))
-doubling <-
-  bind_rows(
-    doubling_cases %>%
-      select(county, week = week, daily_rate = date, doubling) %>%
-      mutate(measure = "cases"),
-    doubling_deaths %>%
-      select(county, week = week, daily_rate = date, doubling) %>%
-      mutate(measure = "deaths")
-  )
-
-p_doubling <- ggplot(data = doubling %>% filter(doubling < 9), aes(x = week, y = doubling, fill = doubling)) +
-  geom_col(position = position_dodge2(reverse = TRUE, padding = 0.1)) +
-  coord_flip() +
-  xlab(NULL) + ylab("doubling time (in days)") +
-  facet_wrap(measure ~ county, ncol = 4) +
-  labs(title = "Doubling Time of Cumulative Count of Confirmed Cases",
-       subtitle = "(longer doubling time is better!)",
-       caption = "Doubling time is the number of days for the cumulative count to double.") +
-  theme(legend.position = "none")
+# p_doubling <- ggplot(data = doubling %>% filter(doubling < 9), aes(x = week, y = doubling, fill = doubling)) +
+#   geom_col(position = position_dodge2(reverse = TRUE, padding = 0.1)) +
+#   coord_flip() +
+#   xlab(NULL) + ylab("doubling time (in days)") +
+#   facet_wrap(measure ~ county, ncol = 4) +
+#   labs(title = "Doubling Time of Cumulative Count of Confirmed Cases",
+#        subtitle = "(longer doubling time is better!)",
+#        caption = "Doubling time is the number of days for the cumulative count to double.") +
+#   theme(legend.position = "none")
 
 ggsave("log_cases.png", plot = pcases, path = path_to_post,
        width = 7, height = 6, units = "in")
@@ -886,8 +992,8 @@ ggsave("new_deaths.png", plot = pnew_deaths, path = path_to_post,
        width = 7, height = 6, units = "in")
 ggsave("hospitalizations.png", plot = phospital, path = path_to_post,
        width = 7, height = 6, units = "in")
-ggsave("doubling.png", plot = p_doubling, path = path_to_post,
-       width = 7, height = 8, units = "in")
+# ggsave("doubling.png", plot = p_doubling, path = path_to_post,
+#        width = 7, height = 8, units = "in")
 
 
 final_processing_time <- Sys.time()
@@ -896,3 +1002,4 @@ socrata_time <- finish_loading_socrata_data - start_loading_socrata_data
 usethis::ui_info("socrata time: {usethis::ui_value(round(socrata_time, 1))} ")
 usethis::ui_info("total time: {usethis::ui_value(round(total_time, 1))} ")
 
+source("R/render_town_summary_html.R")
