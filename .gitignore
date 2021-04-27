@@ -13,3 +13,16 @@ ct_counties.pdf
 /old_items
 *.RData
 temp*.*
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+# following suggested by check_site()
+\\.Rmd$
+\\.Rmarkdown$
+_cache$
+\\.knit\\.md$
+\\.utf8\\.md$
+Thumbs.db
+/resources/

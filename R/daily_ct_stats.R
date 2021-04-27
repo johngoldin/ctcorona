@@ -19,9 +19,9 @@ library(covid19us)
 
 start_time <- Sys.time()
 
-path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-03-29-covid19-cases-in-connecticut/"
-path_to_post_june <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/post/2020-06-22-tracking-covid-19-in-connecticut/"
-path_to_static_june <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/post/2020-06-22-tracking-covid-19-in-connecticut/"
+path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/blog/2020-03-29-covid19-cases-in-connecticut/"
+path_to_post_june <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/blog/2020-06-22-tracking-covid-19-in-connecticut/"
+path_to_static_june <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/blog/2020-06-22-tracking-covid-19-in-connecticut/"
 
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
