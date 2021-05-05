@@ -19,11 +19,14 @@ library(covid19us)
 
 start_time <- Sys.time()
 
+covid_project <- "can_i_get_a_clean_project"
 path_to_post <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/blog/2020-03-29-covid19-cases-in-connecticut/"
 path_to_post_june <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/content/blog/2020-06-22-tracking-covid-19-in-connecticut/"
 path_to_static_june <- "~/Dropbox/Programming/R_Stuff/can_i_blog_too/static/blog/2020-06-22-tracking-covid-19-in-connecticut/"
+path_to_covid_project <- paste0("~/Documents/R_local_repos/can_i_blog_too/content/project/covid/", covid_project, "/")
 
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
+path_to_county_html <- paste0(path_to_covid_project, "county_html/")
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
 load(paste0(path_to_ctcorona, "census_population.RData"))
 

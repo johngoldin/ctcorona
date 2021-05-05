@@ -6,7 +6,7 @@ start_rendering_time <- Sys.time()
 code_dir <- "code"
 county = "New Haven"
 report_filename <- paste0(file.path(getwd(), code_dir, "county_summary.Rmd"))
-output_dir <- paste0(path_to_static_june, "index.en_files/")
+output_dir <- path_to_county_html
 
 the_counties <- c("Fairfield",  "Hartford",   "Litchfield",
                   "Middlesex",  "New Haven",  "New London",
