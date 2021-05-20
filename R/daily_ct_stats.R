@@ -16,6 +16,7 @@ library(RSocrata)
 library(RcppRoll)
 library(covid19us)
 # library(MMWRweek)
+# change made in order to test github connection
 
 start_time <- Sys.time()
 
