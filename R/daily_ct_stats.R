@@ -31,6 +31,7 @@ path_to_county_html <- paste0(path_to_covid_project, "county_html/")
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
 load(paste0(path_to_ctcorona, "census_population.RData"))
+load(paste0(path_to_ctcorona, "vote2020.RData"))
 
 # from https://www.ctdatahaven.org/sites/ctdatahaven/files/UConnCPR%20Changing%20Demographics-5%20CTs%202004.pdf
 # The Changing Demographics of Connecticut — 1990 to 2000. by Center for Population Research  May. 31, 2004
@@ -98,15 +99,24 @@ start_loading_socrata_data <- Sys.time()
 
 source('R/setup_ct_table.R')
 
-# ct covid data resources: https://data.ct.gov/stories/s/wa3g-tfvc
+# socrata examples:
+# https://soda.demo.socrata.com/resource/6yvf-kk3n.json?$where=:created_at < '2020-10-15T03:00:00.000Z'
 
+# ct covid data resources: https://data.ct.gov/stories/s/wa3g-tfvc
 dph_reports <- read.socrata("https://data.ct.gov/resource/bqve-e8um.json",
                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) |>
   as_tibble() |> arrange(desc(date)) |>
   mutate(date = as_date(date))
 
+soc_after <- function(date_var) str_c("?$where=", date_var,  ">='2021-11-3T00:00:000'")
+
+
+# read.socrata(validateUrl(str_c("https://data.ct.gov/resource/bfnu-rgqt.json", "?$where=dateupdated >= '2021-11-20'"),
+#                          app_token = Sys.getenv("CTDATA_APP1_TOKEN")))
+
+# https://data.ct.gov/Health-and-Human-Services/COVID-19-Cases-Hospitalizations-and-Deaths-By-Coun/bfnu-rgqt
 dph_counties <- read.socrata("https://data.ct.gov/resource/bfnu-rgqt.json",
-                            app_token = Sys.getenv("CTDATA_APP1_TOKEN")) |>
+                             app_token = Sys.getenv("CTDATA_APP1_TOKEN")) |>
   as_tibble() |>
   rename(cases = totalcases, deaths = totaldeaths) |>
   mutate(date = as_date(dateupdated),
@@ -314,23 +324,24 @@ if (!exists("dph_nursing_facilities")) {
 # save(dph_community, file = paste0(path_to_ctcorona, "dph_community_",
 #                                   str_replace_all(max(dph_community$creation_date, na.rm = TRUE), "-", ""), ".RData"))
 
-  dph_community <- read.socrata("https://data.ct.gov/resource/s22x-83rd.json",
-                                app_token = Sys.getenv("CTDATA_APP1_TOKEN")) |>
-    as_tibble() |>
-    # left_join(town_info |> select(town, total_pop), by = "town") |>
-    mutate(date = as_date(date),
-           across(c(dailyratecases, newtests, pctpos), as.numeric),
-           week = epiweek(date - 7),
-           # week ending the previous Saturday
-           week_ending = floor_date(date, unit = "week", week_start = 6),
-           creation_date = max(date, na.rm = TRUE)
-    ) |>
-    rename(rnew_cases_per100k = dailyratecases, town = city) |>
-    relocate(date, week_ending, town, rnew_cases_per100k) |>
-    left_join(town_geometries |>
-                as_tibble() |>
-                select(town, county, HS_only, district_number, district_type,
-                       district_name, total_pop), by = "town")
+# commented out on Nov 28 2021      https://dev.socrata.com/foundry/data.ct.gov/s22x-83rd/embed
+  # dph_community <- read.socrata("https://data.ct.gov/resource/s22x-83rd.json",
+  #                               app_token = Sys.getenv("CTDATA_APP1_TOKEN")) |>
+  #   as_tibble() |>
+  #   # left_join(town_info |> select(town, total_pop), by = "town") |>
+  #   mutate(date = as_date(date),
+  #          across(c(dailyratecases, newtests, pctpos), as.numeric),
+  #          week = epiweek(date - 7),
+  #          # week ending the previous Saturday
+  #          week_ending = floor_date(date, unit = "week", week_start = 6),
+  #          creation_date = max(date, na.rm = TRUE)
+  #   ) |>
+  #   rename(rnew_cases_per100k = dailyratecases, town = city) |>
+  #   relocate(date, week_ending, town, rnew_cases_per100k) |>
+  #   left_join(town_geometries |>
+  #               as_tibble() |>
+  #               select(town, county, HS_only, district_number, district_type,
+  #                      district_name, total_pop), by = "town")
 
 
 # dph_nursing_cases has one row per nursing home per date of nursing home report
@@ -370,6 +381,48 @@ dph_cms_nursing <- dph_cms_nursing_raw |>
          residents_weekly_covid_19, residents_total_covid_19,
          number_of_all_beds, total_number_of_occupied,
          county, geolocation.type, geolocation.coordinates)
+# next commented section is vaccine status without age groups.
+# dph_vaccine <- read.socrata("https://data.ct.gov/resource/x7by-h8k4.json") |>
+#   as_tibble() |>
+#   mutate(initiated_vaccination = as.numeric(initiated_vaccination),
+#          initiated_vaccination_percent = as.numeric(initiated_vaccination_percent),
+#          population = as.numeric(population),
+#          fully_vaccinated = as.numeric(fully_vaccinated),
+#          fully_vaccinated_percent = as.numeric(fully_vaccinated_percent),
+#          dateupdated = as_date(dateupdated),
+#          at_least_one_census_tract = at_least_one_census_tract == "Yes")
+# I only need the most recent date for now
+# dph_vaccine_recent <- dph_vaccine |>
+#   filter(dateupdated == max(dateupdated, na.rm = TRUE))
+
+# https://data.ct.gov/browse?COVID-19_Topic=Vaccination   CT data info
+# This table does not included doses administered to CT residents by out-of-state providers or
+# by some Federal entities (including DoD, DoC, VHA, HIS) because they are not yet reported to
+# CT WiZ (the CT immunization Information System).
+dph_vaccine_by_age_full <- read.socrata("https://data.ct.gov/resource/gngw-ukpw.json") |>
+  as_tibble() |>
+  mutate(initiated_vaccination = as.numeric(initiated_vaccination),
+         initiated_vaccination_percent = as.numeric(initiated_vaccination_percent),
+         population = as.numeric(population),
+         fully_vaccinated = as.numeric(fully_vaccinated),
+         fully_vaccinated_percent = as.numeric(fully_vaccinated_percent),
+         dateupdated = as_date(dateupdated),
+         social_vulnerability_index = at_least_one_census_tract,
+         at_least_one_census_tract = at_least_one_census_tract == "Yes")
+# dph_vaccine_by_age_full |> group_by(age_group) |> summarise(first = min(dateupdated), last = max(dateupdated), n = n())
+dph_vaccine_by_age <- dph_vaccine_by_age_full |>
+  filter(dateupdated == max(dateupdated, na.rm = TRUE)) |>
+  pivot_wider(id_cols = c(town, dateupdated, social_vulnerability_index), values_from = c(fully_vaccinated, population),
+              names_from = age_group, values_fill = 0) |>
+  mutate(under_18_vaxed = ((`fully_vaccinated_5-11` + `fully_vaccinated_12-17`) / (`population_5-11` + `population_12-17`)),
+         young_18_to_44_vaxed = ((`fully_vaccinated_18-24` + `fully_vaccinated_25-44`) / (`population_18-24` + `population_25-44`)),
+         middle_vaxed = `fully_vaccinated_45-64` / `population_45-64`,
+         `old_65+_vaxed` = `fully_vaccinated_65+` / `population_65+`)
+# population by town
+# pop_by_town <- dph_vaccine_by_age |> mutate(population = `population_5-11` + `population_12-17` + `population_18-24` + `population_25-44` + `population_45-64` + `population_65+`) |> relocate(town, population)
+xx <- dph_towns |> filter(date == max(date)) |> select(town, total_pop) |> left_join(pop_by_town) |> rename(age_pop = population)
+
+
 #
 # The earlier series (dph_nursing_cases) is cumulative counts.
 # The later series (dph_cms_nursing) appears to have cumulative
@@ -641,6 +694,9 @@ if ((max(dph_total$date) != max(dph_counties$date)) |
   usethis::ui_stop(paste("CT DPH dates. \ntotal:", max(dph_total$date), " counties:", max(dph_counties$date),
                           " towns:", max(dph_towns$date), " age:", max(dph_age$date), " gender:", max(dph_gender$date)))
 
+hospital <- read.socrata("https://healthdata.gov/resource/g62h-syeh.json") |>
+  as_tibble()
+
 # there's also zip code level monitoring at: https://data.ct.gov/resource/javn-ujwr.json
 
 exec_orders <- tibble(
@@ -656,6 +712,7 @@ save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases,
      towns_recent_weeks, counties_recent_weeks, doc_covid,
      covid19_project, cdc_covid,
      ct_vac_state, ct_vac_county, ct_vac_town, ct_vac_age, ct_vac_race,
+     town_vote, dph_vaccine_by_age,
      file = paste0(path_to_ctcorona, "dph_datasets.RData"))
 finish_loading_socrata_data <- Sys.time()
 
