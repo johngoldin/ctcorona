@@ -167,8 +167,22 @@ town_geometries <- town_geometries_save %>%
   left_join(town_info, by = "GEOID")
 # town_categories <- town_info %>% group_by(county, category) %>%
 
+# population by town from 2020 census redistricting dataset
+total2020 <- get_decennial(variables = c("P3_001N"), # P3_001N us 18 and over,
+                           summary_var = "P1_001N",
+                           geography = "county subdivision",
+                           # county = "New Haven",
+                           # sumfile = "SF3",
+                           state = "CT", cache = TRUE, year = 2020) |>
+  mutate(town = str_extract(NAME,".* town") |> str_replace(" town", ""),
+         pct_under18 = (summary_value - value) / summary_value) |>
+  rename(pop2020 = summary_value, over17 = value) |>
+  filter(pop2020 > 0) |>
+  select(-GEOID, -variable, -NAME)
+
 source("R/setup_school_info.R")
 
 save(county_geometries, town_geometries, town_info, county_info,
-     state_info, state_pop, file = paste0(path_to_ctcorona, "census_population.RData"))
+     state_info, state_pop, total2020,
+     file = paste0(path_to_ctcorona, "census_population.RData"))
 # load(paste0(path_to_ctcorona, "census_population.RData"))

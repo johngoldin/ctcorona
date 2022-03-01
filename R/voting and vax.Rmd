@@ -17,8 +17,10 @@ knitr::opts_chunk$set(
 ```{r libraries, echo = FALSE, warning= FALSE, message = FALSE}
 library(tidyverse, quietly = TRUE)
 library(tidycensus, quietly = TRUE)
+library(broom, quietly = TRUE)
 library(sf, quietly = TRUE)
 library(tigris, quietly = TRUE)
+library(lubridate, quietly = TRUE)
 # library(viridisLite, quietly = TRUE)
 library(knitr, quietly = TRUE)
 library(scales, quietly = TRUE)
@@ -37,12 +39,18 @@ path_to_covid_project <- paste0("~/Documents/R_local_repos/", covid_project, "/c
 path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
 load(paste0(path_to_ctcorona, "dph_datasets.RData"))
 load(paste0(path_to_ctcorona, "vote2020.RData"))
+load(paste0(path_to_ctcorona, "census_population.RData")) # created in setup_geometries.R
 
-town_vote <- town_vote |> 
-  left_join(dph_vaccine_by_age, by = "town")
+vote_vaccinated <- town_vote |> 
+  left_join(dph_vaccine_by_age, by = "town") |> 
+  left_join(total2020, by  = "town")
 
-
-xx <- town_vote |> ungroup() |> 
+vote_vaccinated2 <- 
+  left_join(dph_vaccine_by_town, town_vote, by = "town") |> 
+  mutate(vax_rate2020 = fully_vaccinated / pop2020,
+         vax_ratedph = fully_vaccinated / dph_total_pop,
+         vax_rate2020_over17 = fully_vaccinated / over17)
+xx <- vote_vaccinated |> ungroup() |> 
   select(town, pct_repub,
          social_vulnerability_index, under_18_vaxed, young_18_to_44_vaxed, middle_vaxed, `old_65+_vaxed`) |> 
   pivot_longer(names_to = "Age Group",
@@ -54,7 +62,13 @@ xx <- town_vote |> ungroup() |>
                                   "18-44" = "young_18_to_44_vaxed",
                                   "45-64" = "middle_vaxed",
                                   "65+" = "old_65+_vaxed"))
-               
+ # prepare monthly sequence of dates:
+month_dates <- vote_vaccinated2 |> ungroup() |> count(date) |> 
+  mutate(month = month(date)) |> 
+  group_by(month) |> 
+  summarise(date = last(date)) |> pluck("date")
+
+              
 
 p_vote_vaccine <- ggplot(data = xx, 
                          aes(x = pct_repub, y = value,
@@ -65,7 +79,71 @@ p_vote_vaccine <- ggplot(data = xx,
   geom_point(aes(shape = social_vulnerability_index)) +
   geom_text(aes(label = town), size = 2.5) +
   ylab("Percent Fully Vaccinated") + xlab("Percent Trump")
+
+
+
+ p_pops1 <- ggplot(data = vote_vaccinated2 |> 
+                    filter(town != "Mansfield", town != "Canaan", date == max(date)), 
+                   aes(x = pct_repub, y = vax_rate2020)) +
+   geom_smooth(mapping = aes(x = pct_repub, y = vax_rate2020), method = "lm", se = FALSE, na.rm = TRUE) +
+   geom_point(aes(size = pop2020)) +
+   # geom_point(aes(size = pop2020, y = vax_ratedph), colour = "red") +
+   scale_size_area(breaks = c(1000, 2000, 5000, 10000, 30000, 100000)) +
+   geom_text(aes(label = town), size = 2.5) 
+ 
+p_pops1b <- p_pops1 +
+  geom_smooth(data = vote_vaccinated2 |> 
+                filter(date %in% month_dates, social_vulnerability_index == "No"), 
+              aes(group = date), method = "lm", se = FALSE)
+ 
+p_pops2 <- ggplot(data = vote_vaccinated2 |> 
+                    filter(town != "Mansfield", town != "Canaan", 
+                           date == max(date)), 
+                  aes(x = pct_repub, y = vax_rate2020)) +
+   geom_smooth(method = "lm", aes(colour = social_vulnerability_index)) +
+   geom_smooth(aes(size = pop2020, y = vax_rate2020_over17), colour = "grey", method = "lm") +
+   geom_point(aes(size = pop2020, colour = social_vulnerability_index)) +
+   geom_point(aes(size = pop2020, y = vax_rate2020_over17), colour = "grey") +
+   scale_size_area(breaks = c(1000, 2000, 5000, 10000, 30000, 100000)) +
+   geom_text(aes(label = town), size = 2.5)
+
+p_pops3 <- p_pops2 +
+  geom_smooth(data = vote_vaccinated2 |> filter(date %in% month_dates, social_vulnerability_index == "No"), aes(group = date), method = "lm")
+
+# do lm on data. Use ch25 of 4rds https://r4ds.had.co.nz/many-models.html and
+#   https://www.tidymodels.org/learn/statistics/tidy-analysis/
+lm_lines <-  vote_vaccinated2 |> 
+  filter(date %in% month_dates, 
+         town != "Mansfield", town != "Canaan", !is.na(social_vulnerability_index)) |> 
+  group_by(social_vulnerability_index, date) |> 
+  nest() |> 
+  mutate(
+    reg = map(data, ~ lm(vax_rate2020 ~ pct_repub, data = .x)) |> map(tidy)) |> 
+  unnest(reg) |> 
+  select(term, estimate) |> 
+  pivot_wider(names_from  = term, values_from = estimate) |> 
+  rename(intercept = `(Intercept)`) 
+the_dates <- unique(lm_lines$date)
+the_dates <- the_dates[order(desc(the_dates))]
+order_dates <- tibble(date = the_dates, interval = seq(1, length(the_dates)))
+lm_lines <- lm_lines |> 
+  left_join(order_dates) |> 
+  mutate(date_label.x = 0.1 + (interval * 0.03), date_label.y = date_label.x * pct_repub +  intercept)
+
+#### Your next task:
+#### apply lm_lines to add date label
+p_pops1b + geom_text(data = lm_lines |> filter(social_vulnerability_index == "No"),
+                     aes(label = month(date, label  = TRUE, abbr = FALSE) |> as.character(), 
+                         x = date_label.x, y = date_label.y), 
+                     colour = "grey", size = 3)
+
+# NPR charts on death and vaccination by county and trump vote: https://www.npr.org/sections/health-shots/2021/12/05/1059828993/data-vaccine-misinformation-trump-counties-covid-death-rate
+# and here's Charles Gaba on them talking to him about this: https://twitter.com/charles_gaba/status/1467499374817259524?s=20
 ```
+
+
+
+
 
 
 ## Connecticut 2020 Presidential Vote and Vaccination by Town
@@ -83,8 +161,9 @@ plot(p_vote_vaccine)
 ```
 
 Note that for the trend lines in the plot I have eliminated Mansfield and Simsbury as outliers. 
-I think there
-may be an issue with Mansfield and prisons. I don't know what's going on with Simsbury.
+Manfield is the location of University of Connecticut. Some students may be counted
+in census population, but getting their vaccinations elsewhere.
+I don't know what's going on with Simsbury.
 
 The CDC uses someting they call the 
 [social vulnerability index](https://www.atsdr.cdc.gov/placeandhealth/svi/index.html),
@@ -229,8 +308,8 @@ race_town2 <- get_acs(geography = "county subdivision",  # for CT, that means to
 ```{r gender_from_census2, echo = FALSE, message = FALSE}
 vars2020 <- load_variables(2020, "pl", cache = TRUE) 
 if (1 == 2) {
-  sex_age_acs2 <- get_acs_age_sex(acs_vars = vars)
-  sex_age_acs3 <- sex_age_acs2 |> 
+  sex_age_acs2019_2 <- get_acs_age_sex(acs_year = 2019, acs_vars = vars)
+  sex_age_acs2019_3 <- sex_age_acs2 |> 
     group_by(TOWN, age) |> 
     summarise(estimate = sum(estimate))
   
@@ -238,7 +317,7 @@ if (1 == 2) {
   sex_age_acs2014_3 <- sex_age_acs2014_2 |> 
     group_by(TOWN, age) |> 
     summarise(estimate = sum(estimate))
-  save(sex_age_acs2, sex_age_acs2014_2, file = "~/Documents/R_local_repos/ctcorona/data/census_acs_data.RData")
+  save(sex_age_acs2019_2, sex_age_acs2014_2, file = "~/Documents/R_local_repos/ctcorona/data/census_acs_data.RData")
 }
 load("~/Documents/R_local_repos/ctcorona/data/census_acs_data.RData")
 
@@ -271,35 +350,39 @@ load("~/Documents/R_local_repos/ctcorona/data/census_acs_data.RData")
 # 6 Guilford Total Male      10675
 # 7 Guilford Under 18         4910
 
-acs1519_popvax <- town_vote |> 
+acs1519_popvax <- vote_vaccinated |> 
   left_join(sex_age_acs3 |> filter(age == "65+") |> select(town = TOWN, acs_pop_65 = estimate)) |> 
   left_join(sex_age_acs3 |> filter(age == "45-64") |> select(town = TOWN, acs_pop_4564 = estimate)) |> 
   left_join(sex_age_acs3 |> filter(age == "18-44") |> select(town = TOWN, acs_pop_1844 = estimate)) |> 
-  mutate(dif65 = (abs(acs_pop_65 - `population_65+`) / acs_pop_65),
-         dif4564 = (abs(acs_pop_4564 - `population_45-64`) / acs_pop_4564),
+  # mutate(dif65 = (abs(acs_pop_65 - `population_65+`) / acs_pop_65),
+  #        dif4564 = (abs(acs_pop_4564 - `population_45-64`) / acs_pop_4564)),
+  mutate(
          acs_vax65 = `fully_vaccinated_65+` / acs_pop_65,
          acs_vax4564 = `fully_vaccinated_45-64` / acs_pop_4564)
 
-p_pop_compare <- ggplot(data = acs1519_popvax) +
-  geom_abline(slope = 1, intercept = 0) +
-  geom_text(data = acs1519_popvax |> filter((abs(acs_pop_65 - `population_65+`) / acs_pop_65) > 0.10),
-            aes(x = `population_65+`, y = acs_pop_65, label = town), colour = "purple", size = 3) +
-  geom_point(aes(x = `population_65+`, y = acs_pop_65), colour = "purple") 
+ggplot(data = acs1519_popvax, aes(x = pct_repub, y = `full_vaccinated+65+`)) +
+  
 
-p_compare_vax_rate65 <- ggplot(data = acs1519_popvax) +
-  geom_abline(slope = 1, intercept = 0) +
-  geom_text(data = acs1519_popvax |> filter(dif65 > 0.05),
-            aes(y = `old_65+_vaxed`, x = acs_vax65, label = town), colour = "purple", size = 3) +
-  geom_point(aes(y = `old_65+_vaxed`, x = acs_vax65), colour = "purple") +
-  ggtitle("Age 65+: Compare Using ACS 2014-2019 population and DPH population as denominator for vax rate") +
-  ylab("Vax rate using DPH pop") + xlab("Vax rate using ACS")
-p_compare_vax_rate4564 <- ggplot(data = acs1519_popvax) +
-  geom_abline(slope = 1, intercept = 0) +
-  geom_text(data = acs1519_popvax |> filter(dif4564 > 0.05),
-            aes(y = middle_vaxed, x = acs_vax4564, label = town), colour = "green", size = 3) +
-  geom_point(aes(y = middle_vaxed, x = acs_vax4564), colour = "green") +
-  ggtitle("Age 45-64: Compare Using ACS 2014-2019 population and DPH population as denominator for vax rate") +
-  ylab("Vax rate using DPH pop") + xlab("Vax rate using ACS")
+# p_pop_compare <- ggplot(data = acs1519_popvax) +
+#   geom_abline(slope = 1, intercept = 0) +
+#   geom_text(data = acs1519_popvax |> filter((abs(acs_pop_65 - `population_65+`) / acs_pop_65) > 0.10),
+#             aes(x = `population_65+`, y = acs_pop_65, label = town), colour = "purple", size = 3) +
+#   geom_point(aes(x = `population_65+`, y = acs_pop_65), colour = "purple") 
+
+# p_compare_vax_rate65 <- ggplot(data = acs1519_popvax) +
+#   geom_abline(slope = 1, intercept = 0) +
+#   geom_text(data = acs1519_popvax |> filter(dif65 > 0.05),
+#             aes(y = `old_65+_vaxed`, x = acs_vax65, label = town), colour = "purple", size = 3) +
+#   geom_point(aes(y = `old_65+_vaxed`, x = acs_vax65), colour = "purple") +
+#   ggtitle("Age 65+: Compare Using ACS 2014-2019 population and DPH population as denominator for vax rate") +
+#   ylab("Vax rate using DPH pop") + xlab("Vax rate using ACS")
+# p_compare_vax_rate4564 <- ggplot(data = acs1519_popvax) +
+#   geom_abline(slope = 1, intercept = 0) +
+#   geom_text(data = acs1519_popvax |> filter(dif4564 > 0.05),
+#             aes(y = middle_vaxed, x = acs_vax4564, label = town), colour = "green", size = 3) +
+#   geom_point(aes(y = middle_vaxed, x = acs_vax4564), colour = "green") +
+#   ggtitle("Age 45-64: Compare Using ACS 2014-2019 population and DPH population as denominator for vax rate") +
+#   ylab("Vax rate using DPH pop") + xlab("Vax rate using ACS")
 ```
 
 ```{r kdkd, eval = FALSE, echo = FALSE}
@@ -429,5 +512,58 @@ print(p_compare_vax_rate4564, echo = FALSE, message = FALSE)
 https://data.ct.gov/api/odata/v4/gngw-ukpw
 
 
+
+```
+```{r pop_total_by_age, echo = FALSE}
+load("~/Documents/R_local_repos/ctcorona/data/census_acs_data.RData")
+sex_age_acs2014_2 <- sex_age_acs2014_2 |> 
+  filter(age != "Total Female", age != "Total Male") |> 
+  mutate(age = factor(age, levels = c("Under 18", "18-44", "45-64", "65+", "Total")))
+print("ACS 2000-2014")
+sex_age_acs2014_2 |> 
+  group_by(age) |> 
+  summarise(estimate = sum(estimate)) |> 
+  mutate(pct = estimate /  sum((sex_age_acs2014_2$estimate[sex_age_acs2014_2$age == "Total"])), estimate = comma(estimate), pct = percent(pct))
+sex_age_acs2019_2 <- sex_age_acs2019_2 |> 
+  filter(age != "Total Female", age != "Total Male") |> 
+  mutate(age = factor(age, levels = c("Under 18", "18-44", "45-64", "65+", "Total")))
+print("ACS 2005-2019")
+sex_age_acs2019_2 |> 
+  group_by(age) |> 
+  summarise(estimate = sum(estimate)) |> 
+  mutate(pct = estimate /  sum((sex_age_acs2019_2$estimate[sex_age_acs2019_2$age == "Total"])), estimate = comma(estimate), pct = percent(pct))
+
+atown <- function(xx, twn) {
+  cat("ACS ", " for ", twn, ":\n")
+  xx <- xx |> 
+    filter(TOWN == twn) 
+  xx |> 
+    group_by(age) |> 
+    summarise(estimate = sum(estimate)) |> 
+    mutate(pct = estimate /  sum((xx$estimate[xx$age == "Total"])), estimate = comma(estimate), pct = percent(pct))
+}
+
+#   age      estimate pct    
+#   <fct>    <chr>    <chr>  
+# 1 Under 18 4,708    21.19% 
+# 2 18-44    5,361    24.13% 
+# 3 45-64    6,825    30.72% 
+# 4 65+      5,322    23.96% 
+# 5 Total    22,216   100.00%
+# > atown(sex_age_acs2015_2, "Guilford")
+# ACS   for  Guilford :
+# Error in filter(xx, TOWN == twn) : object 'sex_age_acs2015_2' not found
+# > names(sex_age_acs2015_2)
+# Error: object 'sex_age_acs2015_2' not found
+# > atown(sex_age_acs2014_2, "Guilford")
+# ACS   for  Guilford :
+# # A tibble: 5 × 3
+#   age      estimate pct   
+#   <fct>    <chr>    <chr> 
+# 1 Under 18 4,910    21.9% 
+# 2 18-44    5,287    23.6% 
+# 3 45-64    7,837    35.0% 
+# 4 65+      4,371    19.5% 
+# 5 Total    22,405   100.0%
 ```
 

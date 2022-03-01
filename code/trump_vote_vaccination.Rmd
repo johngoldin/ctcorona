@@ -1,0 +1,374 @@
+---
+title: "Trump Vote and Vaccination"
+author: "John Goldin"
+date: "`r Sys.time()` (a work in progress)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+ echo = FALSE,
+ message = FALSE,
+ warning = FALSE,
+ fig.width = 10,
+ fig.asp = 0.8,
+ out.width = "80%"
+)
+# https://www.nytimes.com/2021/09/27/briefing/covid-red-states-vaccinations.html
+#  https://www.theguardian.com/us-news/2021/dec/07/trump-voters-counties-more-likely-die-covid-study
+```
+
+
+Charles Gaba (and [others](https://www.npr.org/sections/health-shots/2021/12/05/1059828993/data-vaccine-misinformation-trump-counties-covid-death-rate)) 
+have used county level data to look at the correlation between
+the Trump share of the 2020 vote and the percentage of the population who have been
+vaccinated.
+
+The goal of this exercise is to reproduce that plot for towns in Connecticut
+and to look at some variations on the same theme.
+
+```{r libraries, echo = FALSE, warning= FALSE, message = FALSE}
+library(tidyverse, quietly = TRUE)
+library(tidycensus, quietly = TRUE)
+library(lubridate, quietly = TRUE)
+library(sf, quietly = TRUE)
+library(tigris, quietly = TRUE)
+# library(viridisLite, quietly = TRUE)
+library(knitr, quietly = TRUE)
+library(scales, quietly = TRUE)
+library(kableExtra, quietly = TRUE)
+library(janitor, quietly = TRUE)
+library(ggnewscale, quietly = TRUE) # see [https://ggplot2-book.org/scales-guides.html#splitting-legends] ggnewscale::new_scale_colour() 
+library(broom, quietly = TRUE)
+options(tigris_use_cache = TRUE)
+options(tigris_class = "sf")
+
+# evidence of Fox news on repub behavior: https://donmoynihan.substack.com/p/fox-news-is-killing-us-here-are-the
+```
+```{r ggplot2_defaults}
+library(scico)       ## scico color palettes(http://www.fabiocrameri.ch/colourmaps.php) in R 
+library(ggtext)      ## add improved text rendering to ggplot2
+library(ggforce)     ## add missing functionality to ggplot2
+library(ggdist)      ## add uncertainity visualizations to ggplot2
+library(patchwork)   ## combine outputs from ggplot2
+theme_set(theme_minimal(base_size = 12, base_family = "Open Sans")) #originally 12
+## modify plot elements globally (for all following plots)
+theme_update(
+  axis.ticks = element_line(color = "grey92"),
+  axis.ticks.length = unit(.5, "lines"),
+  panel.grid.minor = element_blank(),
+  legend.title = element_text(size = 12),
+  legend.text = element_text(color = "grey30"), 
+  plot.title = element_text(size = 14, face = "bold"),  # originally 18
+  plot.subtitle = element_text(size = 10, color = "grey30"), # originally 12
+  plot.caption = element_text(size = 9, margin = margin(t = 15))
+)
+
+```
+
+```{r setup_data, echo = FALSE, warning=FALSE, message = FALSE}
+covid_project <- "can_i_get_a_clean_project"
+path_to_post <- paste0("~/Documents/R_local_repos/",covid_project, "/content/blog/2020-03-29-covid19-cases-in-connecticut/")
+path_to_post_june <- paste0("~/Documents/R_local_repos/", covid_project, "/content/blog/2020-06-22-tracking-covid-19-in-connecticut/index.en_files/")
+path_to_static_june <- paste0("~/Documents/R_local_repos/", covid_project, "/static/blog/2020-06-22-tracking-covid-19-in-connecticut/") # maybe no longer used
+path_to_covid_project <- paste0("~/Documents/R_local_repos/", covid_project, "/content/project/covid/index_files/")
+path_to_ctcorona <- "~/Documents/R_local_repos/ctcorona/data/"
+load(paste0(path_to_ctcorona, "dph_datasets.RData"))
+load(paste0(path_to_ctcorona, "vote2020.RData"))
+load(paste0(path_to_ctcorona, "census_population.RData")) # created in setup_geometries.R
+# compare new haven count vax to CDC data
+if (1 == 2) {
+  ct_vax <- vote_vaccinated2 |> 
+    filter(date == max(date), town != "Resident out of state") |> 
+    mutate(county = if_else(is.na(county), town, county)) |> 
+    group_by(county) |> 
+    summarise(fully_vaccinated = sum(fully_vaccinated, na.rm = TRUE),
+              initiated_vaccination = sum(initiated_vaccination, na.rm = TRUE))
+  ct_vax <- 
+    bind_rows(ct_vax, 
+      tibble(county = "Total", fully_vaccinated = sum(ct_vax$fully_vaccinated),
+             initiated_vaccination = sum(ct_vax$initiated_vaccination))
+    )
+}
+```
+```{r basic_plot}
+# prepare monthly sequence of dates:
+month_dates <- dph_vaccine_by_town |> ungroup() |> count(date) |> 
+  mutate(month = month(date, abbr = FALSE, label = TRUE), year = year(date)) |> 
+  group_by(year, month) |> 
+  summarise(date = last(date)) |> # |> pluck("date")
+  arrange(desc(date)) 
+month_dates$dist = seq(nrow(month_dates), 1, -1)  
+
+vax_rate2020_may_date <- ymd("2021-05-05")
+vax_rate2020_aug_date <- ymd("2021-08-04")
+
+vote_vaccinated2 <- 
+  left_join(dph_vaccine_by_town, town_vote, by = "town") |> 
+  left_join(month_dates, by = "date") |> 
+  mutate(vax_rate2020 = fully_vaccinated / pop2020,
+         vax_ratedph = fully_vaccinated / dph_total_pop,
+         vax_rate2020_over17 = fully_vaccinated / over17,
+         exclude = town %in% c("Canaan", "Mansfield"))
+# join table to itself to get vax rates at may and august
+vote_vaccinated2 <- vote_vaccinated2 |> 
+  left_join(vote_vaccinated2 |> filter(date == vax_rate2020_may_date) |> select(town, vax_rate2020_may = vax_rate2020)) |> 
+  left_join(vote_vaccinated2 |> filter(date == vax_rate2020_aug_date) |> select(town, vax_rate2020_aug = vax_rate2020))
+# show_col(c(first_color, lighten(first_color,factor = 2.2)))
+# https://gist.github.com/Jfortin1/72ef064469d1703c6b30
+lighten <- function(color, factor=1.4){
+    col <- col2rgb(color)
+    col <- col*factor
+    col <- rgb(t(col), maxColorValue=255)
+    col
+}
+  # magma, plasma, cividis, viridis    
+  # show_col(viridis_pal(option = "magma", begin = 0.3, end = 0.7)(2))
+my_pal_choice <- "cividis"
+my_viridis_pal <- viridis_pal(option = my_pal_choice, begin = 0.25, end = 0.85)
+first_color <- my_viridis_pal(2)[1]
+second_color <- my_viridis_pal(2)[2]
+last_color <-  lighten(first_color,factor = 1.5)
+lighten_by = seq(from = 0, by = (1.5 / nrow(month_dates)), length.out = nrow(month_dates))
+line_color_gradient = lighten(rep(first_color, length(lighten_by)), lighten_by)
+line_color_gradient <-purrr::map2(rep(first_color, length(lighten_by)), lighten_by, lighten)
+
+
+my_size_breaks <- c(1000, 5000, 25000, 100000)
+# basic plot with overall regression line
+p_simple <- ggplot(data = vote_vaccinated2 |> 
+                    filter(!exclude, date == max(date)), 
+                   aes(x = pct_repub, y = vax_rate2020)) +
+   geom_smooth(mapping = aes(x = pct_repub, y = vax_rate2020), method = "lm", se = FALSE, 
+               na.rm = TRUE, 
+               colour = my_viridis_pal(2)[1]) +
+   geom_point(aes(size = pop2020), colour = my_viridis_pal(2)[1]) +
+   scale_size_area(breaks = my_size_breaks,
+                   labels = scales::comma(my_size_breaks, accuracy = 1),
+                   name = "Population") +
+   geom_text(aes(label = town), size = 2.5, colour = "black", vjust = 1) +
+  geom_text(data = vote_vaccinated2 |> filter(county == "New Haven", 
+                                              !exclude, date == max(date)),
+            mapping = aes(label = town), size = 2.5, colour = "blue", vjust = 1) + 
+  xlab("Percent for Trump in 2020") + ylab("Percent Two Doses (or 1 J&J)") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(title = 'Connecticut Towns\n2020 Trump Vote and Vaccination Rate',
+       caption = "Blue town names flag my home county of New Haven.")
+
+# just the points
+p_basic <- ggplot(data = vote_vaccinated2 |> 
+                    filter(!exclude, date == max(date)), 
+                   aes(x = pct_repub, y = vax_rate2020)) +
+   # geom_smooth(mapping = aes(x = pct_repub, y = vax_rate2020), method = "lm", se = FALSE, na.rm = TRUE) +
+   # scale_colour_viridis_d("Social\nVulnerability\nIndex", 
+   #                        option = my_pal_choice, begin = 0.2, end = 0.8) + 
+   geom_point(aes(size = pop2020), colour = first_color) +
+   scale_size_area(breaks = my_size_breaks,
+                   labels = scales::comma(my_size_breaks, accuracy = 1),
+                   name = "Population") +
+   geom_text(aes(label = town), size = 2.5, colour = "grey15", alpha = 75, vjust = 1) +
+  geom_text(data = vote_vaccinated2 |> filter(county == "New Haven", 
+                                              !exclude, date == max(date)),
+            mapping = aes(label = town), size = 2.5, colour = "blue", vjust = 1) + 
+  xlab("Percent for Trump in 2020") + ylab("Percent Two Doses (or 1 J&J)") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(title = 'Connecticut Towns\n2020 Trump Vote and Vaccination Rate')
+# separate trend line for socially vulnerable yes/no
+p_basic_sv <- ggplot(data = vote_vaccinated2 |> 
+                    filter(!exclude, date == max(date)), 
+                   aes(x = pct_repub, y = vax_rate2020, group = social_vulnerability_index,
+                       colour = social_vulnerability_index)) +
+   geom_smooth(mapping = aes(x = pct_repub, y = vax_rate2020), method = "lm", se = FALSE, na.rm = TRUE) +
+   scale_colour_viridis_d("Social\nVulnerability\nIndex", 
+                          option = my_pal_choice, begin = 0.25, end = 0.85) + 
+   geom_point(aes(size = pop2020)) +
+   scale_size_area(breaks = my_size_breaks,
+                   labels = scales::comma(my_size_breaks, accuracy = 1),
+                   name = "Population") +
+   geom_text(aes(label = town), size = 2.5, colour = "black", vjust = 1) +
+  geom_text(data = vote_vaccinated2 |> filter(county == "New Haven", 
+                                              !exclude, date == max(date)),
+            mapping = aes(label = town), size = 2.5, colour = "blue", vjust = 1) + 
+  xlab("Percent for Trump in 2020") + ylab("Percent Two Doses (or 1 J&J)") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(title = 'Connecticut Towns\n2020 Trump Vote and Vaccination Rate', 
+       subtitle = 'Separate trend lines depending on social vulnerability.')
+# p_basic_weighted <- ggplot(data = vote_vaccinated2 |> 
+#                     filter(!exclude, date == max(date)), 
+#                    aes(x = pct_repub, y = vax_rate2020, group = social_vulnerability_index,
+#                        colour = social_vulnerability_index)) +
+#    geom_smooth(mapping = aes(x = pct_repub, y = vax_rate2020, weight = pop2020), method = "lm", se = FALSE, na.rm = TRUE) +
+#    scale_colour_viridis_d("Social\nVulnerability\nIndex", 
+#                           option = my_pal_choice, begin = 0.2, end = 0.8) + 
+#    geom_point(aes(size = pop2020)) +
+#    scale_size_area(breaks = my_size_breaks,
+#                    labels = scales::comma(my_size_breaks, accuracy = 1),
+#                    name = "Population") +
+#    geom_text(aes(label = town), size = 2.5, colour = "darkgrey") +
+#   xlab("Percent for Trump in 2020") + ylab("Percent Two Doses (or 1 J&J)") +
+#   scale_y_continuous(labels = scales::percent_format()) +
+#   scale_x_continuous(labels = scales::percent_format(accuracy = 1))
+```
+```{r plot_variations}
+# basic plot with overall non vulnerable regression line and cascading line history
+p_basic_trend <- ggplot(data = vote_vaccinated2 |> 
+                    filter(!exclude, date == max(date)), 
+                   aes(x = pct_repub, y = vax_rate2020)) +
+  geom_smooth(data = vote_vaccinated2 |>
+                filter(!exclude, date %in% month_dates$date,
+                       social_vulnerability_index == "No"),
+              # aes(group = date, colour = factor(-dist)), method = "lm", se = FALSE) +
+              aes(group = date, size = dist * 0.01), 
+              method = "lm", se = FALSE, show.legend = FALSE, colour = first_color) +
+  scale_size(range = c(0.1, 0.8)) +
+   # scale_color_gradientn(colors = line_color_gradient)  +
+   # ggnewscale::new_scale_colour() +
+   ggnewscale::new_scale("size") +
+    # , group = social_vulnerability_index, colour = social_vulnerability_index)
+   geom_point(aes(size = pop2020,colour = social_vulnerability_index)) +
+   scale_colour_viridis_d("Social\nVulnerability\nIndex", 
+                          option = my_pal_choice, begin = 0.25, end = 0.85) + 
+   scale_size_area(breaks = my_size_breaks,
+                   labels = scales::comma(my_size_breaks, accuracy = 1),
+                   name = "Population") +
+   geom_text(aes(label = town), size = 2.5, colour = "black", vjust = 1) +
+  geom_text(data = vote_vaccinated2 |> filter(county == "New Haven", 
+                                              !exclude, date == max(date)),
+            mapping = aes(label = town), size = 2.5, colour = "blue", vjust = 1) + 
+  xlab("Percent for Trump in 2020") + ylab("Percent Two Doses (or 1 J&J)") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(title = 'Connecticut Towns\n2020 Trump Vote and Vaccination Rate', 
+       subtitle = 'History of trend line for towns not flagged as socially vulnerable')
+  
+  
+  # do lm on data. Use ch25 of 4rds https://r4ds.had.co.nz/many-models.html and
+#   https://www.tidymodels.org/learn/statistics/tidy-analysis/
+lm_lines <-  vote_vaccinated2 |> 
+  filter(date %in% month_dates$date, 
+         !exclude, !is.na(social_vulnerability_index)) |> 
+  group_by(social_vulnerability_index, date) |> 
+  nest() |> 
+  mutate(
+    reg = map(data, ~ lm(vax_rate2020 ~ pct_repub, data = .x)) |> map(tidy)) |> 
+  unnest(reg) |> 
+  select(term, estimate) |> 
+  pivot_wider(names_from  = term, values_from = estimate) |> 
+  rename(intercept = `(Intercept)`, slope = pct_repub) |> 
+  left_join(month_dates, by = "date") |> 
+  mutate(pct_repub = 0.15,  vax_rate2020 = intercept + (slope * pct_repub))
+p_basic_trend_date <- p_basic_trend +
+  geom_text(data = lm_lines[c(1:4, nrow(lm_lines) / 2), ], mapping = aes(x = pct_repub, y = vax_rate2020,
+                                                  label = paste(month, year)),
+            colour = first_color, size = 3, ljust = 0)
+p_basic3 <- p_basic + 
+  ggnewscale::new_scale_colour() +
+  geom_abline(data = lm_lines |> filter(social_vulnerability_index == "No"), 
+              mapping = aes(intercept = intercept, slope = slope,
+                            colour = dist), show.legend = FALSE) 
+
+p <- ggplot(data = lm_lines) +
+    geom_abline(data = lm_lines |> filter(social_vulnerability_index == "No"), 
+              mapping = aes(intercept = intercept, slope = pct_repub,
+                            colour = rev(dist)), show.legend = FALSE)
+
+```
+
+<br><br>
+
+#### Percent Two Doses (or 1 J&J)
+
+The denominator for the vaccination rate is the 2020 decennial census. The
+numerator is based on vaccination information from the 
+[Department of Public Health](https://data.ct.gov/Health-and-Human-Services/COVID-19-Vaccinations-by-Town-and-Age-Group/gngw-ukpw).
+Their data comes from [CT WiZ](https://portal.ct.gov/DPH/Immunizations/ALL-ABOUT-CT-WiZ). "[all COVID-19 vaccine doses administered must be 
+reported to CT WiZ, CT’s Immunization Information System, within 24 hours.](https://portal.ct.gov/DPH/Immunizations/COVID-19-Vaccine-Providers)" 
+Unfortunately it doesn't follow that the vaccine information is perfect. 
+The DPH site notes that vaccines by federal providers such as the DOD may not
+be included. A Connecticut resident who is vaccinated in another state would
+not be included automatically. 
+If vaccination information does get into the patients local Connecticut
+electronic health record via their health care provider 
+it may still be uploaded to CT WiZ. The home
+address as recorded in WiZ might not correspond to where the individual
+is counted by the Census. For example college students might
+be in the Census with their college address while their vaccination record might
+be recorded with their home address.
+
+"Fully vaccinated" here refers to one dose of J&J or two doses of Pfizer or
+Moderna vaccines.
+
+```{r display_p_simple, echo = FALSE}
+print(p_simple)
+```
+
+<br><br>
+```{r display_p_basic_sv, echo = FALSE}
+print(p_basic_sv)
+```
+
+<br><br>
+```{r display_p_basic_trend_date, echo = FALSE}
+print(p_basic_trend_date)
+```
+```{r death_rates1}
+period_totals <- period_totals |> 
+  left_join(vote_vaccinated2 |> filter(date == max(date)) |> 
+     select(town, social_vulnerability_index, fully_vaccinated, exclude,
+            vax_rate2020, vax_rate2020_may, vax_rate2020_aug), by = "town") 
+# all based off of period_totals
+p_two_periods <- ggplot(data = period_totals |> filter(!exclude),
+            aes(x = deaths_per_day_cut2, y = deaths_per_day_cut3_max)) +
+  geom_smooth(method = "lm", colour = "grey50") +
+  geom_point(aes(size = pop2020, colour = social_vulnerability_index)) +
+   scale_colour_viridis_d("Social\nVulnerability\nIndex", 
+                          option = my_pal_choice, begin = 0.25, end = 0.85) + 
+   geom_text(aes(label = town), size = 2.5, colour = "black", vjust = 1) +
+  geom_text(data = period_totals |> filter(county == "New Haven"),
+            mapping = aes(label = town), size = 2.5, colour = "blue", vjust = 1) + 
+   scale_size_area(breaks = my_size_breaks,
+                   labels = scales::comma(my_size_breaks, accuracy = 1),
+                   name = "Population") +
+    labs(title = 'Connecticut Towns\nDeath Rate per 100K for Two Periods of Pandemic', 
+       subtitle = '') +
+   xlab("May-July -- Deaths per Day per 100K Population") +
+   ylab("Aug-Dec Deaths per Day per 100K Population")
+p_vax_deaths_aug_dec <- ggplot(data = period_totals |> filter(!exclude),
+                        aes(x = vax_rate2020_aug, y = deaths_per_day_cut3_max)) +
+  geom_point(aes(size = pop2020, colour = social_vulnerability_index)) +
+  scale_colour_viridis_d("Social\nVulnerability\nIndex", 
+                         option = my_pal_choice, begin = 0.25, end = 0.85) + 
+  geom_smooth(mapping = aes(weight = pop2020), method = "lm") +
+  geom_text(aes(label = town), size = 2.5, colour = "black", vjust = 1) +
+  geom_text(data = period_totals |> filter(county == "New Haven"),
+            mapping = aes(label = town), size = 2.5, colour = "blue", vjust = 1) + 
+  scale_size_area(breaks = my_size_breaks,
+                  labels = scales::comma(my_size_breaks, accuracy = 1),
+                  name = "Population") +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  xlab("Percent Two Doses (or 1 J&J) (August)") +
+  ylab("Deaths per 100,000 per Day August to December") +
+  labs(title = 'Connecticut Towns\nVaccination Rate and Death Rate per 100K per Day', 
+       subtitle = 'Deaths from August to December, Vax Rate as of August 1')  
+p_vax_deaths_may_july <- ggplot(data = period_totals,
+                        aes(x = vax_rate2020_may, y = deaths_per_day_cut2)) +
+  geom_point(aes(size = pop2020, colour = social_vulnerability_index)) +
+  scale_colour_viridis_d("Social\nVulnerability\nIndex", 
+                         option = my_pal_choice, begin = 0.25, end = 0.85) + 
+  geom_smooth(mapping = aes(weight = pop2020), method = "lm") +
+  geom_text(aes(label = town), size = 2.5, colour = "black", vjust = 1) +
+  geom_text(data = period_totals |> filter(county == "New Haven"),
+            mapping = aes(label = town), size = 2.5, colour = "blue", vjust = 1) + 
+  scale_size_area(breaks = my_size_breaks,
+                  labels = scales::comma(my_size_breaks, accuracy = 1),
+                  name = "Population") +
+  scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+  xlab("Percent Two Doses (or 1 J&J) (May)") +
+  ylab("Deaths per 100,000 per Day May to July") +
+  labs(title = 'Connecticut Towns\nVaccination Rate and Death Rate per 100K per Day', 
+       subtitle = 'Deaths from May to July, Vax Rate as of May 1')  
+```
+
