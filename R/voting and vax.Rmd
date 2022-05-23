@@ -305,7 +305,7 @@ race_town2 <- get_acs(geography = "county subdivision",  # for CT, that means to
 #   spread(key = race, value = Percent) %>% 
 #   arrange(`White not Hispanic`) 
 ```
-```{r gender_from_census2, echo = FALSE, message = FALSE}
+```{r gender_from_census2, echo = FALSE, message = FALSE, eval = FALSE}
 vars2020 <- load_variables(2020, "pl", cache = TRUE) 
 if (1 == 2) {
   sex_age_acs2019_2 <- get_acs_age_sex(acs_year = 2019, acs_vars = vars)
@@ -501,7 +501,7 @@ DPH population estimate or the latest ACS estimate as the denominator when
 calculating the vaccination rate. It makes a noticeable difference. The town
 names are show for cases where the difference in population estimates is greater than 5%.
 
-```{r pop_compre_plot, echo = FALSE, message = FALSE}
+```{r pop_compre_plot, echo = FALSE, message = FALSE, eval = FALSE}
 print(p_compare_vax_rate65, echo = FALSE, message = FALSE)
 print(p_compare_vax_rate4564, echo = FALSE, message = FALSE)
 ```

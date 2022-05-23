@@ -430,12 +430,15 @@ dph_cms_nursing <- dph_cms_nursing_raw |>
                      town), by = "federal_provider_number") |>
   select(date, federal_provider_number, ct_credential_number, town,
          starts_with("provider"), residents_weekly_confirmed,
-         residents_weekly_suspected, residents_total_confirmed,
-         residents_total_suspected, residents_weekly_all_deaths,
+         # residents_weekly_suspected, residents_total_confirmed,
+         residents_total_confirmed,
+         # residents_total_suspected, residents_weekly_all_deaths,
+         residents_weekly_all_deaths,
          residents_total_all_deaths, total_resident_covid_19_deaths,
          residents_weekly_covid_19, residents_total_covid_19,
          number_of_all_beds, total_number_of_occupied,
-         county, geolocation.type, geolocation.coordinates)
+         # county, geolocation.type, geolocation.coordinates)
+         county)
 # next commented section is vaccine status without age groups.
 # dph_vaccine <- read.socrata("https://data.ct.gov/resource/x7by-h8k4.json") |>
 #   as_tibble() |>
@@ -584,7 +587,7 @@ nursing_combined <- dph_nursing_cases |>
   mutate(source = "state",
          residents_weekly_confirmed = NA_real_,
          residents_weekly_covid_19_deaths = NA_real_,
-         residents_total_suspected = NA_real_,
+         # residents_total_suspected = NA_real_,
          provider_name = tolower(nursing_home),
          all_deaths = NA_real_) |>
   select(source, ct_credential_number = ct_license_number, date,
@@ -598,7 +601,7 @@ nursing_combined <- dph_nursing_cases |>
                      nh_deaths = as.numeric(residents_total_covid_19),
                      all_deaths = as.numeric(residents_total_all_deaths),
                      residents_weekly_confirmed = as.numeric(residents_weekly_confirmed),
-                     residents_total_suspected = as.numeric(residents_total_suspected),
+                     # residents_total_suspected = as.numeric(residents_total_suspected),
                      residents_weekly_covid_19_deaths = as.numeric(residents_weekly_covid_19),
                      source = "cms",
                      provider_name = tolower(provider_name),
@@ -606,7 +609,8 @@ nursing_combined <- dph_nursing_cases |>
                      nh_probable_deaths = NA_real_,
                      licensed_beds = as.numeric(number_of_all_beds)) |>
               select(source, ct_credential_number, date, residents_weekly_confirmed,
-                     residents_total_suspected, nh_cases, all_deaths,
+                     # residents_total_suspected, nh_cases, all_deaths,
+                     nh_cases, all_deaths,
                      residents_weekly_covid_19_deaths, nh_deaths,
                      provider_name, town, licensed_beds, nh_lab_confirmed_deaths, nh_probable_deaths))
   # View(nursing_combined |> arrange(ct_credential_number, date))
