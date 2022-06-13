@@ -1,8 +1,12 @@
 #get_acs_age_sex
 # used by voting and vax.Rmd
 # do ACS calls to get age distribution by town
+#
+# use next line to source
+# source("~/Documents/R_local_repos/ctcorona/R/get_acs_age_sex.R")
 
-get_acs_age_sex <- function(acs_year = 2019, acs_vars) {
+require(tidyverse)
+get_acs_age_sex <- function(acs_year = 2019, acs_vars = load_variables(acs_year, "acs5", cache = TRUE)) {
   sex_vars_full <- acs_vars |> filter(concept == "SEX BY AGE")
   sex_vars <- sex_vars_full$name
   # str_extract(sex_vars_full$label, "ale:!![0-9 A-Za-z]+") |> unique() |> str_replace("ale:!!","")
@@ -48,7 +52,7 @@ get_acs_age_sex <- function(acs_year = 2019, acs_vars) {
              str_replace(" County", "") |> str_replace("town, ", ""),
            sex_x_age_pct = estimate / summary_est,
            sex_x_age_pct_moe = moe_prop(estimate, summary_est, moe, summary_moe)) |>
-    left_join(vars |> select(name, label), by = c("variable" = "name"))
+    left_join(acs_vars |> select(name, label), by = c("variable" = "name"))
   sex_age_acs2 <- sex_age_acs |>
     mutate(census_age = case_when(
       label == "Estimate!!Total:" ~ "Total",

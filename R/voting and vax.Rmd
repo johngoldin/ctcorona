@@ -210,7 +210,7 @@ Vaccination rates are from DPH via [data.ct.gov](https://data.ct.gov/Health to a
 
 ```{r census_stuff, echo = FALSE, message = FALSE}
 # from https://www.johngoldin.com/blog/2019 to 04 to new to haven to census to and to r/
-vars <- load_variables(2019, "acs5", cache = TRUE) %>% 
+vars <- load_variables(2020, "acs5", cache = TRUE) %>% 
   mutate(table_id = str_sub(name, 1, 6), 
          # Race generally is in parentheses after the concept name.
          # But for a few cases, something else is in parentheses first. So I
@@ -306,18 +306,27 @@ race_town2 <- get_acs(geography = "county subdivision",  # for CT, that means to
 #   arrange(`White not Hispanic`) 
 ```
 ```{r gender_from_census2, echo = FALSE, message = FALSE, eval = FALSE}
-vars2020 <- load_variables(2020, "pl", cache = TRUE) 
+vars2014 <- load_variables(2014, "acs5", cache = TRUE) 
+vars2019 <- load_variables(2019, "acs5", cache = TRUE) 
+vars2020 <- load_variables(2020, "acs5", cache = TRUE) 
 if (1 == 2) {
-  sex_age_acs2019_2 <- get_acs_age_sex(acs_year = 2019, acs_vars = vars)
-  sex_age_acs2019_3 <- sex_age_acs2 |> 
+  sex_age_acs2019_2 <- get_acs_age_sex(acs_year = 2019, acs_vars = vars2019)
+  sex_age_acs2019_3 <- sex_age_acs2019_2 |> 
     group_by(TOWN, age) |> 
     summarise(estimate = sum(estimate))
   
-  sex_age_acs2014_2 <- get_acs_age_sex(acs_year = 2014, acs_vars = vars)
+  sex_age_acs2014_2 <- get_acs_age_sex(acs_year = 2014, acs_vars = vars2014)
   sex_age_acs2014_3 <- sex_age_acs2014_2 |> 
     group_by(TOWN, age) |> 
     summarise(estimate = sum(estimate))
-  save(sex_age_acs2019_2, sex_age_acs2014_2, file = "~/Documents/R_local_repos/ctcorona/data/census_acs_data.RData")
+  sex_age_acs2020_2 <- get_acs_age_sex(acs_year = 2020, acs_vars = vars2020)
+  sex_age_acs2020_3 <- sex_age_acs2020_2 |> 
+    group_by(TOWN, age) |> 
+    summarise(estimate = sum(estimate))  
+  save(sex_age_acs2020_2,
+       sex_age_acs2019_2, 
+       sex_age_acs2014_2, 
+       file = "~/Documents/R_local_repos/ctcorona/data/census_acs_data.RData")
 }
 load("~/Documents/R_local_repos/ctcorona/data/census_acs_data.RData")
 
