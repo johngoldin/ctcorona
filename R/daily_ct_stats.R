@@ -855,7 +855,7 @@ if ((max(dph_total$date) != max(dph_counties$date)) |
     (max(dph_total$date) != max(dph_towns$date)) |
     (max(dph_total$date) != max(dph_age$date)) |
     (max(dph_total$date) != max(dph_gender$date)))
-  usethis::ui_stop(paste("CT DPH dates. \ntotal:", max(dph_total$date), " counties:", max(dph_counties$date),
+  usethis::ui_warn(paste("CT DPH dates. \ntotal:", max(dph_total$date), " counties:", max(dph_counties$date),
                           " towns:", max(dph_towns$date), " age:", max(dph_age$date), " gender:", max(dph_gender$date)))
 
 hospital <- read.socrata("https://healthdata.gov/resource/g62h-syeh.json") |>
