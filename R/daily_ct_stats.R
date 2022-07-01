@@ -828,6 +828,7 @@ usethis::ui_info("tests          :            {usethis::ui_value(dph_total$tests
 usethis::ui_info("percent positive:            {usethis::ui_value(round(dph_total$new_cases[dph_total$date == last_date] / dph_total$new_tests[dph_total$date == last_date], 3))} ")
 usethis::ui_info("Confirmed hospitalizations: {usethis::ui_value(dph_total$hospital[dph_total$date == last_date])}  {usethis::ui_value(dph_total$hospital[dph_total$date == (last_date - 1)])}")
 
+
 dph_age <- read.socrata("https://data.ct.gov/resource/ypz6-8qyf.json",
                          app_token = Sys.getenv("CTDATA_APP1_TOKEN")) |>
   as_tibble() |>
@@ -870,6 +871,15 @@ exec_orders <- tibble(
 ) |>
   left_join(dph_counties |> filter(county == "Fairfield") |> select(date, cases), by = "date") |>
   mutate(county = "Fairfield")
+
+max_date <- function(adf) {
+  if (is.character(max(adf$date))) return(as_date(max(adf$date)))
+  max(adf$date)
+}
+usethis::ui_info("last hospital: {usethis::ui_value(max_date(hospital))}")
+usethis::ui_info("last ct_vax_county: {usethis::ui_value(max_date(ct_vac_county))}")
+usethis::ui_info("last dph_towns: {usethis::ui_value(max_date(dph_towns))}")
+usethis::ui_info("last dph_total: {usethis::ui_value(max_date(dph_total))}")
 
 save(dph_reports, dph_total, dph_towns, dph_counties, dph_nursing_cases,
      dph_age, town_with_nursing, dph_assisted_living,
